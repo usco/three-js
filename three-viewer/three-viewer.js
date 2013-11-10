@@ -266,47 +266,73 @@ Polymer('three-viewer', {
 	this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
 
 	this.renderer.setSize( this.width,this.height );
-},
-//event handlers
-onPointerDown:function(event)
-{
-  var event = event.impl || event;
-  var x = event.offsetX;
-  var y = event.offsetY;
-  var intersects = this._pick(x,y);
+  },
+  //public api
+	addToScene: function ( object )
+	{
+		try
+		{
+			this.rootAssembly.add( object );
+      //this.scene.add(object);
+		}
+		catch(error)
+		{
+			console.log("Failed to add object",object, "to scence: error", error)
+		}
+	},
+	captureScreen:function(callback, width, height)
+	{
+		var width = width || 640;
+		var height = height || 480;
+		if(callback === undefined)
+		{
+			throw new Error("no callback provided");
+		}
+		captureScreen(callback, this.renderer.domElement, width, height);
+	},
+  //event handlers
+  keyDown:function(event)
+	{//overidable method stand in
+	},
+  onPointerDown:function(event)
+  {
+    var event = event.impl || event;
+    var x = event.offsetX;
+    var y = event.offsetY;
+    var intersects = this._pick(x,y);
 
-  console.log("mouseX,Y",x,y);
-  if(intersects.length>0)
+    console.log("mouseX,Y",x,y);
+    if(intersects.length>0)
+    {
+      var selected = intersects[0].object;
+      selected._oldColor = selected.material.color.clone();
+      selected.material.color.setRGB(1,0,0);
+      this.selectedObject = selected;
+    }else
+    {
+      this.selectedObject = null;
+    }
+  },
+  //attribute change handlers / various handlers
+  autoRotateChanged:function()
   {
-    var selected = intersects[0].object;
-    selected._oldColor = selected.material.color.clone();
-    selected.material.color.setRGB(1,0,0);
-    this.selectedObject = selected;
-  }else
+	  this.controls.autoRotate = this.autoRotate;
+  },
+  selectedObjectChanged:function(oldSelection)
   {
-    this.selectedObject = null;
+    if(oldSelection != null)
+    {
+      oldSelection.material.color = oldSelection._oldColor;
+    }
+  },
+  //helpers
+  _pick:function(x,y)
+  {
+    var intersected, intersects, raycaster, v;
+    v = new THREE.Vector3((x / this.width) * 2 - 1, -(y / this.height) * 2 + 1, 1);
+    new THREE.Projector().unprojectVector(v, this.camera);
+    raycaster = new THREE.Raycaster(this.camera.position, v.sub(this.camera.position).normalize());
+    intersects = raycaster.intersectObjects(this.scene.children, true);
+    return intersects;
   }
-},
-//attribute change handlers / various handlers
-autoRotateChanged:function()
-{
-	this.controls.autoRotate = this.autoRotate;
-},
-selectedObjectChanged:function(oldSelection)
-{
-  if(oldSelection != null)
-  {
-    oldSelection.material.color = oldSelection._oldColor;
-  }
-},
-//helpers
-_pick:function(x,y)
-{
-  var intersected, intersects, raycaster, v;
-  v = new THREE.Vector3((x / this.width) * 2 - 1, -(y / this.height) * 2 + 1, 1);
-  new THREE.Projector().unprojectVector(v, this.camera);
-  raycaster = new THREE.Raycaster(this.camera.position, v.sub(this.camera.position).normalize());
-  intersects = raycaster.intersectObjects(this.scene.children, true);
-  return intersects;
-}
 });
