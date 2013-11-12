@@ -1,3 +1,5 @@
+//TODO: perhaps object hover/select and other interactions other than basic camera movement should be moved
+//out of viewer
 Polymer('three-viewer', {
   viewAngle: 40,
   cameraUp : [0,0,1],
@@ -50,8 +52,8 @@ Polymer('three-viewer', {
     renderer.domElement.style.position = 'absolute';
     renderer.domElement.style.top = 0;
 
-		renderer.shadowMapEnabled = true;
-		renderer.shadowMapAutoUpdate = true;
+		renderer.shadowMapEnabled = this.showShadows;
+		renderer.shadowMapAutoUpdate = this.showShadows;
 		renderer.shadowMapSoft = true;
 		renderer.shadowMapType = THREE.PCFShadowMap; // options are THREE.BasicShadowMap | THREE.PCFShadowMap | THREE.PCFSoftShadowMap
 			
@@ -100,9 +102,9 @@ Polymer('three-viewer', {
 	  var cube = new THREE.Mesh(geometry, material);
     cube.name = "TestCube";
     cube.position.set(-200,0,0);
-    this.scene.add(cube);
+    this.rootAssembly.add(cube);
 
-    var geometry = new THREE.SphereGeometry(75, 20,20);
+    var geometry = new THREE.SphereGeometry(25, 20,20);
     geometry.computeCentroids();
   	geometry.computeBoundingSphere();
     geometry.computeBoundingBox();
@@ -110,11 +112,18 @@ Polymer('three-viewer', {
     var sphere = new THREE.Mesh(geometry, material);
     sphere.name = "testSphere";
     sphere.position.set(50,0,0);
-    this.scene.add(sphere);
-
+    this.rootAssembly.add(sphere);
 
     this.scene.add(this.rootAssembly); //entry point to store meshes
     this.setupLights();
+
+     //add grid
+	    this.grid = new THREE.CustomGridHelper(200,10,this.cameraUp)
+	    this.scene.add(this.grid);
+	    //add axes
+	    this.axes = new THREE.LabeledAxes()
+	    this.scene.add(this.axes);
+
   },
   setupLights: function()
 	{
@@ -227,7 +236,11 @@ Polymer('three-viewer', {
   setupHelpers: function()
   {
     this.selectionHelper = new SelectionHelper({camera:this.camera,color:0x000000,textColor:0xffffff})
-		this.selectionHelper.hiearchyRoot=this.rootAssembly.children;
+		this.selectionHelper.hiearchyRoot = this.rootAssembly.children;
+
+    //TODO: move this?
+    this.selectionHelper.viewWidth=this.width;
+    this.selectionHelper.viewHeight=this.height;
   },
   setupControls: function()
   {
@@ -261,11 +274,15 @@ Polymer('three-viewer', {
   },
   onResize: function()
   {
-	var cs = window.getComputedStyle(this);
-	this.width = parseInt(cs.getPropertyValue("width").replace("px",""));
-	this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
+	  var cs = window.getComputedStyle(this);
+	  this.width = parseInt(cs.getPropertyValue("width").replace("px",""));
+	  this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
 
-	this.renderer.setSize( this.width,this.height );
+    //resize all that is needed
+	  this.renderer.setSize( this.width,this.height );
+
+    this.selectionHelper.viewWidth=this.width;
+    this.selectionHelper.viewHeight=this.height;
   },
   //public api
 	addToScene: function ( object )
@@ -294,36 +311,158 @@ Polymer('three-viewer', {
   keyDown:function(event)
 	{//overidable method stand in
 	},
+  keyUp:function(event)
+	{//overidable method stand in
+	},
+  onPointerMove:function(event)
+  {
+    var event = event.impl || event;
+    var x = event.offsetX;
+    var y = event.offsetY;
+
+    this.highlightedObject = this.selectionHelper.getObjectAt(x,y);
+
+    this._noMove = false;
+  },
   onPointerDown:function(event)
   {
     var event = event.impl || event;
     var x = event.offsetX;
     var y = event.offsetY;
-    var intersects = this._pick(x,y);
 
-    console.log("mouseX,Y",x,y);
-    if(intersects.length>0)
-    {
-      var selected = intersects[0].object;
-      selected._oldColor = selected.material.color.clone();
-      selected.material.color.setRGB(1,0,0);
-      this.selectedObject = selected;
-    }else
-    {
-      this.selectedObject = null;
-    }
+    this._noMove = true;
+    this._actionInProgress = true;
+    this._pushStart = new Date().getTime();
+
+  },
+  onPointerUp:function(event)
+  {
+    var event = event.impl || event;
+    var x = event.offsetX;
+    var y = event.offsetY;
+
+    this._actionInProgress = false;
+      var _pushEnd = new Date().getTime()
+      var _elapsed = _pushEnd - this._pushStart;
+      this._longAction = !(_elapsed <= 125);
+      this._longStaticTap = (_elapsed >= 300 && this._noMove == true);
+
+      var selected = this.selectionHelper.getObjectAt(x,y);
+
+      if(this._longStaticTap)
+      {
+        if(this.longStaticTap) this.longStaticTap(x,y);//TODO: change this into an event ?
+      }
+      else if( selected != null && selected != undefined)
+      {
+        this.selectionHelper.selectObjectAt(x,y)
+        this.selectedObject = selected
+      }
+      else
+      {
+        if (this._longAction == false)
+        {
+          this.selectedObject = null;
+					this.selectionHelper._unSelect();
+        }
+      }
+
+  },
+  bla:function()
+  {
+    console.log("taping");
+  },
+  bli:function()
+  {
+    console.log("holding");
+  },
+  blo:function()
+  {
+    console.log("released");
+  },
+  ble:function()
+  {
+    console.log("pulsed");
   },
   //attribute change handlers / various handlers
   autoRotateChanged:function()
   {
 	  this.controls.autoRotate = this.autoRotate;
   },
+  showGridChanged:function()
+	{
+		console.log("showGridChanged", this.showGrid);
+		this.grid.toggle(this.showGrid)
+	},
+	showShadowsChanged:function()
+	{
+		console.log("showShadowsChanged", this.showShadows);
+		
+		//hack for now
+		var settings = {};
+		settings.shadows = this.showShadows;
+		settings.selfShadows =this.showShadows;
+		settings.objectViewMode = "shaded";
+		updateVisuals(this.rootAssembly, settings);
+	},
+	showAxesChanged: function()
+	{
+		console.log("showAxesChanged", this.showAxes);
+		this.axes.toggle( this.showAxes ) ;
+	},
+	projectionChanged:function()
+	{
+		console.log("projectionChanged", this.projection);
+		if(this.projection == "orthographic")
+		{
+				this.camera.toOrthographic();
+				this.selectionHelper.isOrtho = true;
+		}
+		else
+		{
+        this.camera.toPerspective();
+				this.selectionHelper.isOrtho = false;
+        //this.camera.setZoom(1);
+		}
+	},
+	orientationChanged:function()
+	{
+			console.log("orientation changed");
+			//TODO: streamline this
+			switch(this.orientation)
+			{
+				case 'diagonal':
+					this.camera.toDiagonalView();
+					break;
+				case 'top':
+					this.camera.toTopView();
+					break;
+				case 'bottom':
+					this.camera.toBottomView();
+					break;
+				case 'left':
+					this.camera.toLeftView();
+					break;
+				case 'right':
+					this.camera.toRightView();
+					break;
+				case 'front':
+					this.camera.toFrontView();
+					break;
+				case 'back':
+					this.camera.toBackView();
+					break;
+				default:
+					this.camera.toDiagonalView();
+			}
+	},
+  highlightedObjectChanged:function(oldHighlight)
+  {
+    console.log("highlighted object changed",this.highlightedObject);
+  },
   selectedObjectChanged:function(oldSelection)
   {
-    if(oldSelection != null)
-    {
-      oldSelection.material.color = oldSelection._oldColor;
-    }
+     console.log("SELECTED object changed",this.selectedObject);
   },
   //helpers
   _pick:function(x,y)
