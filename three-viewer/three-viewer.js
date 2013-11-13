@@ -1,5 +1,6 @@
 //TODO: perhaps object hover/select and other interactions other than basic camera movement should be moved
 //out of viewer
+//TODO: offload handling of complexities of renderer(s) into a renderManager of sorts
 Polymer('three-viewer', {
   viewAngle: 40,
   cameraUp : [0,0,1],
@@ -12,11 +13,15 @@ Polymer('three-viewer', {
 	showStats: false,
 	showAxes:true,
 
+  //full screen postprocessing
+  postProcess:false,
+
   selectedObject : null,
 
   created: function() {
     this.width = 0;
     this.height = 0;
+    this.bg = "rgb(255, 255, 255)";
 
 	  this.scene = new THREE.Scene();
     this.rootAssembly = new THREE.Object3D();
@@ -37,6 +42,7 @@ Polymer('three-viewer', {
     this.setupScene();
     this.setupControls();
     this.setupHelpers();
+    this.setupPostProcess();
   },
   setupRenderer: function()
   {
@@ -56,12 +62,12 @@ Polymer('three-viewer', {
 		renderer.shadowMapAutoUpdate = this.showShadows;
 		renderer.shadowMapSoft = true;
 		renderer.shadowMapType = THREE.PCFShadowMap; // options are THREE.BasicShadowMap | THREE.PCFShadowMap | THREE.PCFSoftShadowMap
-			
+    this.convertColor(this.bg);
+		renderer.setClearColor( this.bg, 1 );	  
+
     this.$.viewer.appendChild( renderer.domElement );
     this.renderer = renderer;
-    /*
-		this.convertColor(this.bg)
-		renderer.setClearColor( this.bg, 1 );*/
+		
   },
   setupScene:function()
   {
@@ -84,21 +90,12 @@ Polymer('three-viewer', {
     this.camera.defaultPosition.copy(this.defaultCameraPosition);
     this.scene.add(this.camera);
 
-    /*
-    //add grid
-    /*
-    this.grid = new THREE.CustomGridHelper(200,10,this.cameraUp)
-    this.scene.add(this.grid);
-    //add axes
-    this.axes = new THREE.LabeledAxes()
-    this.scene.add(this.axes);*/
-
     //add 3D shapes
     var geometry = new THREE.CubeGeometry( 100, 100, 100 ); 
     geometry.computeCentroids();
   	geometry.computeBoundingSphere();
     geometry.computeBoundingBox();
-	  var material = new THREE.MeshBasicMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
+	  var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
 	  var cube = new THREE.Mesh(geometry, material);
     cube.name = "TestCube";
     cube.position.set(-200,0,0);
@@ -108,11 +105,15 @@ Polymer('three-viewer', {
     geometry.computeCentroids();
   	geometry.computeBoundingSphere();
     geometry.computeBoundingBox();
-    var material = new THREE.MeshBasicMaterial( {opacity:1,transparent:true,color: 0xff8800} );
+    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
     var sphere = new THREE.Mesh(geometry, material);
     sphere.name = "testSphere";
-    sphere.position.set(50,0,0);
+    sphere.position.set(50,0,30);
+    sphere.castShadow =  this.showShadows;
+    sphere.receiveShadow = this.showShadows;
+
     this.rootAssembly.add(sphere);
+    //new THREE.MeshLambertMaterial( {color: 0xff2233} ); 
 
     this.scene.add(this.rootAssembly); //entry point to store meshes
     this.setupLights();
@@ -142,21 +143,6 @@ Polymer('three-viewer', {
       ambientColor = 0x161515
 	  	ambientLight = new THREE.AmbientLight(ambientColor)
 		  
-  /*
-	  	spotLight = new THREE.SpotLight( 0xbbbbbb, 1.5)  ;  
-	  	spotLight.position.x = 50;
-	  	spotLight.position.y = 50;
-	  	spotLight.position.z = 150;
-	  	
-		spotLight.shadowCameraNear = 1;
-		spotLight.shadowCameraFov =60;
-		spotLight.shadowMapBias = 0.0039;
-		spotLight.shadowMapDarkness = 0.5;
-		shadowResolution = 512; //parseInt(this.settings.shadowResolution.split("x")[0])
-		spotLight.shadowMapWidth = shadowResolution
-		spotLight.shadowMapHeight = shadowResolution
-		spotLight.castShadow = true*/
-
     var SHADOW_MAP_WIDTH = 4096, SHADOW_MAP_HEIGHT = 2048;
     spotLight = new THREE.SpotLight( 0xbbbbbb, 0.8, 0, Math.PI, 1 );
 		spotLight.position.set( 20, 20, 250 );
@@ -233,6 +219,53 @@ Polymer('three-viewer', {
 		  mainScene.add(light)
 		}
 	},
+  setupPostProcess:function()
+  {
+      if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
+      {
+        //shaders, post processing etc
+        var resolutionBase = 1;
+        var resolutionMultiplier = 1.5;
+
+        //various passes and rtts
+        var renderPass = new THREE.RenderPass(this.scene, this.camera)
+        var copyPass = new THREE.ShaderPass( THREE.CopyShader )
+      
+        /*this.edgeDetectPass3 = new THREE.ShaderPass(THREE.EdgeShader3)
+      
+        var contrastPass = new THREE.ShaderPass(THREE.BrightnessContrastShader)
+        contrastPass.uniforms['contrast'].value=0.5
+        contrastPass.uniforms['brightness'].value=-0.4*/
+        
+        var vignetteEffect = new VignetteEffect();
+
+        this.fxaaResolutionMultiplier = resolutionBase/resolutionMultiplier;
+        var composerResolutionMultiplier = resolutionBase*resolutionMultiplier;
+
+        this.finalComposer = new THREE.EffectComposer( this.renderer )
+
+        /*
+        var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
+        var renderTarget = new THREE.WebGLRenderTarget( this.width , this.height, renderTargetParameters );
+      
+        this.finalComposer = new THREE.EffectComposer( this.renderer , renderTarget );          
+        this.finalComposer.setSize(this.hRes, this.vRes);
+        */
+        //prepare the final render passes
+        this.finalComposer.addPass( renderPass );
+        //this.finalComposer.addPass(this.fxAAPass)
+
+        //blend in the edge detection results
+        /*
+        var effectBlend = new THREE.ShaderPass( THREE.AdditiveBlendShader, "tDiffuse1" );
+        effectBlend.uniforms[ 'tDiffuse2' ].value = this.normalComposer.renderTarget2;
+        effectBlend.uniforms[ 'tDiffuse3' ].value = this.depthComposer.renderTarget2;
+        this.finalComposer.addPass( effectBlend );*/
+        this.finalComposer.addPass( vignetteEffect.pass );
+        //make sure the last pass renders to screen
+        this.finalComposer.passes[this.finalComposer.passes.length-1].renderToScreen = true;
+      }
+  },
   setupHelpers: function()
   {
     this.selectionHelper = new SelectionHelper({camera:this.camera,color:0x000000,textColor:0xffffff})
@@ -263,7 +296,27 @@ Polymer('three-viewer', {
 	  this.controls.update(); 
   },
   render:function() {
-    this.renderer.render(this.scene, this.camera);
+    if (this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
+    {
+      //necessary hack for effectomposer
+      THREE.EffectComposer.camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
+      THREE.EffectComposer.quad = new THREE.Mesh( new THREE.PlaneGeometry( 2, 2 ), null );
+      THREE.EffectComposer.scene = new THREE.Scene();
+      THREE.EffectComposer.scene.add( THREE.EffectComposer.quad );
+      /*
+      originalStates = helpers.toggleHelpers(this.scene)#hide helpers from scene
+      this.depthComposer.render()
+      this.normalComposer.render()
+      helpers.enableHelpers(this.scene, originalStates)#show previously shown helpers again
+      
+      this.finalComposer.passes[this.finalComposer.passes.length-1].uniforms[ 'tDiffuse2' ].value = this.normalComposer.renderTarget2
+      this.finalComposer.passes[this.finalComposer.passes.length-1].uniforms[ 'tDiffuse3' ].value = this.depthComposer.renderTarget2*/
+      this.finalComposer.render();
+    }
+    else
+    {
+      this.renderer.render( this.scene, this.camera );
+    }
   },
   setInitialStyle:function()
   {
@@ -271,6 +324,9 @@ Polymer('three-viewer', {
 	  var cs = window.getComputedStyle(this);
 	  this.width = parseInt(cs.getPropertyValue("width").replace("px",""));
 	  this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
+    //setup backround color
+	  this.bg = cs.getPropertyValue("background-color");
+    console.log("this.bg",this.bg);
   },
   onResize: function()
   {
@@ -279,7 +335,23 @@ Polymer('three-viewer', {
 	  this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
 
     //resize all that is needed
-	  this.renderer.setSize( this.width,this.height );
+
+    //BUG in firefox: dpr is not 1 on desktop, scaling issue ensue, so forcing to "1"
+    this.dpr=1;
+		this.resUpscaler = 1;
+    this.hRes = this.width * this.dpr * this.resUpscaler;
+    this.vRes = this.height * this.dpr * this.resUpscaler;
+    
+		this.camera.aspect = this.width / this.height;
+    this.camera.setSize(this.width,this.height);
+		this.camera.updateProjectionMatrix();
+		this.renderer.setSize( this.width,this.height );
+
+    if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
+    {
+      this.finalComposer.setSize(this.hRes, this.vRes)
+    }
+
 
     this.selectionHelper.viewWidth=this.width;
     this.selectionHelper.viewHeight=this.height;
@@ -306,6 +378,12 @@ Polymer('three-viewer', {
 			throw new Error("no callback provided");
 		}
 		captureScreen(callback, this.renderer.domElement, width, height);
+	},
+  //utilities: TODO: move this to seperate js file
+	convertColor: function(hex)
+	{
+    hex = parseInt("0x"+hex.split('#').pop(),16);
+    return  hex;
 	},
   //event handlers
   keyDown:function(event)

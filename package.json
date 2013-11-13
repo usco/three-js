@@ -5,6 +5,16 @@
   "description": "three.js polymer custom elements",
   "author": "Mark kaosat-dev Moissette",
   "license": "MIT",
+  "window": {
+    "title": "Ui test",
+    "toolbar": false,
+    "frame": true,
+    "width": 800,
+    "height": 600,
+    "position": "mouse",
+    "min_width": 640,
+    "min_height": 480
+  },
   "dependencies": {
   },
   "devDependencies": {
