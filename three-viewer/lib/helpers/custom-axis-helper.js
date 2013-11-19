@@ -131,7 +131,8 @@ THREE.LabeledAxes.prototype._drawText = function(text, displaySize, background, 
 	texture.needsUpdate = true;
 
 	var spriteMaterial = new THREE.SpriteMaterial( 
-		{ map: texture, useScreenCoordinates: false, alignment: THREE.SpriteAlignment.topLeft } );
+		{ map: texture, useScreenCoordinates: false} );
+  //alignment: THREE.SpriteAlignment.topLeft 
  	var sprite = new THREE.Sprite(spriteMaterial);
   	sprite.scale.set(100 * scale, 50 * scale, 1.0);
   	return sprite;

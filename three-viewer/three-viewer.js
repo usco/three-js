@@ -15,6 +15,7 @@ Polymer('three-viewer', {
 
   //full screen postprocessing
   postProcess:false,
+  fullScreen:false,
 
   selectedObject : null,
 
@@ -48,7 +49,7 @@ Polymer('three-viewer', {
   {
     if ( Detector.webgl )
     {
-				var renderer = new THREE.WebGLRenderer( {antialias:true,preserveDrawingBuffer:true} );
+				var renderer = new THREE.WebGLRenderer( {antialias:true, preserveDrawingBuffer:true} );
     }
 		else
     {
