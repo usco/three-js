@@ -103,9 +103,8 @@ Polymer('three-viewer', {
     this.setupLights();
 
 	  //add axes
-	  this.axes = new THREE.LabeledAxes()
+	  this.axes = new THREE.LabeledAxes();
 	  this.scene.add(this.axes);
-
   },
   setupLights: function()
 	{

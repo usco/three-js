@@ -14,9 +14,9 @@ THREE.ArrowHelper2 = function (direction, origin, length, color) {
 	this.add(this.line);
 	  
 	this.arrowHeadRootPosition = this.origin.clone().add(this.direction);
-	this.arrowHead = new THREE.Mesh(new THREE.CylinderGeometry(0, 1, 5, 10, 10, false), new THREE.MeshBasicMaterial({color:this.color}));
-	this.arrowHead.position = this.arrowHeadRootPosition;
-	this.add( this.arrowHead );
+	this.head = new THREE.Mesh(new THREE.CylinderGeometry(0, 1, 5, 10, 10, false), new THREE.MeshBasicMaterial({color:this.color}));
+	this.head.position = this.arrowHeadRootPosition;
+	this.add( this.head );
 	
 }
 THREE.ArrowHelper2.prototype = Object.create( THREE.Object3D.prototype );
@@ -38,29 +38,24 @@ THREE.LabeledAxes = function (size, xColor, yColor, zColor, textColor, addLabels
       this.yColor = new THREE.Color().setHex( this.yColor );
       this.zColor = new THREE.Color().setHex( this.zColor );
 	
-	
-	var bla = this._drawText("X",18,true, 1);
-	this.add(bla);
-	
-	if ( addLabels == true )
+	    if ( addLabels == true )
       {
-        var s = this.size * 1.1;
-        var fontSize = 18 ;
-        var scale = 50;//0.008 ;
+        var s = this.size ;
+        var fontSize = 15 ;
         
-        this.xLabel=this._drawText("X",fontSize,true, scale);
-        //this.xLabel.position.set(s,0,0);
+        this.xLabel=this._drawText("X",fontSize);
+        this.xLabel.position.set(s,0,0);
         
-        this.yLabel=this._drawText("Y",fontSize,false, scale);
+        this.yLabel=this._drawText("Y",fontSize);
         this.yLabel.position.set(0,s,0);
         
-        this.zLabel=this._drawText("Z",fontSize,false, scale);
+        this.zLabel=this._drawText("Z",fontSize);
         this.zLabel.position.set(0,0,s);
       }  
       if ( addArrows == true )
       {
         s = this.size / 1.25; // THREE.ArrowHelper arrow length
-        this.xArrow = new THREE.ArrowHelper(new THREE.Vector3(1,0,0),new THREE.Vector3(0,0,0),s, this.xColor);
+        this.xArrow = new THREE.ArrowHelper2(new THREE.Vector3(1,0,0),new THREE.Vector3(0,0,0),s, this.xColor);
         this.yArrow = new THREE.ArrowHelper(new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,0),s, this.yColor);
         this.zArrow = new THREE.ArrowHelper(new THREE.Vector3(0,0,1),new THREE.Vector3(0,0,0),s, this.zColor);
         this.add( this.xArrow );
@@ -76,12 +71,15 @@ THREE.LabeledAxes = function (size, xColor, yColor, zColor, textColor, addLabels
       this.add( this.yLabel );
       this.add( this.zLabel );
       this.name = "axes";
+
+      //not working
+      this.xArrow.line.material.depthTest = false;
+      this.xArrow.head.material.depthTest = false;
 }
 
 THREE.LabeledAxes.prototype = Object.create( THREE.Object3D.prototype );
 
 THREE.LabeledAxes.prototype.toggle = function(toggle) {
-	
 	//apply visibility settings to all children 
       this.traverse( function( child ) {
       	child.visible = toggle;
@@ -111,31 +109,39 @@ THREE.LabeledAxes.prototype._buildAxes = function() {
 	  this.add( zLine );    
 }
 
-THREE.LabeledAxes.prototype._drawText = function(text, displaySize, background, scale) {
-  var borderThickness, canvas, context, fontSize, metrics, rect, sprite, spriteMaterial, textWidth, texture;
-  var fontSize = displaySize || 18;
-  var fontFace = "Arial"
+THREE.LabeledAxes.prototype._drawText = function(text, fontSize, fontFace, textColor, background, scale) {
+  var fontSize = fontSize || 18;
+  var fontFace = fontFace || "Arial";
+  var textColor = textColor || "#000000";
   var background = background || false;
   var scale = scale || 1.0;
-  
-  
-  	var canvas = document.createElement('canvas');
+
+  var canvas = document.createElement('canvas');
 	var context = canvas.getContext('2d');
 	context.font = "Bold " + fontSize + "px " + fontFace;
   
-  	context.fillStyle = "rgba(0, 0, 0, 1.0)";
-	context.fillText( text, borderThickness , fontSize + borderThickness);
+    
+	// get size data (height depends only on font size)
+	var metrics = context.measureText( text );
+	var textWidth = metrics.width;
+	
+	// text color
+  context.strokeStyle = textColor;
+  context.fillStyle = textColor;
+	context.fillText( text, canvas.width/2, canvas.height/2 );
+  //context.strokeText(text, canvas.width/2, canvas.height/2)
 	
 	// canvas contents will be used for a texture
 	var texture = new THREE.Texture(canvas) 
 	texture.needsUpdate = true;
 
 	var spriteMaterial = new THREE.SpriteMaterial( 
-		{ map: texture, useScreenCoordinates: false} );
-  //alignment: THREE.SpriteAlignment.topLeft 
+		{ map: texture, useScreenCoordinates: false,  color: 0xffffff} );
+  spriteMaterial.depthTest = false;
+  //spriteMaterial.renderDepth = 1e20
+
  	var sprite = new THREE.Sprite(spriteMaterial);
   	sprite.scale.set(100 * scale, 50 * scale, 1.0);
   	return sprite;
- 
 };
       
