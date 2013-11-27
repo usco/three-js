@@ -19,12 +19,12 @@
 
 <script src="lib/postProcessing/shaders/VignetteShader.js"></script>
 <script src="lib/postProcessing/VignetteEffect.js"></script>
-
+<!--on-tap="bla" on-hold="bli" on-release="blo" on-holdpulse="ble"-->
 <polymer-element name="three-viewer"
 attributes="viewAngle cameraUp projection orientation autoRotate  postProcess fullScreen showStats showShadows showGrid showAxes" >
   <template>
     <link rel="stylesheet" type="text/css" href="three-viewer.css">
-    <div id="viewWrapper" touch-action="none" on-pointermove="onPointerMove" on-pointerdown="onPointerDown" on-pointerup="onPointerUp" on-tap="bla" on-hold="bli" on-release="blo" on-holdpulse="ble">
+    <div id="viewWrapper" touch-action="none" on-pointermove="onPointerMove" on-pointerdown="onPointerDown" on-pointerup="onPointerUp" >
       <div id="viewer"></div>
     </div>
   </template>
