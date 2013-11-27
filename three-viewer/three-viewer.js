@@ -14,9 +14,8 @@ Polymer('three-viewer', {
 	showAxes:true,
 
   //full screen postprocessing
-  postProcess:true,
+  postProcess:false,
   fullScreen:false,
-  rootObject: new THREE.Object3D(),
 
   selectedObject : null,
 
@@ -32,12 +31,17 @@ Polymer('three-viewer', {
     this.cameraUp = new THREE.Vector3(this.cameraUp[0],this.cameraUp[1],this.cameraUp[2]);
   },
   enteredView: function() {
-    this.setInitialStyle();
+    this._setStyle();
     this.init();
     this.animate();
 
+    //setup various handlers
     window.addEventListener("resize",this.onResize.bind(this));
-    window.onresize=this.onResize.bind(this);
+
+    if (this.requestFullscreen) document.addEventListener("fullscreenchange", this.onFullScreenChange.bind(this), false);
+    if (this.mozRequestFullScreen) document.addEventListener("mozfullscreenchange", this.onFullScreenChange.bind(this), false);
+    if (this.webkitRequestFullScreen) document.addEventListener("webkitfullscreenchange", this.onFullScreenChange.bind(this), false);
+
   },
   init:function(){
     this.setupRenderer();
@@ -97,7 +101,7 @@ Polymer('three-viewer', {
 
 	  //add axes
 	  this.axes = new THREE.LabeledAxes()
-	  this.addToScene(this.axes);
+	  this.scene.add(this.axes);
 
   },
   setupLights: function()
@@ -292,7 +296,7 @@ Polymer('three-viewer', {
       this.renderer.render( this.scene, this.camera );
     }
   },
-  setInitialStyle:function()
+  _setStyle:function()
   {
 	  //setup width & height
 	  var cs = window.getComputedStyle(this);
@@ -301,33 +305,7 @@ Polymer('three-viewer', {
     //setup backround color
 	  this.bg = cs.getPropertyValue("background-color");
   },
-  onResize: function()
-  {
-	  var cs = window.getComputedStyle(this);
-	  this.width = parseInt(cs.getPropertyValue("width").replace("px",""));
-	  this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
-
-    //resize all that is needed
-
-    //BUG in firefox: dpr is not 1 on desktop, scaling issue ensue, so forcing to "1"
-    this.dpr=1;
-		this.resUpscaler = 1;
-    this.hRes = this.width * this.dpr * this.resUpscaler;
-    this.vRes = this.height * this.dpr * this.resUpscaler;
-    
-		this.camera.aspect = this.width / this.height;
-    this.camera.setSize(this.width,this.height);
-		this.camera.updateProjectionMatrix();
-		this.renderer.setSize( this.width,this.height );
-
-    if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
-    {
-      this.finalComposer.setSize(this.hRes, this.vRes)
-    }
-
-    this.selectionHelper.viewWidth = this.width;
-    this.selectionHelper.viewHeight = this.height;
-  },
+ 
   //public api
 	addToScene: function ( object )
 	{
@@ -359,10 +337,43 @@ Polymer('three-viewer', {
 	},
 
   //event handlers
-  keyDown:function(event)
+  onResize: function()
+  {
+	  var cs = window.getComputedStyle(this);
+	  this.width = parseInt(cs.getPropertyValue("width").replace("px",""));
+	  this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
+
+    //resize all that is needed
+
+    //BUG in firefox: dpr is not 1 on desktop, scaling issue ensue, so forcing to "1"
+    this.dpr=1;
+		this.resUpscaler = 1;
+    this.hRes = this.width * this.dpr * this.resUpscaler;
+    this.vRes = this.height * this.dpr * this.resUpscaler;
+    
+		this.camera.aspect = this.width / this.height;
+    this.camera.setSize(this.width,this.height);
+		this.camera.updateProjectionMatrix();
+		this.renderer.setSize( this.width,this.height );
+
+    if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
+    {
+      this.finalComposer.setSize(this.hRes, this.vRes)
+    }
+
+    this.selectionHelper.viewWidth = this.width;
+    this.selectionHelper.viewHeight = this.height;
+  },
+  onFullScreenChange:function()
+  {
+    //workaround to reset this.fullScreen to correct value when pressing exit etc in full screen mode
+    this.fullScreen = !(!document.fullscreenElement &&    // alternative standard method
+    !document.mozFullScreenElement && !document.webkitFullscreenElement);
+  },
+  onKeyDown:function(event)
 	{//overidable method stand in
 	},
-  keyUp:function(event)
+  onKeyUp:function(event)
 	{//overidable method stand in
 	},
   onPointerMove:function(event)
@@ -417,7 +428,6 @@ Polymer('three-viewer', {
 					this.selectionHelper._unSelect();
         }
       }
-
   },
 
   //attribute change handlers / various handlers
@@ -492,6 +502,23 @@ Polymer('three-viewer', {
 					this.camera.toDiagonalView();
 			}
 	},
+  fullScreenChanged:function()
+  {
+    //console.log("fullScreen",this.fullScreen,!document.fullscreenElement);
+    if(this.fullScreen)
+    {
+      console.log("switching", this, "to fullscreen");
+      if(this.requestFullScreen)this.requestFullScreen();
+      if(this.webkitRequestFullScreen)this.webkitRequestFullScreen();
+      if(this.mozRequestFullScreen)this.mozRequestFullScreen();
+    }
+    else
+    {
+      if(document.cancelFullScreen) document.cancelFullScreen();
+      if(document.webkitCancelFullScreen) document.webkitCancelFullScreen();
+      if(document.mozCancelFullScreen) document.webkitCancelFullScreen();
+    }
+  },
   highlightedObjectChanged:function(oldHighlight)
   {
     console.log("highlighted object changed",this.highlightedObject);

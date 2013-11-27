@@ -24,7 +24,7 @@
 attributes="viewAngle cameraUp projection orientation autoRotate  postProcess fullScreen showStats showShadows showGrid showAxes" >
   <template>
     <link rel="stylesheet" type="text/css" href="three-viewer.css">
-    <div id="viewWrapper" touch-action="none" on-pointermove="onPointerMove" on-pointerdown="onPointerDown" on-pointerup="onPointerUp" >
+    <div id="viewWrapper" touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPointerDown}}" on-pointerup="{{onPointerUp}}" >
       <div id="viewer"></div>
     </div>
   </template>

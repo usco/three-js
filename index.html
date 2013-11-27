@@ -4,9 +4,15 @@
       <script src="components/platform/platform.js"></script>
       <link rel="import" href="components/polymer/polymer.html">
       <link rel="import" href="three-viewer/three-viewer.html">
+
+      <style>
+        three-viewer{
+          left:0px;top:0px;width:100%;height:100%;background-color:#ffffff;
+        }
+      </style>
   </head>
 <body>
-  <three-viewer orientation="diagonal" showShadows style="left:0px;top:0px;width:100%;height:100%;background-color:#ffffff "></three-viewer>
+  <three-viewer orientation="diagonal" showShadows postProcess autoRotate ></three-viewer>
 
 
   <script>
