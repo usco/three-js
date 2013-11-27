@@ -6,6 +6,42 @@
       <link rel="import" href="three-viewer/three-viewer.html">
   </head>
 <body>
- <three-viewer orientation="diagonal" showShadows style="left:0px;top:0px;width:100%;height:100%;background-color:#ffffff "></three-viewer>
+  <three-viewer orientation="diagonal" showShadows style="left:0px;top:0px;width:100%;height:100%;background-color:#ffffff "></three-viewer>
+
+
+  <script>
+    window.addEventListener('WebComponentsReady', function() {
+	    var threeViewer = document.querySelector('three-viewer');
+      //example : adding 3D shapes to viewer''
+      var geometry = new THREE.CubeGeometry( 100, 100, 100 ); 
+      geometry.computeCentroids();
+    	geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+	    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
+	    var cube = new THREE.Mesh(geometry, material);
+      cube.name = "TestCube";
+      cube.position.set(-200,0,0);
+      //add to scene
+      threeViewer.addToScene(cube);
+
+      var geometry = new THREE.SphereGeometry(25, 20,20);
+      geometry.computeCentroids();
+    	geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+      var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
+      var sphere = new THREE.Mesh(geometry, material);
+      sphere.name = "testSphere";
+      sphere.position.set(50,0,30);
+      sphere.castShadow =  this.showShadows;
+      sphere.receiveShadow = this.showShadows;
+
+       //add grid
+	     //this.grid = new THREE.CustomGridHelper(200,10,this.cameraUp)
+	    //this.scene.add(this.grid);
+      threeViewer.addToScene(sphere);
+    });
+      
+    
+  </script>  
 </body>
 </html>

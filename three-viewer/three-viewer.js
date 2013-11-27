@@ -14,8 +14,9 @@ Polymer('three-viewer', {
 	showAxes:true,
 
   //full screen postprocessing
-  postProcess:false,
+  postProcess:true,
   fullScreen:false,
+  rootObject: new THREE.Object3D(),
 
   selectedObject : null,
 
@@ -91,40 +92,12 @@ Polymer('three-viewer', {
     this.camera.defaultPosition.copy(this.defaultCameraPosition);
     this.scene.add(this.camera);
 
-    //add 3D shapes
-    var geometry = new THREE.CubeGeometry( 100, 100, 100 ); 
-    geometry.computeCentroids();
-  	geometry.computeBoundingSphere();
-    geometry.computeBoundingBox();
-	  var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
-	  var cube = new THREE.Mesh(geometry, material);
-    cube.name = "TestCube";
-    cube.position.set(-200,0,0);
-    this.rootAssembly.add(cube);
-
-    var geometry = new THREE.SphereGeometry(25, 20,20);
-    geometry.computeCentroids();
-  	geometry.computeBoundingSphere();
-    geometry.computeBoundingBox();
-    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
-    var sphere = new THREE.Mesh(geometry, material);
-    sphere.name = "testSphere";
-    sphere.position.set(50,0,30);
-    sphere.castShadow =  this.showShadows;
-    sphere.receiveShadow = this.showShadows;
-
-    this.rootAssembly.add(sphere);
-    //new THREE.MeshLambertMaterial( {color: 0xff2233} ); 
-
     this.scene.add(this.rootAssembly); //entry point to store meshes
     this.setupLights();
 
-     //add grid
-	    this.grid = new THREE.CustomGridHelper(200,10,this.cameraUp)
-	    this.scene.add(this.grid);
-	    //add axes
-	    this.axes = new THREE.LabeledAxes()
-	    this.scene.add(this.axes);
+	  //add axes
+	  this.axes = new THREE.LabeledAxes()
+	  this.addToScene(this.axes);
 
   },
   setupLights: function()
@@ -273,8 +246,8 @@ Polymer('three-viewer', {
 		this.selectionHelper.hiearchyRoot = this.rootAssembly.children;
 
     //TODO: move this?
-    this.selectionHelper.viewWidth=this.width;
-    this.selectionHelper.viewHeight=this.height;
+    this.selectionHelper.viewWidth = this.width;
+    this.selectionHelper.viewHeight = this.height;
   },
   setupControls: function()
   {
@@ -327,7 +300,6 @@ Polymer('three-viewer', {
 	  this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
     //setup backround color
 	  this.bg = cs.getPropertyValue("background-color");
-    console.log("this.bg",this.bg);
   },
   onResize: function()
   {
@@ -353,9 +325,8 @@ Polymer('three-viewer', {
       this.finalComposer.setSize(this.hRes, this.vRes)
     }
 
-
-    this.selectionHelper.viewWidth=this.width;
-    this.selectionHelper.viewHeight=this.height;
+    this.selectionHelper.viewWidth = this.width;
+    this.selectionHelper.viewHeight = this.height;
   },
   //public api
 	addToScene: function ( object )
@@ -363,7 +334,6 @@ Polymer('three-viewer', {
 		try
 		{
 			this.rootAssembly.add( object );
-      //this.scene.add(object);
 		}
 		catch(error)
 		{
@@ -380,12 +350,14 @@ Polymer('three-viewer', {
 		}
 		captureScreen(callback, this.renderer.domElement, width, height);
 	},
+
   //utilities: TODO: move this to seperate js file
 	convertColor: function(hex)
 	{
     hex = parseInt("0x"+hex.split('#').pop(),16);
     return  hex;
 	},
+
   //event handlers
   keyDown:function(event)
 	{//overidable method stand in
@@ -447,22 +419,7 @@ Polymer('three-viewer', {
       }
 
   },
-  bla:function()
-  {
-    console.log("taping");
-  },
-  bli:function()
-  {
-    console.log("holding");
-  },
-  blo:function()
-  {
-    console.log("released");
-  },
-  ble:function()
-  {
-    console.log("pulsed");
-  },
+
   //attribute change handlers / various handlers
   autoRotateChanged:function()
   {
@@ -542,15 +499,5 @@ Polymer('three-viewer', {
   selectedObjectChanged:function(oldSelection)
   {
      console.log("SELECTED object changed",this.selectedObject);
-  },
-  //helpers
-  _pick:function(x,y)
-  {
-    var intersected, intersects, raycaster, v;
-    v = new THREE.Vector3((x / this.width) * 2 - 1, -(y / this.height) * 2 + 1, 1);
-    new THREE.Projector().unprojectVector(v, this.camera);
-    raycaster = new THREE.Raycaster(this.camera.position, v.sub(this.camera.position).normalize());
-    intersects = raycaster.intersectObjects(this.scene.children, true);
-    return intersects;
   }
 });
