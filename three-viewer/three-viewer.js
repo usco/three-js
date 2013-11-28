@@ -328,7 +328,7 @@ Polymer('three-viewer', {
 
       if(this._longStaticTap)
       {
-        if(this.longStaticTap) this.longStaticTap(x,y);//TODO: change this into an event ?
+        this.fire("longStaticTap",{position:{x:x,y:y}});
       }
       else if( selected != null && selected != undefined)
       {
@@ -337,6 +337,7 @@ Polymer('three-viewer', {
       }
       else
       {
+        this.fire("longMoveTap",{position:{x:x,y:y}});
         if (this._longAction == false)
         {
           this.selectedObject = null;
