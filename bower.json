@@ -5,7 +5,7 @@
   "dependencies": {
     "platform": "Polymer/platform#master",
     "polymer": "Polymer/polymer#master"
-  }
+  },
   "ignore": [
     "index.html"
   ]

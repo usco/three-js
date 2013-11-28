@@ -25,7 +25,7 @@
 	    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
 	    var cube = new THREE.Mesh(geometry, material);
       cube.name = "TestCube";
-      cube.position.set(-200,0,0);
+      cube.position.set(-200,60,60);
       //add to scene
       threeViewer.addToScene(cube);
 
@@ -39,11 +39,8 @@
       sphere.position.set(50,0,30);
       sphere.castShadow =  this.showShadows;
       sphere.receiveShadow = this.showShadows;
-
-       //add grid
-	     //this.grid = new THREE.CustomGridHelper(200,10,this.cameraUp)
-	    //this.scene.add(this.grid);
       threeViewer.addToScene(sphere);
+
     });
       
     
