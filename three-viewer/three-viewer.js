@@ -328,7 +328,7 @@ Polymer('three-viewer', {
 
       if(this._longStaticTap)
       {
-        this.fire("longStaticTap",{position:{x:x,y:y}});
+        this.fire("longstatictap",{position:{x:x,y:y}});
       }
       else if( selected != null && selected != undefined)
       {
@@ -337,11 +337,14 @@ Polymer('three-viewer', {
       }
       else
       {
-        this.fire("longMoveTap",{position:{x:x,y:y}});
         if (this._longAction == false)
         {
           this.selectedObject = null;
 					this.selectionHelper._unSelect();
+        }
+        else
+        {
+          this.fire("longmovetap",{position:{x:x,y:y}});
         }
       }
   },
