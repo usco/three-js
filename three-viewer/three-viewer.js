@@ -8,7 +8,6 @@ Polymer('three-viewer', {
   orientation: "diagonal",
   autoRotate:false,
   
-  showGrid: true,
 	showShadows:true,
 	showStats: false,
 	showAxes:true,
@@ -354,11 +353,6 @@ Polymer('three-viewer', {
   {
 	  this.controls.autoRotate = this.autoRotate;
   },
-  showGridChanged:function()
-	{
-		console.log("showGridChanged", this.showGrid);
-		this.grid.toggle(this.showGrid)
-	},
 	showShadowsChanged:function()
 	{
 		console.log("showShadowsChanged", this.showShadows);

@@ -1,10 +1,13 @@
-THREE.ArrowHelper2 = function (direction, origin, length, color) {
+THREE.ArrowHelper2 = function (direction, origin, length, color, headLength, headRadius, headColor) {
 	THREE.Object3D.call( this );
 	
 	this.direction = direction || new THREE.Vector3(1,0,0);
 	this.origin = origin || new THREE.Vector3(0,0,0);
 	this.length = length || 50;
 	this.color = color || "#FF0000";
+  this.headLength = headLength || 6;
+  this.headRadius = headRadius || 1;
+  this.headColor = headColor || this.color;
 	
 	//dir, origin, length, hex
 	var lineGeometry = new THREE.Geometry();
@@ -14,8 +17,12 @@ THREE.ArrowHelper2 = function (direction, origin, length, color) {
 	this.add(this.line);
 	  
 	this.arrowHeadRootPosition = this.origin.clone().add(this.direction);
-	this.head = new THREE.Mesh(new THREE.CylinderGeometry(0, 1, 5, 10, 10, false), new THREE.MeshBasicMaterial({color:this.color}));
+	this.head = new THREE.Mesh(new THREE.CylinderGeometry(0, this.headRadius, this.headLength, 8, 1, false), new THREE.MeshBasicMaterial({color:this.headColor}));
 	this.head.position = this.arrowHeadRootPosition;
+  
+  this.head.lookAt(this.arrowHeadRootPosition.clone().add(this.direction.clone().setLength(this.headLength)) );
+  this.head.rotateX(Math.PI/2);
+  
 	this.add( this.head );
 	
 }
@@ -56,8 +63,8 @@ THREE.LabeledAxes = function (size, xColor, yColor, zColor, textColor, addLabels
       {
         s = this.size / 1.25; // THREE.ArrowHelper arrow length
         this.xArrow = new THREE.ArrowHelper2(new THREE.Vector3(1,0,0),new THREE.Vector3(0,0,0),s, this.xColor);
-        this.yArrow = new THREE.ArrowHelper(new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,0),s, this.yColor);
-        this.zArrow = new THREE.ArrowHelper(new THREE.Vector3(0,0,1),new THREE.Vector3(0,0,0),s, this.zColor);
+        this.yArrow = new THREE.ArrowHelper2(new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,0),s, this.yColor);
+        this.zArrow = new THREE.ArrowHelper2(new THREE.Vector3(0,0,1),new THREE.Vector3(0,0,0),s, this.zColor);
         this.add( this.xArrow );
         this.add( this.yArrow );
         this.add( this.zArrow );
