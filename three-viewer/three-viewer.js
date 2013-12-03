@@ -21,6 +21,7 @@ Polymer('three-viewer', {
 
   selectedObject : null,
 
+  //generic custom element callbacks
   created: function() {
     this.width = 0;
     this.height = 0;
@@ -43,8 +44,54 @@ Polymer('three-viewer', {
     if (this.requestFullscreen) document.addEventListener("fullscreenchange", this.onFullScreenChange.bind(this), false);
     if (this.mozRequestFullScreen) document.addEventListener("mozfullscreenchange", this.onFullScreenChange.bind(this), false);
     if (this.webkitRequestFullScreen) document.addEventListener("webkitfullscreenchange", this.onFullScreenChange.bind(this), false);
-
   },
+  //public api
+  clearScene:function()
+  {
+    while (this.rootAssembly.children.length > 0) {
+      this.rootAssembly.remove(this.rootAssembly.children[this.rootAssembly.children.length - 1]);
+    }
+
+    // cleanup without calling render (data needs to be cleaned up before a new scene can be generated)
+    //see here https://github.com/mrdoob/three.js/issues/2760
+    if(this.renderer instanceof THREE.WebGLRenderer)
+    {
+      this.renderer.initWebGLObjects(this.scene);
+    }
+  },
+	addToScene: function ( object )
+	{
+		try
+		{
+			this.rootAssembly.add( object );
+		}
+		catch(error)
+		{
+			console.log("Failed to add object",object, "to scene: error", error)
+		}
+	},
+  removeFromScene : function( object )
+  {
+    try
+		{
+			this.rootAssembly.remove( object );
+		}
+		catch(error)
+		{
+			console.log("Failed to remove object from scene: error", error)
+		}
+  },
+	captureScreen:function(callback, width, height)
+	{
+		var width = width || 640;
+		var height = height || 480;
+		if(callback === undefined)
+		{
+			throw new Error("no callback provided");
+		}
+		captureScreen(callback, this.renderer.domElement, width, height);
+	},
+  //initialization methods
   init:function(){
     this.setupRenderer();
     this.setupScene();
@@ -219,30 +266,6 @@ Polymer('three-viewer', {
     //setup backround color
 	  this.bg = cs.getPropertyValue("background-color");
   },
- 
-  //public api
-	addToScene: function ( object )
-	{
-		try
-		{
-			this.rootAssembly.add( object );
-		}
-		catch(error)
-		{
-			console.log("Failed to add object",object, "to scence: error", error)
-		}
-	},
-	captureScreen:function(callback, width, height)
-	{
-		var width = width || 640;
-		var height = height || 480;
-		if(callback === undefined)
-		{
-			throw new Error("no callback provided");
-		}
-		captureScreen(callback, this.renderer.domElement, width, height);
-	},
-
   //utilities: TODO: move this to seperate js file
 	convertColor: function(hex)
 	{

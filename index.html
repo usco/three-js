@@ -39,6 +39,16 @@
       sphere.position.set(50,0,30);
       threeViewer.addToScene(sphere);
 
+      //clearing a scene
+      threeViewer.clearScene();
+
+      //add things back
+      threeViewer.addToScene(cube);
+      threeViewer.addToScene(sphere);
+
+      //remove cube only
+      threeViewer.removeFromScene(cube);
+
     });
       
     
