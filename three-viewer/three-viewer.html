@@ -1,3 +1,5 @@
+<link rel="import" href="three-stats.html">
+
 <script src="lib/Detector.js"></script>
 <script src="lib/three.min.js"></script>
 <script src="lib/OrbitControls.js"></script>
@@ -29,6 +31,7 @@ attributes="viewAngle cameraUp projection orientation autoRotate  postProcess fu
     <link rel="stylesheet" type="text/css" href="three-viewer.css">
     <div id="viewWrapper" touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPointerDown}}" on-pointerup="{{onPointerUp}}" >
       <div id="viewer"></div>
+      <three-stats id="stats" show="{{showStats}}"></three-stats>
     </div>
   </template>
 <script src="three-viewer.js"></script>

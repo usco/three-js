@@ -233,6 +233,11 @@ Polymer('three-viewer', {
   update: function()
   {
 	  this.controls.update(); 
+			
+		if(this.showStats == true && this.$.stats !== undefined)
+		{
+				this.$.stats.update();
+		}
   },
   render:function() {
     if (this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
