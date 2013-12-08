@@ -48,7 +48,7 @@ THREE.LabeledAxes = function (size, xColor, yColor, zColor, textColor, addLabels
 	    if ( addLabels == true )
       {
         var s = this.size ;
-        var fontSize = 15 ;
+        var fontSize = 10 ;
         
         this.xLabel=this._drawText("X",fontSize);
         this.xLabel.position.set(s,0,0);
@@ -79,9 +79,16 @@ THREE.LabeledAxes = function (size, xColor, yColor, zColor, textColor, addLabels
       this.add( this.zLabel );
       this.name = "axes";
 
-      //not working
+      //Make sure arrows are always visible (through objects)
+      //not working in all cases ?
       this.xArrow.line.material.depthTest = false;
       this.xArrow.head.material.depthTest = false;
+
+      this.yArrow.line.material.depthTest = false;
+      this.yArrow.head.material.depthTest = false;
+
+      this.zArrow.line.material.depthTest = false;
+      this.zArrow.head.material.depthTest = false;
 }
 
 THREE.LabeledAxes.prototype = Object.create( THREE.Object3D.prototype );
