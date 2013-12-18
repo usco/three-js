@@ -448,10 +448,8 @@ Polymer('three-viewer', {
 	},
   fullScreenChanged:function()
   {
-    //console.log("fullScreen",this.fullScreen,!document.fullscreenElement);
     if(this.fullScreen)
     {
-      console.log("switching", this, "to fullscreen");
       if(this.requestFullScreen)this.requestFullScreen();
       if(this.webkitRequestFullScreen)this.webkitRequestFullScreen();
       if(this.mozRequestFullScreen)this.mozRequestFullScreen();
@@ -460,7 +458,7 @@ Polymer('three-viewer', {
     {
       if(document.cancelFullScreen) document.cancelFullScreen();
       if(document.webkitCancelFullScreen) document.webkitCancelFullScreen();
-      if(document.mozCancelFullScreen) document.webkitCancelFullScreen();
+      if(document.mozCancelFullScreen) document.mozCancelFullScreen();
     }
   },
   highlightedObjectChanged:function(oldHighlight)
