@@ -1,4 +1,4 @@
-polymer-threejs-ui
+usco-viewer-base
 ============================
 
 Licence
