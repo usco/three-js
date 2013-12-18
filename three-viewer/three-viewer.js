@@ -321,6 +321,7 @@ Polymer('three-viewer', {
   onPointerMove:function(event)
   {
     var event = event.impl || event;
+    event = normalizeEvent(event);
     var x = event.offsetX;
     var y = event.offsetY;
 
@@ -331,6 +332,7 @@ Polymer('three-viewer', {
   onPointerDown:function(event)
   {
     var event = event.impl || event;
+    normalizeEvent(event);
     var x = event.offsetX;
     var y = event.offsetY;
 
@@ -342,6 +344,7 @@ Polymer('three-viewer', {
   onPointerUp:function(event)
   {
     var event = event.impl || event;
+    normalizeEvent(event);
     var x = event.offsetX;
     var y = event.offsetY;
 
