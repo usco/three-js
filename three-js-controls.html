@@ -1,0 +1,36 @@
+<polymer-element name="three-js-controls">
+</polymer-element>
+
+<script src="lib/OrbitControls.js"></script>
+  
+
+<polymer-element name="three-js-orbitControls">
+  <script>
+    Polymer('three-js-orbitControls', {
+      autorotate: false,
+      cameraUp : null,
+      object: null,
+      ready: function() {
+        //this.object = new THREE.PerspectiveCamera(this.fov, this.aspect, 0.1, 10000);
+      },
+      enteredView: function()
+      {
+        this.cameraUp = new THREE.Vector3(0,1,0);
+        var detail = this.fire('three-js-get-renderer', {});
+        if (detail) {
+          console.log("blaaah renderer",detail);
+      }
+
+        /*
+        this.controls = new THREE.OrbitControls( this.camera, this.renderer.domElement, this.cameraUp );
+		    this.controls.userPanSpeed = 8.0;
+		    this.controls.userZoomSpeed = 2.0;
+      	this.controls.userRotateSpeed = 2.0;
+
+		    this.controls.autoRotate = this.autoRotate;
+		    this.controls.autoRotateSpeed = 4.0;*/
+      }
+    });
+  </script>  
+
+</polymer-element>

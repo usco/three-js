@@ -1,5 +1,5 @@
 {
-  "name": "nw-demo",
+  "name": "polymer-three-js",
   "main": "index.html",
   "chromium-args": "--ignore-gpu-blacklist",
   "description": "three.js polymer custom elements",

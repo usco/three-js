@@ -1,0 +1,108 @@
+
+<polymer-element name="three-js-camera" extends="three-js-object" attributes="aspect fov lookAt">
+  <script>
+    Polymer('three-js-camera', {
+      lookAt: '',
+      aspect: 16 / 9,
+      fov: 40,
+      near : 0.1,
+      far: 10000,
+      object: null,
+      ready: function() {
+      },
+      updatePosition: function() {
+        this.super();
+        this.lookAtChanged();
+      },
+      lookAtChanged: function() {
+        if(this.lookAt)
+        {
+          var node = this.parentNode.querySelector(this.lookAt);
+          if (node /*&& node.object*/) {
+            this.object.lookAt(node);
+          }
+        }
+        else{this.object.lookAt(new THREE.Vector3());}
+      }
+    });
+  </script>
+</polymer-element>
+
+<polymer-element name="three-js-perspectiveCamera" extends="three-js-camera">
+  <script>
+    Polymer('three-js-perspectiveCamera', {
+      ready: function() {
+        this.object = new THREE.PerspectiveCamera(this.fov, this.aspect, this.near, this.far);
+        this.super();
+      },
+      lookAtChanged: function() {
+        console.log("look at changed", this.lookAt)
+        if(this.lookAt)
+        {
+          var node = this.parentNode.querySelector(this.lookAt);
+          if (node /*&& node.object*/) {
+            this.object.lookAt(node);
+          }
+        }
+        else{this.object.lookAt(new THREE.Vector3());}
+      }
+    });
+  </script>
+</polymer-element>
+
+<script src="lib/CombinedCamera.js"></script>
+
+<polymer-element name="three-js-combinedCamera" extends="three-js-camera" attributes="projection orientation">
+  <script>
+    Polymer('three-js-combinedCamera', {
+      cameraUp : [0,0,1],
+      projection: "perspective",
+      orientation: "diagonal",
+      object: null,
+      ready: function() {
+        this.super();      
+        this.cameraUp = new THREE.Vector3(this.cameraUp[0],this.cameraUp[1],this.cameraUp[2]);  
+        this.camera = new THREE.CombinedCamera(
+          this.width,
+          this.height,
+          this.fov,
+          this.near,
+          this.far,
+          this.near,
+          this.far);
+        this.camera.up = this.cameraUp;
+        //this.camera.position.copy(this.defaultCameraPosition);
+        //this.camera.defaultPosition.copy(this.defaultCameraPosition);
+        this.object = this.camera;
+      },
+      updatePosition: function() {
+        this.super();
+      },
+      //attribute change handlers / various handlers
+      projectionChanged:function()
+	    {
+		    console.log("projectionChanged", this.projection);
+		    if(this.projection == "orthographic")
+		    {
+				    this.camera.toOrthographic();
+				    //this.selectionHelper.isOrtho = true;
+		    }
+		    else
+		    {
+            this.camera.toPerspective();
+				    //this.selectionHelper.isOrtho = false;
+		    }
+	    },
+      orientationChanged:function()
+	    {
+			    console.log("orientation changed to", this.orientation);
+          var orientation = this.orientation;
+          var methodName = "to"+orientation.charAt(0).toUpperCase() + orientation.slice(1)+"View";
+          try{
+            this.camera[methodName]();
+          }catch(error){}
+	    },
+  
+    });
+  </script>
+</polymer-element>

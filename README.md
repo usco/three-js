@@ -1,4 +1,4 @@
-usco-viewer-base
+polymer-three-js
 ============================
 
 Licence
