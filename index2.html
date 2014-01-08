@@ -15,15 +15,19 @@
   </head>
 <body>
   <three-js>
-    <three-js-combinedCamera tracking y="10" z="600" orientation="top" ></three-js-combinedCamera>
-    <!--<three-js-orbitControls> </three-js-orbitControls>-->
-    <three-js-scene name="carambba">
-      <three-js-cube x="100" color="blue" w="170" name="container" id="foo">
-        <three-js-cube z="80" rx="40" rz="30" color="red" w="130" name="inner" id="bar"> </three-js-cube>
-        <three-js-sphere z="-80" x="40" rx="-40" rz="30"  color="orange" r="130" name="inner2" id="boom"> </three-js-sphere>
+    <three-stats id="stats" show></three-stats>
+    <three-js-combinedCamera tracking x="100" y="100" z="200" orientation="top" cameraUp=[0,0,1] ></three-js-combinedCamera>
+    <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" autoRotate> </three-js-orbitControls>
+
+    <three-js-scene name="caramba">
+      <three-axis-helper> </three-axis-helper>
+
+      <three-js-cube x="150" color="blue" w="17" name="container" id="foo">
+        <three-js-cube z="30" rx="40" rz="30" color="red" w="13" name="inner" id="bar"> </three-js-cube>
+        <three-js-sphere z="-40" x="40" rx="-40" rz="30"  color="orange" r="13" name="inner2" id="boom"> </three-js-sphere>
       </three-js-cube>
 
-      <three-js-cube x="-200" color="green" w="100"> </three-js-cube>
+      <three-js-cube x="-45" color="pink" w="24"> </three-js-cube>
       
       <three-js-light x="50" y="30" z="200"></three-js-light>
       <three-js-light kind="spot" x="-150" y="350" rx="90" shadow></three-js-light>
@@ -62,7 +66,7 @@
 
       cube.add(sphere)
 
-      //threeViewer.add3(cube);
+      threeViewer.add3(cube);
       //threeViewer.add3(sphere);
 
       //clearing a scene

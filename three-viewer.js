@@ -36,65 +36,6 @@ Polymer('three-viewer', {
     this.setupHelpers();
     this.setupPostProcess();
   },
-  setupRenderer: function()
-  {
-    if ( Detector.webgl )
-    {
-				var renderer = new THREE.WebGLRenderer( {antialias:true, preserveDrawingBuffer:true} );
-    }
-		else
-    {
-				var renderer = new THREE.CanvasRenderer(); 
-    }
-		renderer.setSize(this.width, this.height);
-    renderer.domElement.style.position = 'absolute';
-    renderer.domElement.style.top = 0;
-
-		renderer.shadowMapEnabled = this.showShadows;
-		renderer.shadowMapAutoUpdate = this.showShadows;
-		renderer.shadowMapSoft = true;
-		renderer.shadowMapType = THREE.PCFShadowMap; // options are THREE.BasicShadowMap | THREE.PCFShadowMap | THREE.PCFSoftShadowMap
-    this.convertColor(this.bg);
-		renderer.setClearColor( this.bg, 1 );	  
-
-    this.$.viewer.appendChild( renderer.domElement );
-    this.renderer = renderer;
-		
-  },
-  setupScene:function()
-  {
-    //todo: read camera params from camera config/settings
-		this.defaultCameraPosition = new THREE.Vector3(100,100,200);
-
-    ASPECT = this.width / this.height;
-    this.NEAR = 0.1;
-    this.FAR = 20000;
-    this.camera = new THREE.CombinedCamera(
-        this.width,
-        this.height,
-        this.viewAngle,
-        this.NEAR,
-        this.FAR,
-        this.NEAR,
-        this.FAR);
-    this.camera.up = this.cameraUp;
-    this.camera.position.copy(this.defaultCameraPosition);
-    this.camera.defaultPosition.copy(this.defaultCameraPosition);
-    this.scene.add(this.camera);
-
-    this.scene.add(this.rootAssembly); //entry point to store meshes
-    this.setupLights();
-
-	  //add axes
-	  this.axes = new THREE.LabeledAxes();
-	  this.scene.add(this.axes);
-  },
-  setupLights: function()
-	{
-    var lighting = new Lighting(this.camera.far);
-    this.scene.add( lighting );
-    this.lighting = lighting;
-	},
   setupPostProcess:function()
   {
       if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
@@ -157,81 +98,7 @@ Polymer('three-viewer', {
 				this.$.stats.update();
 		}
   },
-  //utilities: TODO: move this to seperate js file
-	convertColor: function(hex)
-	{
-    hex = parseInt("0x"+hex.split('#').pop(),16);
-    return  hex;
-	},
-
   
-  onKeyDown:function(event)
-	{//overidable method stand in
-	},
-  onKeyUp:function(event)
-	{//overidable method stand in
-	},
-  onPointerMove:function(event)
-  {
-    var event = event.impl || event;
-    event = normalizeEvent(event);
-    var x = event.offsetX;
-    var y = event.offsetY;
-
-    this.highlightedObject = this.selectionHelper.getObjectAt(x,y);
-
-    this._noMove = false;
-  },
-  onPointerDown:function(event)
-  {
-    var event = event.impl || event;
-    normalizeEvent(event);
-    var x = event.offsetX;
-    var y = event.offsetY;
-
-    this._noMove = true;
-    this._actionInProgress = true;
-    this._pushStart = new Date().getTime();
-
-  },
-  onPointerUp:function(event)
-  {
-    var event = event.impl || event;
-    normalizeEvent(event);
-    var x = event.offsetX;
-    var y = event.offsetY;
-
-    this._actionInProgress = false;
-      var _pushEnd = new Date().getTime()
-      var _elapsed = _pushEnd - this._pushStart;
-      this._longAction = !(_elapsed <= 125);
-      this._longStaticTap = (_elapsed >= 300 && this._noMove == true);
-
-      var selected = this.selectionHelper.getObjectAt(x,y);
-
-      if(this._longStaticTap)
-      {
-        this.fire("longstatictap",{position:{x:x,y:y}});
-      }
-      else if( selected != null && selected != undefined)
-      {
-        this.selectionHelper.selectObjectAt(x,y)
-        this.selectedObject = selected
-      }
-      else
-      {
-        if (this._longAction == false)
-        {
-          this.selectedObject = null;
-					this.selectionHelper._unSelect();
-        }
-        else
-        {
-          this.fire("longmovetap",{position:{x:x,y:y}});
-        }
-      }
-  },
-
   //attribute change handlers / various handlers
   autoRotateChanged:function()
   {
@@ -253,67 +120,6 @@ Polymer('three-viewer', {
 		console.log("showAxesChanged", this.showAxes);
 		this.axes.toggle( this.showAxes ) ;
 	},
-	projectionChanged:function()
-	{
-		console.log("projectionChanged", this.projection);
-		if(this.projection == "orthographic")
-		{
-				this.camera.toOrthographic();
-				this.selectionHelper.isOrtho = true;
-		}
-		else
-		{
-        this.camera.toPerspective();
-				this.selectionHelper.isOrtho = false;
-        //this.camera.setZoom(1);
-		}
-	},
-	orientationChanged:function()
-	{
-			console.log("orientation changed");
-			//TODO: streamline this
-			switch(this.orientation)
-			{
-				case 'diagonal':
-					this.camera.toDiagonalView();
-					break;
-				case 'top':
-					this.camera.toTopView();
-					break;
-				case 'bottom':
-					this.camera.toBottomView();
-					break;
-				case 'left':
-					this.camera.toLeftView();
-					break;
-				case 'right':
-					this.camera.toRightView();
-					break;
-				case 'front':
-					this.camera.toFrontView();
-					break;
-				case 'back':
-					this.camera.toBackView();
-					break;
-				default:
-					this.camera.toDiagonalView();
-			}
-	},
-  fullScreenChanged:function()
-  {
-    if(this.fullScreen)
-    {
-      if(this.requestFullScreen)this.requestFullScreen();
-      if(this.webkitRequestFullScreen)this.webkitRequestFullScreen();
-      if(this.mozRequestFullScreen)this.mozRequestFullScreen();
-    }
-    else
-    {
-      if(document.cancelFullScreen) document.cancelFullScreen();
-      if(document.webkitCancelFullScreen) document.webkitCancelFullScreen();
-      if(document.mozCancelFullScreen) document.mozCancelFullScreen();
-    }
-  },
   highlightedObjectChanged:function(oldHighlight)
   {
     console.log("highlighted object changed",this.highlightedObject);

@@ -4,31 +4,54 @@
 <script src="lib/OrbitControls.js"></script>
   
 
-<polymer-element name="three-js-orbitControls">
+<polymer-element name="three-js-orbitControls" attributes="cameraUp panSpeed zoomSpeed rotateSpeed autoRotate">
   <script>
     Polymer('three-js-orbitControls', {
-      autorotate: false,
-      cameraUp : null,
+      autoRotate: false,
+      cameraUp : [0,1,0],
+      panSpeed : 8.0,
+      zoomSpeed: 2.0,
+      rotateSpeed: 2.0, 
+      autoRotateSpeed:4.0,
       object: null,
       ready: function() {
-        //this.object = new THREE.PerspectiveCamera(this.fov, this.aspect, 0.1, 10000);
+        this.object = new THREE.OrbitControls();//FIXME: hack !!
+      },
+      init:function(camera, renderer)
+      {
+        this.camera= camera;
+        this.object = new THREE.OrbitControls( this.camera, renderer.domElement, this.cameraUp );
+		    this.object.userPanSpeed = this.panSpeed;
+		    this.object.userZoomSpeed = this.zoomSpeed;
+      	this.object.userRotateSpeed = this.rotateSpeed;
+
+		    this.object.autoRotate = this.autoRotate;
+		    this.object.autoRotateSpeed = this.autoRotateSpeed;
+
+        //console.log("controls z up", this.cameraUp,"cam",camera,"rend",renderer)
+      },
+      addToParent3: function() {
+        if (this.parentNode.add3 && !this.objectParent) {
+          this.objectParent = this.parentNode;
+          this.parentNode.add3(this);
+          var parentName = this.parentNode.localName;
+          console.log('[%s]: request adding to [%s]', this.localName + (this.id ? '#' + this.id : ''), parentName);
+        }
       },
       enteredView: function()
       {
-        this.cameraUp = new THREE.Vector3(0,1,0);
-        var detail = this.fire('three-js-get-renderer', {});
-        if (detail) {
-          console.log("blaaah renderer",detail);
-      }
-
+        this.cameraUp = new THREE.Vector3(this.cameraUp[0],this.cameraUp[1],this.cameraUp[2]);  
+        this.addToParent3();   
+        console.log("control in view")     
         /*
-        this.controls = new THREE.OrbitControls( this.camera, this.renderer.domElement, this.cameraUp );
-		    this.controls.userPanSpeed = 8.0;
-		    this.controls.userZoomSpeed = 2.0;
-      	this.controls.userRotateSpeed = 2.0;
-
-		    this.controls.autoRotate = this.autoRotate;
-		    this.controls.autoRotateSpeed = 4.0;*/
+        this.async(function() {
+          
+          var detail = this.fire('three-js-get-renderer', {});
+          if (detail) {
+            console.log("blaaah renderer",detail);
+            this.init(detail.renderer)
+          }
+        }, null, 1000);*/
       }
     });
   </script>  

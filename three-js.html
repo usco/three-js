@@ -1,13 +1,19 @@
-<script src="lib/three.js"></script>
+<script src="lib/Detector.js"></script>
+<script src="lib/three.min.js"></script>
 <script src="lib/helpers/screen-capture.js"></script>
 <script src="lib/helpers/selection-helper.js"></script>
+<script src="lib/helpers/normalizeEvent.js"></script>
+
 
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="three-js-baseElements.html">
 <link rel="import" href="three-js-cameras.html">
+<link rel="import" href="three-js-controls.html">
+<link rel="import" href="three-helpers.html">
+<link rel="import" href="three-stats.html">
 
-
-<polymer-element name="three-js" on-three-js-get-renderer="{{getRenderer}}" on-track="{{track}}" attributes="renderNow">
+<polymer-element name="three-js" attributes="renderNow fullScreen postProcess"
+on-three-js-get-renderer="{{getRenderer}}" on-track="{{track}}">
 <template>
     <style>
       :host {
@@ -39,29 +45,36 @@
         this.rootAssembly = new THREE.Object3D();
       },
       ready: function() {
-        var renderer = new THREE.WebGLRenderer({antialias: true});
-        this.shadowRoot.appendChild(renderer.domElement);
-        this.renderer = renderer;
-        renderer.setSize(this.offsetWidth, this.offsetHeight);
-        renderer.shadowMapEnabled = true;
-        renderer.shadowMapType = THREE.PCFShadowMap;
-        this.invalidate();
-  
+        this.setupRenderer();
+
         //FIXME: workaround for bad child element insertion order
         if(this._tmpBuff)
         {
-          for(var i=0;i<this._tmpBuff.length;i++)
+          for(var i=this._tmpBuff.length-1;i >= 0 ; i--)
           {
-            //console.log("bla",this._tmpBuff[i].localName)
-            this.add3(this._tmpBuff[i]);
+            var child = this._tmpBuff[i];
+            var childObj = child.object;
+            this._tmpBuff.splice(i, 1);
+             if(child.object && child.localName !== 'three-js-scene' && child.localName !== 'three-js-orbitcontrols')
+            {
+              console.log("in root: child", child.localName, "added to ", this.localName);
+              this.scene.add(child.object);
+            }
+            else if(child.object && child.localName === 'three-js-orbitcontrols')
+            {
+              child.init(this.camera,this.renderer);
+              this.controls = child.object;
+              //this.controls.addEventListener("change",function(){console.log("controls changed")})
+            }
+            else
+            {
+              console.log("in root: OTHER: child", child.localName, "added to ", this.localName);
+            }
           }
         }  
       },
       enteredView:function()
       {
-         this._setStyle();
-         this.setupHelpers();
-
          //setup various handlers
         window.addEventListener("resize",this.onResize.bind(this));
 
@@ -69,12 +82,40 @@
         if (this.mozRequestFullScreen) document.addEventListener("mozfullscreenchange", this.onFullScreenChange.bind(this), false);
         if (this.webkitRequestFullScreen) document.addEventListener("webkitfullscreenchange", this.onFullScreenChange.bind(this), false);
 
-         this.camera.aspect = this.width / this.height;
+         /*this.camera.aspect = this.width / this.height;
          this.camera.setSize(this.width,this.height);
 		     this.camera.updateProjectionMatrix();
-		     this.renderer.setSize( this.width,this.height );
+		     this.renderer.setSize( this.width,this.height );*/
+         
+         this._setStyle();
+         this.setupHelpers();
+         this.animate();
+         this.onResize();
       },
       //initialization methods
+      setupRenderer: function()
+      {
+        if ( Detector.webgl )
+        {
+				    var renderer = new THREE.WebGLRenderer( {antialias:true, preserveDrawingBuffer:true} );
+        }
+		    else
+        {
+				    var renderer = new THREE.CanvasRenderer(); 
+        }
+		    renderer.setSize(this.offsetWidth, this.offsetHeight);
+
+		    renderer.shadowMapEnabled = this.showShadows;
+		    renderer.shadowMapAutoUpdate = this.showShadows;
+		    renderer.shadowMapSoft = true;
+		    renderer.shadowMapType = THREE.PCFShadowMap; // options are THREE.BasicShadowMap | THREE.PCFShadowMap | THREE.PCFSoftShadowMap
+        this.convertColor(this.bg);
+		    renderer.setClearColor( this.bg, 1 );	  
+
+        this.shadowRoot.appendChild(renderer.domElement);
+        this.renderer = renderer;
+		
+      },
       setupHelpers: function()
       {
         this.selectionHelper = new SelectionHelper({camera:this.camera,color:0x000000,textColor:0xffffff})
@@ -109,9 +150,8 @@
         {
           this.finalComposer.setSize(this.hRes, this.vRes)
         }
-
-        //this.selectionHelper.viewWidth = this.width;
-        //this.selectionHelper.viewHeight = this.height;
+        this.selectionHelper.viewWidth = this.width;
+        this.selectionHelper.viewHeight = this.height;
       },
       onFullScreenChange:function()
       {
@@ -119,7 +159,72 @@
         this.fullScreen = !(!document.fullscreenElement &&    // alternative standard method
         !document.mozFullScreenElement && !document.webkitFullscreenElement);
       },
+      onKeyDown:function(event)
+	    {//overidable method stand in
+	    },
+      onKeyUp:function(event)
+	    {//overidable method stand in
+	    },
+      onPointerMove:function(event)
+      {
+        var event = event.impl || event;
+        event = normalizeEvent(event);
+        var x = event.offsetX;
+        var y = event.offsetY;
 
+        this.highlightedObject = this.selectionHelper.getObjectAt(x,y);
+
+        this._noMove = false;
+      },
+      onPointerDown:function(event)
+      {
+        var event = event.impl || event;
+        normalizeEvent(event);
+        var x = event.offsetX;
+        var y = event.offsetY;
+
+        this._noMove = true;
+        this._actionInProgress = true;
+        this._pushStart = new Date().getTime();
+
+      },
+      onPointerUp:function(event)
+      {
+        var event = event.impl || event;
+        normalizeEvent(event);
+        var x = event.offsetX;
+        var y = event.offsetY;
+
+        this._actionInProgress = false;
+          var _pushEnd = new Date().getTime()
+          var _elapsed = _pushEnd - this._pushStart;
+          this._longAction = !(_elapsed <= 125);
+          this._longStaticTap = (_elapsed >= 300 && this._noMove == true);
+
+          var selected = this.selectionHelper.getObjectAt(x,y);
+
+          if(this._longStaticTap)
+          {
+            this.fire("longstatictap",{position:{x:x,y:y}});
+          }
+          else if( selected != null && selected != undefined)
+          {
+            this.selectionHelper.selectObjectAt(x,y)
+            this.selectedObject = selected
+          }
+          else
+          {
+            if (this._longAction == false)
+            {
+              this.selectedObject = null;
+					    this.selectionHelper._unSelect();
+            }
+            else
+            {
+              this.fire("longmovetap",{position:{x:x,y:y}});
+            }
+          }
+      },
       //public api
       clearScene:function()
       {
@@ -167,19 +272,22 @@
 		    captureScreen(callback, this.renderer.domElement, width, height);
 	    },
       add3: function(child) {
-        //console.log("child", child.localName)
+        console.log("child", child.localName)
         //TODO: do this MUCH better
         if( child.localName === 'three-js-scene')
         {
-          //console.log("I want to add a scene");
-
           if(this.scene) child.object.children = this.scene.children;
           this.scene = child.object;
-          //console.log("this.scene added",this.scene)
         }
         if (child.localName === 'three-js-camera' || child.localName === 'three-js-combinedcamera' ) {
           this.camera = child.object;
         }
+
+        if( child.localName === 'three-js-orbitcontrols')
+        {
+          this._tmpBuff.push(child);
+        }
+
         if(!this.scene)
         {
           if(!this._tmpBuff) this._tmpBuff = [];
@@ -207,6 +315,9 @@
       },
       //
       track: function(event) {
+        //this.render();
+        //this.controls.update();
+        return;
         var obj = this.camera;
         var obj = this.querySelector('[tracking]').object;
         //console.log("tracking",obj)
@@ -219,25 +330,43 @@
           this.render();
         }
       },
-      //various
+      //attribute change handlers / various handlers
       renderNowChanged: function() {
         this.render();
       },
+      fullScreenChanged:function()
+      {
+        if(this.fullScreen)
+        {
+          if(this.requestFullScreen)this.requestFullScreen();
+          if(this.webkitRequestFullScreen)this.webkitRequestFullScreen();
+          if(this.mozRequestFullScreen)this.mozRequestFullScreen();
+        }
+        else
+        {
+          if(document.cancelFullScreen) document.cancelFullScreen();
+          if(document.webkitCancelFullScreen) document.webkitCancelFullScreen();
+          if(document.mozCancelFullScreen) document.mozCancelFullScreen();
+        }
+      },
+
       invalidate: function() {
         this.validateJob = this.job(this.validateJob, this.validate, 250);
       },
       validate: function() {
         (this.validateJob || this.nullJob).stop();
+
+        if(this.controls) this.controls.update();
         this.render();
       },
       nullJob: {
         stop: function(){}
       },
+      //other
       render: function() {
         if (! this.camera) {
           console.log('no camera');
           return;}
-
         if (this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
         {
           //necessary hack for effectomposer
@@ -245,14 +374,6 @@
           THREE.EffectComposer.quad = new THREE.Mesh( new THREE.PlaneGeometry( 2, 2 ), null );
           THREE.EffectComposer.scene = new THREE.Scene();
           THREE.EffectComposer.scene.add( THREE.EffectComposer.quad );
-          /*
-          originalStates = helpers.toggleHelpers(this.scene)#hide helpers from scene
-          this.depthComposer.render()
-          this.normalComposer.render()
-          helpers.enableHelpers(this.scene, originalStates)#show previously shown helpers again
-          
-          this.finalComposer.passes[this.finalComposer.passes.length-1].uniforms[ 'tDiffuse2' ].value = this.normalComposer.renderTarget2
-          this.finalComposer.passes[this.finalComposer.passes.length-1].uniforms[ 'tDiffuse3' ].value = this.depthComposer.renderTarget2*/
           this.finalComposer.render();
         }
         else
@@ -260,6 +381,22 @@
           this.renderer.render( this.scene, this.camera );
         }
       },
+      animate: function() 
+      {
+	      this.render();		
+	      this.update();
+	      requestAnimationFrame(this.animate.bind(this))
+      },
+      update: function()
+      {
+	        this.controls.update(); 
+      },
+      //utilities: TODO: move this to seperate js file
+	    convertColor: function(hex)
+	    {
+        hex = parseInt("0x"+hex.split('#').pop(),16);
+        return  hex;
+	    },
       _setStyle:function()
       {
 	      //setup width & height

@@ -6,7 +6,7 @@
       aspect: 16 / 9,
       fov: 40,
       near : 0.1,
-      far: 10000,
+      far: 20000,
       object: null,
       ready: function() {
       },
@@ -52,15 +52,17 @@
 
 <script src="lib/CombinedCamera.js"></script>
 
-<polymer-element name="three-js-combinedCamera" extends="three-js-camera" attributes="projection orientation">
+<polymer-element name="three-js-combinedCamera" extends="three-js-camera" attributes="cameraUp projection orientation">
   <script>
     Polymer('three-js-combinedCamera', {
-      cameraUp : [0,0,1],
+      cameraUp : [0,1,0],
       projection: "perspective",
       orientation: "diagonal",
       object: null,
       ready: function() {
         this.super();      
+        //todo: read camera params from camera config/settings ?
+		    this.defaultCameraPosition = new THREE.Vector3(100,100,200);
         this.cameraUp = new THREE.Vector3(this.cameraUp[0],this.cameraUp[1],this.cameraUp[2]);  
         this.camera = new THREE.CombinedCamera(
           this.width,
@@ -71,8 +73,9 @@
           this.near,
           this.far);
         this.camera.up = this.cameraUp;
-        //this.camera.position.copy(this.defaultCameraPosition);
-        //this.camera.defaultPosition.copy(this.defaultCameraPosition);
+        this.camera.position.copy(this.defaultCameraPosition);
+        this.camera.defaultPosition.copy(this.defaultCameraPosition);
+        
         this.object = this.camera;
       },
       updatePosition: function() {
