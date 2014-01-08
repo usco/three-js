@@ -13,7 +13,8 @@
 <link rel="import" href="three-stats.html">
 
 <polymer-element name="three-js" attributes="renderNow fullScreen postProcess"
-on-three-js-get-renderer="{{getRenderer}}" on-track="{{track}}">
+on-three-js-get-renderer="{{getRenderer}}" on-track="{{track}}" 
+touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPointerDown}}" on-pointerup="{{onPointerUp}}">
 <template>
     <style>
       :host {
@@ -34,6 +35,9 @@ on-three-js-get-renderer="{{getRenderer}}" on-track="{{track}}">
       renderNow: false,
       fullScreen: false,
       postProcess: false,
+
+      selectedObject : null,
+      highlightedObject: null,
 
       //generic custom element callbacks
       created: function() {
@@ -349,7 +353,14 @@ on-three-js-get-renderer="{{getRenderer}}" on-track="{{track}}">
           if(document.mozCancelFullScreen) document.mozCancelFullScreen();
         }
       },
-
+      highlightedObjectChanged:function(oldHighlight)
+      {
+        console.log("highlighted object changed",this.highlightedObject);
+      },
+      selectedObjectChanged:function(oldSelection)
+      {
+         console.log("SELECTED object changed",this.selectedObject);
+      },
       invalidate: function() {
         this.validateJob = this.job(this.validateJob, this.validate, 250);
       },

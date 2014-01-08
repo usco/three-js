@@ -2,10 +2,7 @@
 //out of viewer
 //TODO: offload handling of complexities of renderer(s) into a renderManager of sorts
 Polymer('three-viewer', {
-  viewAngle: 40,
   cameraUp : [0,0,1],
-  projection: "perspective",
-  orientation: "diagonal",
   autoRotate:false,
   
 	showShadows:true,
@@ -120,12 +117,4 @@ Polymer('three-viewer', {
 		console.log("showAxesChanged", this.showAxes);
 		this.axes.toggle( this.showAxes ) ;
 	},
-  highlightedObjectChanged:function(oldHighlight)
-  {
-    console.log("highlighted object changed",this.highlightedObject);
-  },
-  selectedObjectChanged:function(oldSelection)
-  {
-     console.log("SELECTED object changed",this.selectedObject);
-  }
 });

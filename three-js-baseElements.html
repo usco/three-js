@@ -1,6 +1,7 @@
-<polymer-element name="three-js-object" attributes="x y z rx ry rz castShadow receiveShadow">
+<polymer-element name="three-js-object" attributes="name x y z rx ry rz castShadow receiveShadow">
   <script>
     Polymer('three-js-object', {
+      name: '',
       x: 0,
       y: 0,
       z: 0,
@@ -26,15 +27,17 @@
             var childObj = child.object;
             this._tmpBuff.splice(i, 1);
 
+            if(childObj) console.log("child", child.localName+"_"+child.object.name, "added to ", this.localName+"_"+this.object.name);
+
              if(child.object && child.localName !== 'three-js-scene' )
             {
-              console.log("child", child.localName+"_"+child.object.name, "added to ", this.localName+"_"+this.object.name);
+              //console.log("child", child.localName+"_"+child.object.name, "added to ", this.localName+"_"+this.object.name);
               this.object.add(child.object);
             }
             else
             {
               //console.log("2 child", child.localName, "added to ", this.localName);
-              //this.object.add(child);
+              this.object.add(child);
             }
           }
         }  
