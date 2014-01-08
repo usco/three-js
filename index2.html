@@ -17,8 +17,14 @@
   <three-js>
      <three-js-combinedCamera tracking y="10" z="600" orientation="top" ></three-js-combinedCamera>
      <!--<three-js-orbitControls> </three-js-orbitControls>-->
-     <three-js-scene name="carambba">
-      <three-js-cube x="-100"></three-js-cube>
+     
+    <three-js-scene name="carambba">
+      <three-js-cube x="-100" color="blue" w="170" name="container" id="foo">
+        <three-js-cube z="80" rx="40" rz="30" color="red" w="130" name="inner" id="bar"> </three-js-cube>
+      </three-js-cube>
+
+   <!-- <three-js-cube x="-200" color="green" w="100"> </three-js-cube>-->
+      
       <three-js-light x="50" y="30" z="200"></three-js-light>
       <three-js-light kind="spot" x="-150" y="350" rx="90" shadow></three-js-light>
      </three-js-scene>
@@ -28,6 +34,7 @@
   <script>
     window.addEventListener('WebComponentsReady', function() {
 	    var threeViewer = document.querySelector('three-js');
+      //console.log("threeViewer",threeViewer.scene)
       //example : adding 3D shapes to viewer''
       var geometry = new THREE.CubeGeometry( 50, 50, 50 ); 
       geometry.computeCentroids();
@@ -38,7 +45,7 @@
       cube.name = "TestCube";
       cube.position.set(-100,30,30);
       //add to scene
-      //threeViewer.add3(cube);
+      
 
       var geometry = new THREE.SphereGeometry(12, 20,20);
       geometry.computeCentroids();
@@ -48,7 +55,11 @@
       var sphere = new THREE.Mesh(geometry, material);
       sphere.name = "testSphere";
       sphere.position.set(50,0,30);
-      threeViewer.add3(sphere);
+
+      cube.add(sphere)
+
+      //threeViewer.add3(cube);
+      //threeViewer.add3(sphere);
 
       //clearing a scene
       //threeViewer.clearScene();

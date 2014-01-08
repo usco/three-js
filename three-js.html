@@ -35,7 +35,6 @@
         this.rootAssembly = new THREE.Object3D();
       },
       ready: function() {
-        console.log("wrapper ready")
         var renderer = new THREE.WebGLRenderer({antialias: true});
         this.shadowRoot.appendChild(renderer.domElement);
         this.renderer = renderer;
@@ -49,22 +48,19 @@
         {
           for(var i=0;i<this._tmpBuff.length;i++)
           {
-            console.log("bla",this._tmpBuff[i].localName)
+            //console.log("bla",this._tmpBuff[i].localName)
             this.add3(this._tmpBuff[i]);
           }
         }  
       },
       enteredView:function()
       {
-         console.log("entered view");
          this._setStyle();
 
          this.camera.aspect = this.width / this.height;
          this.camera.setSize(this.width,this.height);
 		     this.camera.updateProjectionMatrix();
 		     this.renderer.setSize( this.width,this.height );
-
-        console.log("this.scene",this.scene)
       },
 
       renderNowChanged: function() {
@@ -90,17 +86,16 @@
         //TODO: do this MUCH better
         if( child.localName === 'three-js-scene')
         {
-          console.log("I want to add a scene");
+          //console.log("I want to add a scene");
 
           if(this.scene) child.object.children = this.scene.children;
           this.scene = child.object;
-          console.log("this.scene added",this.scene)
+          //console.log("this.scene added",this.scene)
         }
 
 
         if (child.localName === 'three-js-camera' || child.localName === 'three-js-combinedcamera' ) {
           this.camera = child.object;
-          console.log("ADDED CAM");
         }
         if(!this.scene)
         {
