@@ -1,4 +1,7 @@
 <script src="lib/three.js"></script>
+<script src="lib/helpers/screen-capture.js"></script>
+<script src="lib/helpers/selection-helper.js"></script>
+
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="three-js-baseElements.html">
 <link rel="import" href="three-js-cameras.html">
@@ -24,6 +27,7 @@
     Polymer('three-js', {
       renderNow: false,
       fullScreen: false,
+      postProcess: false,
 
       //generic custom element callbacks
       created: function() {
@@ -56,31 +60,112 @@
       enteredView:function()
       {
          this._setStyle();
+         this.setupHelpers();
+
+         //setup various handlers
+        window.addEventListener("resize",this.onResize.bind(this));
+
+        if (this.requestFullscreen) document.addEventListener("fullscreenchange", this.onFullScreenChange.bind(this), false);
+        if (this.mozRequestFullScreen) document.addEventListener("mozfullscreenchange", this.onFullScreenChange.bind(this), false);
+        if (this.webkitRequestFullScreen) document.addEventListener("webkitfullscreenchange", this.onFullScreenChange.bind(this), false);
 
          this.camera.aspect = this.width / this.height;
          this.camera.setSize(this.width,this.height);
 		     this.camera.updateProjectionMatrix();
 		     this.renderer.setSize( this.width,this.height );
       },
+      //initialization methods
+      setupHelpers: function()
+      {
+        this.selectionHelper = new SelectionHelper({camera:this.camera,color:0x000000,textColor:0xffffff})
+		    this.selectionHelper.hiearchyRoot = this.rootAssembly.children;
 
-      renderNowChanged: function() {
-        this.render();
+        //TODO: move this?
+        this.selectionHelper.viewWidth = this.width;
+        this.selectionHelper.viewHeight = this.height;
       },
-      invalidate: function() {
-        this.validateJob = this.job(this.validateJob, this.validate, 250);
+
+      //event handlers
+      onResize: function()
+      {
+	      var cs = window.getComputedStyle(this);
+	      this.width = parseInt(cs.getPropertyValue("width").replace("px",""));
+	      this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
+
+        //resize all that is needed
+
+        //BUG in firefox: dpr is not 1 on desktop, scaling issue ensue, so forcing to "1"
+        this.dpr=1;
+		    this.resUpscaler = 1;
+        this.hRes = this.width * this.dpr * this.resUpscaler;
+        this.vRes = this.height * this.dpr * this.resUpscaler;
+        
+		    this.camera.aspect = this.width / this.height;
+        this.camera.setSize(this.width,this.height);
+		    this.camera.updateProjectionMatrix();
+		    this.renderer.setSize( this.width,this.height );
+
+        if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
+        {
+          this.finalComposer.setSize(this.hRes, this.vRes)
+        }
+
+        //this.selectionHelper.viewWidth = this.width;
+        //this.selectionHelper.viewHeight = this.height;
       },
-      validate: function() {
-        (this.validateJob || this.nullJob).stop();
-        this.render();
+      onFullScreenChange:function()
+      {
+        //workaround to reset this.fullScreen to correct value when pressing exit etc in full screen mode
+        this.fullScreen = !(!document.fullscreenElement &&    // alternative standard method
+        !document.mozFullScreenElement && !document.webkitFullscreenElement);
       },
-      nullJob: {
-        stop: function(){}
+
+      //public api
+      clearScene:function()
+      {
+        while (this.rootAssembly.children.length > 0) {
+          this.rootAssembly.remove(this.rootAssembly.children[this.rootAssembly.children.length - 1]);
+        }
+
+        // cleanup without calling render (data needs to be cleaned up before a new scene can be generated)
+        //see here https://github.com/mrdoob/three.js/issues/2760
+        if(this.renderer instanceof THREE.WebGLRenderer)
+        {
+          this.renderer.initWebGLObjects(this.scene);
+        }
       },
-      render: function() {
-        if (this.camera) {
-          this.renderer.render(this.scene, this.camera);
-        } else console.log('no camera');
+	    addToScene: function ( object )
+	    {
+		    try
+		    {
+			    this.rootAssembly.add( object );
+		    }
+		    catch(error)
+		    {
+			    console.log("Failed to add object",object, "to scene: error", error)
+		    }
+	    },
+      removeFromScene : function( object )
+      {
+        try
+		    {
+			    this.rootAssembly.remove( object );
+		    }
+		    catch(error)
+		    {
+			    console.log("Failed to remove object from scene: error", error)
+		    }
       },
+	    captureScreen:function(callback, width, height)
+	    {
+		    var width = width || 640;
+		    var height = height || 480;
+		    if(callback === undefined)
+		    {
+			    throw new Error("no callback provided");
+		    }
+		    captureScreen(callback, this.renderer.domElement, width, height);
+	    },
       add3: function(child) {
         //console.log("child", child.localName)
         //TODO: do this MUCH better
@@ -92,8 +177,6 @@
           this.scene = child.object;
           //console.log("this.scene added",this.scene)
         }
-
-
         if (child.localName === 'three-js-camera' || child.localName === 'three-js-combinedcamera' ) {
           this.camera = child.object;
         }
@@ -136,6 +219,47 @@
           this.render();
         }
       },
+      //various
+      renderNowChanged: function() {
+        this.render();
+      },
+      invalidate: function() {
+        this.validateJob = this.job(this.validateJob, this.validate, 250);
+      },
+      validate: function() {
+        (this.validateJob || this.nullJob).stop();
+        this.render();
+      },
+      nullJob: {
+        stop: function(){}
+      },
+      render: function() {
+        if (! this.camera) {
+          console.log('no camera');
+          return;}
+
+        if (this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
+        {
+          //necessary hack for effectomposer
+          THREE.EffectComposer.camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
+          THREE.EffectComposer.quad = new THREE.Mesh( new THREE.PlaneGeometry( 2, 2 ), null );
+          THREE.EffectComposer.scene = new THREE.Scene();
+          THREE.EffectComposer.scene.add( THREE.EffectComposer.quad );
+          /*
+          originalStates = helpers.toggleHelpers(this.scene)#hide helpers from scene
+          this.depthComposer.render()
+          this.normalComposer.render()
+          helpers.enableHelpers(this.scene, originalStates)#show previously shown helpers again
+          
+          this.finalComposer.passes[this.finalComposer.passes.length-1].uniforms[ 'tDiffuse2' ].value = this.normalComposer.renderTarget2
+          this.finalComposer.passes[this.finalComposer.passes.length-1].uniforms[ 'tDiffuse3' ].value = this.depthComposer.renderTarget2*/
+          this.finalComposer.render();
+        }
+        else
+        {
+          this.renderer.render( this.scene, this.camera );
+        }
+      },
       _setStyle:function()
       {
 	      //setup width & height
@@ -148,7 +272,4 @@
     });
   </script>
 </polymer-element>
-
-
-
 

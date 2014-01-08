@@ -7,18 +7,27 @@
 <script src="lib/postProcessing/shaders/VignetteShader.js"></script>
 <script src="lib/postProcessing/VignetteEffect.js"></script>
 
-
 <polymer-element name="three-post-process" attributes="name">
-  <template >
-    <div>
-    I am a post process effect called {{name}}
-    </div>
-  </template>
-  <script>Polymer('three-post-process',{
+  <script>Polymer('three-post-effect',{
     name:"default",
     effectJs: "huzzah",
     enteredView:function()
     { console.log("post process in view",this.parentNode);
+      if(this.parentNode)
+      {
+          this.parentNode.addEffect(this.effectJs+" "+this.name);
+      }
+    }
+    });
+  </script>
+</polymer-element>
+
+<polymer-element name="vignette-effect" extends="three-post-effect">
+  <script>Polymer('three-post-process',{
+    name:"default",
+    effectJs: "huzzah",
+    enteredView:function()
+    { 
       if(this.parentNode)
       {
           this.parentNode.addEffect(this.effectJs+" "+this.name);
@@ -42,12 +51,38 @@
       <content select="three-post-process" id="postFx"></content>
   </template>
   <script>Polymer('three-effect-composer',{
-  
+    renderer: null,
+    effects: [],
     addEffect:function(effect)
     {
       console.log("adding effect",effect);
-      
-    }
+    },
+    init:function()
+    {
+      if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
+      {
+        //shaders, post processing etc
+        var resolutionBase = 1;
+        var resolutionMultiplier = 1.5;
+
+        //various passes and rtts
+        var renderPass = new THREE.RenderPass(this.scene, this.camera)
+        var copyPass = new THREE.ShaderPass( THREE.CopyShader )
+        
+        var vignetteEffect = new VignetteEffect();
+
+        this.fxaaResolutionMultiplier = resolutionBase/resolutionMultiplier;
+        var composerResolutionMultiplier = resolutionBase*resolutionMultiplier;
+
+        this.finalComposer = new THREE.EffectComposer( this.renderer )
+
+        //prepare the final render passes
+        this.finalComposer.addPass( renderPass );
+        this.finalComposer.addPass( vignetteEffect.pass );
+        //make sure the last pass renders to screen
+        this.finalComposer.passes[this.finalComposer.passes.length-1].renderToScreen = true;
+      }
+  },
   });
   </script>
 </polymer-element>

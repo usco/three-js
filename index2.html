@@ -15,21 +15,23 @@
   </head>
 <body>
   <three-js>
-     <three-js-combinedCamera tracking y="10" z="600" orientation="top" ></three-js-combinedCamera>
-     <!--<three-js-orbitControls> </three-js-orbitControls>-->
-     
+    <three-js-combinedCamera tracking y="10" z="600" orientation="top" ></three-js-combinedCamera>
+    <!--<three-js-orbitControls> </three-js-orbitControls>-->
     <three-js-scene name="carambba">
       <three-js-cube x="100" color="blue" w="170" name="container" id="foo">
         <three-js-cube z="80" rx="40" rz="30" color="red" w="130" name="inner" id="bar"> </three-js-cube>
-              <three-js-sphere z="-80" x="40" rx="-40" rz="30"  color="orange" r="130" name="inner2" id="boom"> </three-js-sphere>
+        <three-js-sphere z="-80" x="40" rx="-40" rz="30"  color="orange" r="130" name="inner2" id="boom"> </three-js-sphere>
       </three-js-cube>
 
-
-   <!-- <three-js-cube x="-200" color="green" w="100"> </three-js-cube>-->
+      <three-js-cube x="-200" color="green" w="100"> </three-js-cube>
       
       <three-js-light x="50" y="30" z="200"></three-js-light>
       <three-js-light kind="spot" x="-150" y="350" rx="90" shadow></three-js-light>
-     </three-js-scene>
+    </three-js-scene>
+
+    <three-effect-composer>
+      <vignette-effect> </vignette-effect>
+    </three-effect-composer>
 
   </three-js>
 

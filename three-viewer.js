@@ -11,10 +11,7 @@ Polymer('three-viewer', {
 	showShadows:true,
 	showStats: false,
 	showAxes:true,
-
   //full screen postprocessing
-  postProcess:false,
-  fullScreen:false,
 
   //additional
   lighting: null,
@@ -23,74 +20,14 @@ Polymer('three-viewer', {
 
   //generic custom element callbacks
   created: function() {
-    this.width = 0;
-    this.height = 0;
-    this.bg = "rgb(255, 255, 255)";
-
 	  this.scene = new THREE.Scene();
     this.rootAssembly = new THREE.Object3D();
-  },
-  ready:function(){
-    this.cameraUp = new THREE.Vector3(this.cameraUp[0],this.cameraUp[1],this.cameraUp[2]);
   },
   enteredView: function() {
     this._setStyle();
     this.init();
     this.animate();
-
-    //setup various handlers
-    window.addEventListener("resize",this.onResize.bind(this));
-
-    if (this.requestFullscreen) document.addEventListener("fullscreenchange", this.onFullScreenChange.bind(this), false);
-    if (this.mozRequestFullScreen) document.addEventListener("mozfullscreenchange", this.onFullScreenChange.bind(this), false);
-    if (this.webkitRequestFullScreen) document.addEventListener("webkitfullscreenchange", this.onFullScreenChange.bind(this), false);
   },
-  //public api
-  clearScene:function()
-  {
-    while (this.rootAssembly.children.length > 0) {
-      this.rootAssembly.remove(this.rootAssembly.children[this.rootAssembly.children.length - 1]);
-    }
-
-    // cleanup without calling render (data needs to be cleaned up before a new scene can be generated)
-    //see here https://github.com/mrdoob/three.js/issues/2760
-    if(this.renderer instanceof THREE.WebGLRenderer)
-    {
-      this.renderer.initWebGLObjects(this.scene);
-    }
-  },
-	addToScene: function ( object )
-	{
-		try
-		{
-			this.rootAssembly.add( object );
-		}
-		catch(error)
-		{
-			console.log("Failed to add object",object, "to scene: error", error)
-		}
-	},
-  removeFromScene : function( object )
-  {
-    try
-		{
-			this.rootAssembly.remove( object );
-		}
-		catch(error)
-		{
-			console.log("Failed to remove object from scene: error", error)
-		}
-  },
-	captureScreen:function(callback, width, height)
-	{
-		var width = width || 640;
-		var height = height || 480;
-		if(callback === undefined)
-		{
-			throw new Error("no callback provided");
-		}
-		captureScreen(callback, this.renderer.domElement, width, height);
-	},
   //initialization methods
   init:function(){
     this.setupRenderer();
@@ -205,25 +142,6 @@ Polymer('three-viewer', {
         this.finalComposer.passes[this.finalComposer.passes.length-1].renderToScreen = true;
       }
   },
-  setupHelpers: function()
-  {
-    this.selectionHelper = new SelectionHelper({camera:this.camera,color:0x000000,textColor:0xffffff})
-		this.selectionHelper.hiearchyRoot = this.rootAssembly.children;
-
-    //TODO: move this?
-    this.selectionHelper.viewWidth = this.width;
-    this.selectionHelper.viewHeight = this.height;
-  },
-  setupControls: function()
-  {
-    this.controls = new THREE.OrbitControls( this.camera, this.renderer.domElement, this.cameraUp );
-		this.controls.userPanSpeed = 8.0;
-		this.controls.userZoomSpeed = 2.0;
-  	this.controls.userRotateSpeed = 2.0;
-
-		this.controls.autoRotate = this.autoRotate;
-		this.controls.autoRotateSpeed = 4.0;
-  },
   animate: function() 
   {
 	  this.render();		
@@ -239,38 +157,6 @@ Polymer('three-viewer', {
 				this.$.stats.update();
 		}
   },
-  render:function() {
-    if (this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
-    {
-      //necessary hack for effectomposer
-      THREE.EffectComposer.camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
-      THREE.EffectComposer.quad = new THREE.Mesh( new THREE.PlaneGeometry( 2, 2 ), null );
-      THREE.EffectComposer.scene = new THREE.Scene();
-      THREE.EffectComposer.scene.add( THREE.EffectComposer.quad );
-      /*
-      originalStates = helpers.toggleHelpers(this.scene)#hide helpers from scene
-      this.depthComposer.render()
-      this.normalComposer.render()
-      helpers.enableHelpers(this.scene, originalStates)#show previously shown helpers again
-      
-      this.finalComposer.passes[this.finalComposer.passes.length-1].uniforms[ 'tDiffuse2' ].value = this.normalComposer.renderTarget2
-      this.finalComposer.passes[this.finalComposer.passes.length-1].uniforms[ 'tDiffuse3' ].value = this.depthComposer.renderTarget2*/
-      this.finalComposer.render();
-    }
-    else
-    {
-      this.renderer.render( this.scene, this.camera );
-    }
-  },
-  _setStyle:function()
-  {
-	  //setup width & height
-	  var cs = window.getComputedStyle(this);
-	  this.width = parseInt(cs.getPropertyValue("width").replace("px",""));
-	  this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
-    //setup backround color
-	  this.bg = cs.getPropertyValue("background-color");
-  },
   //utilities: TODO: move this to seperate js file
 	convertColor: function(hex)
 	{
@@ -278,40 +164,7 @@ Polymer('three-viewer', {
     return  hex;
 	},
 
-  //event handlers
-  onResize: function()
-  {
-	  var cs = window.getComputedStyle(this);
-	  this.width = parseInt(cs.getPropertyValue("width").replace("px",""));
-	  this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
-
-    //resize all that is needed
-
-    //BUG in firefox: dpr is not 1 on desktop, scaling issue ensue, so forcing to "1"
-    this.dpr=1;
-		this.resUpscaler = 1;
-    this.hRes = this.width * this.dpr * this.resUpscaler;
-    this.vRes = this.height * this.dpr * this.resUpscaler;
-    
-		this.camera.aspect = this.width / this.height;
-    this.camera.setSize(this.width,this.height);
-		this.camera.updateProjectionMatrix();
-		this.renderer.setSize( this.width,this.height );
-
-    if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
-    {
-      this.finalComposer.setSize(this.hRes, this.vRes)
-    }
-
-    this.selectionHelper.viewWidth = this.width;
-    this.selectionHelper.viewHeight = this.height;
-  },
-  onFullScreenChange:function()
-  {
-    //workaround to reset this.fullScreen to correct value when pressing exit etc in full screen mode
-    this.fullScreen = !(!document.fullscreenElement &&    // alternative standard method
-    !document.mozFullScreenElement && !document.webkitFullscreenElement);
-  },
+  
   onKeyDown:function(event)
 	{//overidable method stand in
 	},
