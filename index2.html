@@ -1,0 +1,66 @@
+<html>
+  <head>
+    <title>Three.js polymer.js viewer example</title>
+      <script src="../platform/platform.js"></script>
+      <link rel="import" href="../polymer/polymer.html">
+      <link rel="import" href="three-js.html">
+
+      <style>
+         html, body, three-js {
+      margin: 0;
+      position: relative;
+      height: 100%;
+    }
+      </style>
+  </head>
+<body>
+  <three-js>
+     <three-js-combinedCamera tracking y="10" z="600" orientation="perspective"></three-js-combinedCamera>
+     <three-js-orbitControls> </three-js-orbitControls>
+  
+     <three-js-cube x="-200"></three-js-cube>
+     <three-js-light x="50" y="30" z="200"></three-js-light>
+     <three-js-light kind="spot" x="-150" y="350" rx="90" shadow></three-js-light>
+  </three-js>
+
+  <script>
+    window.addEventListener('WebComponentsReady2', function() {
+	    var threeViewer = document.querySelector('three-viewer');
+      //example : adding 3D shapes to viewer''
+      var geometry = new THREE.CubeGeometry( 50, 50, 50 ); 
+      geometry.computeCentroids();
+    	geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+	    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
+	    var cube = new THREE.Mesh(geometry, material);
+      cube.name = "TestCube";
+      cube.position.set(-100,30,30);
+      //add to scene
+      threeViewer.addToScene(cube);
+
+      var geometry = new THREE.SphereGeometry(12, 20,20);
+      geometry.computeCentroids();
+    	geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+      var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
+      var sphere = new THREE.Mesh(geometry, material);
+      sphere.name = "testSphere";
+      sphere.position.set(50,0,30);
+      threeViewer.addToScene(sphere);
+
+      //clearing a scene
+      threeViewer.clearScene();
+
+      //add things back
+      threeViewer.addToScene(cube);
+      threeViewer.addToScene(sphere);
+
+      //remove cube only
+      threeViewer.removeFromScene(cube);
+
+    });
+      
+    
+  </script>  
+</body>
+</html>

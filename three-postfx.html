@@ -1,0 +1,53 @@
+<script src="lib/postProcessing/EffectComposer.js"></script>
+<script src="lib/postProcessing/RenderPass.js"></script>
+<script src="lib/postProcessing/ShaderPass.js"></script>
+<script src="lib/postProcessing/MaskPass.js"></script>
+<script src="lib/postProcessing/shaders/CopyShader.js"></script>
+
+<script src="lib/postProcessing/shaders/VignetteShader.js"></script>
+<script src="lib/postProcessing/VignetteEffect.js"></script>
+
+
+<polymer-element name="three-post-process" attributes="name">
+  <template >
+    <div>
+    I am a post process effect called {{name}}
+    </div>
+  </template>
+  <script>Polymer('three-post-process',{
+    name:"default",
+    effectJs: "huzzah",
+    enteredView:function()
+    { console.log("post process in view",this.parentNode);
+      if(this.parentNode)
+      {
+          this.parentNode.addEffect(this.effectJs+" "+this.name);
+      }
+    }
+    });
+  </script>
+</polymer-element>
+
+<polymer-element name="three-effect-composer" >
+  <template>
+    <style>
+      :host {
+        opacity: 0.6;
+        transition: opacity 400ms ease-in-out;
+         color:green;
+        display:block;
+      }
+      :host:hover { opacity: 1; }
+    </style>
+      <content select="three-post-process" id="postFx"></content>
+  </template>
+  <script>Polymer('three-effect-composer',{
+  
+    addEffect:function(effect)
+    {
+      console.log("adding effect",effect);
+      
+    }
+  });
+  </script>
+</polymer-element>
