@@ -22,25 +22,21 @@
           this.object = new THREE.Object3D();
           this.object.name = this.name;
       },
-      __addOrdererChildren:function()
+      __addOrderedChildren:function()
       {
         //FIXME: workaround for bad child element insertion order
         if(this._tmpBuff)
         {
           console.log("this._tmpBuff.length",this._tmpBuff.length, "of",this.name, this._tmpBuff)
-
           for(var i=this._tmpBuff.length-1;i >= 0 ; i--)
           {
             var child = this._tmpBuff[i];
             var childObj = child.object;
             this._tmpBuff.splice(i, 1);
 
-            //if(!this.object) this.object = new THREE.Object3D();
             if(childObj) console.log("child", child.localName+"_"+child.object.name, "added to ", this.localName+"_"+this.object.name);
-
-             if(child.object && child.localName !== 'three-js-scene' )
+            if(child.object && child.localName !== 'three-js-scene' )
             {
-              
               //console.log("child", child.localName+"_"+child.object.name, "added to ", this.localName+"_"+this.object.name);
               this.object.add(child.object);
             }
@@ -120,7 +116,7 @@
         }
         console.log('[%s]: enteredView: parent chain: [%s]', this.localName + (this.id ? '#' + this.id : ''), l);
         */
-        this.__addOrdererChildren();
+        this.__addOrderedChildren();
         this.addToParent3();
         
       },
@@ -134,19 +130,6 @@
 
 <polymer-element name="three-js-scene" extends="three-js-object">
   <template>
-  <style>
-      :host{
-          display:inline-block;
-
-      }
-      /* @polyfill three-object*/
-      ::content three-object
-      {
-        color:red;
-        display:block;
-        padding-left:10px;
-      }
-  </style>
   <!--<content select="three-object"></content>-->
   </template>
   <script>Polymer('three-js-scene',{
@@ -236,12 +219,8 @@
         this.object.geometry = this.geometry;
         this.object.material = this.material;
 
-        
         if (this.geometry && this.material && !this.objectParent) {
-          //this.removeFromParent3();
-          //this.object = new THREE.Mesh(this.geometry, this.material);
-          //this.addToParent3();
-          this.__addOrdererChildren();
+          this.__addOrderedChildren();
           this.addToParent3();
         }
       },

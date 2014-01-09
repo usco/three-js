@@ -1,10 +1,9 @@
 <script src="lib/Stats.js"></script>
-
 <polymer-element name="three-stats" attributes="show" >
 	<template>
     <style>
       @host{
-        *{ position:absolute; top:0px;}
+        *{ position:absolute; top:0px;z-index:99999}
       }
     </style>
 		<div id="stats" hidden?="{{!show}}"></div>

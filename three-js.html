@@ -10,6 +10,7 @@
 <link rel="import" href="three-js-cameras.html">
 <link rel="import" href="three-js-controls.html">
 <link rel="import" href="three-helpers.html">
+<link rel="import" href="three-postfx.html">
 <link rel="import" href="three-stats.html">
 
 <polymer-element name="three-js" attributes="renderNow fullScreen postProcess"
@@ -27,6 +28,7 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
         right: 0;
         bottom: 0;
         left: 0;
+        z-index:0;
       }
     </style>
   </template>
@@ -46,7 +48,7 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
         this.bg = "rgb(255, 255, 255)";
 
         //this.scene = new THREE.Scene();
-        this.rootAssembly = new THREE.Object3D();
+        //this.hierarchyRoot = new THREE.Object3D();
       },
       ready: function() {
         this.setupRenderer();
@@ -79,22 +81,17 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
       },
       enteredView:function()
       {
-         //setup various handlers
+        //setup various handlers
         window.addEventListener("resize",this.onResize.bind(this));
 
         if (this.requestFullscreen) document.addEventListener("fullscreenchange", this.onFullScreenChange.bind(this), false);
         if (this.mozRequestFullScreen) document.addEventListener("mozfullscreenchange", this.onFullScreenChange.bind(this), false);
         if (this.webkitRequestFullScreen) document.addEventListener("webkitfullscreenchange", this.onFullScreenChange.bind(this), false);
 
-         /*this.camera.aspect = this.width / this.height;
-         this.camera.setSize(this.width,this.height);
-		     this.camera.updateProjectionMatrix();
-		     this.renderer.setSize( this.width,this.height );*/
-         
-         this._setStyle();
-         this.setupHelpers();
-         this.animate();
-         this.onResize();
+        this._setStyle();
+        this.setupHelpers();
+        this.animate();
+        this.onResize();
       },
       //initialization methods
       setupRenderer: function()
@@ -118,16 +115,23 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
 
         this.shadowRoot.appendChild(renderer.domElement);
         this.renderer = renderer;
-		
       },
       setupHelpers: function()
       {
+        console.log("setting up helpers");
+        this.hierarchyRoot =  this.querySelector('[hierarchyRoot]').object;
+        var activeScene = document.querySelectorAll('three-js-scene[active]')[0];
+        this.hierarchyRoot = activeScene.querySelector('[hierarchyRoot]').object;
+        
         this.selectionHelper = new SelectionHelper({camera:this.camera,color:0x000000,textColor:0xffffff})
-		    this.selectionHelper.hiearchyRoot = this.rootAssembly.children;
+		    this.selectionHelper.hiearchyRoot = this.hierarchyRoot.children;
 
         //TODO: move this?
         this.selectionHelper.viewWidth = this.width;
         this.selectionHelper.viewHeight = this.height;
+
+
+        //console.log("test", test);
       },
 
       //event handlers
@@ -232,8 +236,8 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
       //public api
       clearScene:function()
       {
-        while (this.rootAssembly.children.length > 0) {
-          this.rootAssembly.remove(this.rootAssembly.children[this.rootAssembly.children.length - 1]);
+        while (this.hierarchyRoot.children.length > 0) {
+          this.hierarchyRoot.remove(this.hierarchyRoot.children[this.hierarchyRoot.children.length - 1]);
         }
 
         // cleanup without calling render (data needs to be cleaned up before a new scene can be generated)
@@ -247,7 +251,7 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
 	    {
 		    try
 		    {
-			    this.rootAssembly.add( object );
+			    this.hierarchyRoot.add( object );
 		    }
 		    catch(error)
 		    {
@@ -258,7 +262,7 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
       {
         try
 		    {
-			    this.rootAssembly.remove( object );
+			    this.hierarchyRoot.remove( object );
 		    }
 		    catch(error)
 		    {
@@ -280,8 +284,17 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
         //TODO: do this MUCH better
         if( child.localName === 'three-js-scene')
         {
-          if(this.scene) child.object.children = this.scene.children;
-          this.scene = child.object;
+          //console.log("scene blah", child,"attrs",child.attributes,child.attributes.getNamedItem("active") );
+          if(child.attributes.getNamedItem("active"))
+          {
+            console.log("scene", child.name,"is active")
+            if(this.scene) child.object.children = this.scene.children;
+            this.scene = child.object;
+          }
+
+          if(!this.scenes) this.scenes = {};
+          this.scenes[child.name] = child.object;
+          
         }
         if (child.localName === 'three-js-camera' || child.localName === 'three-js-combinedcamera' ) {
           this.camera = child.object;
