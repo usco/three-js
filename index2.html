@@ -23,7 +23,7 @@
       
         <three-js-cube x="150" color="blue" w="17" name="container" id="foo">
           <three-js-cube z="30" rx="40" rz="30" color="red" w="13" name="inner" id="bar"> </three-js-cube>
-          <three-js-sphere z="-40" x="40" rx="-40" rz="30"  color="orange" r="13" name="inner2" id="boom"> </three-js-sphere>
+          <three-js-sphere z="40" x="40" rx="-40" rz="30"  color="orange" r="30" name="inner2" id="boom"> </three-js-sphere>
         </three-js-cube>
 
      <!--FIXME: this does not work(three.js object as container)-->
@@ -69,7 +69,7 @@
 
       cube.add(sphere)
 
-      threeViewer.add3(cube);
+      //threeViewer.add3(cube);
       //threeViewer.add3(sphere);
 
       //clearing a scene

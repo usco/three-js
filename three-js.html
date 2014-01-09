@@ -61,7 +61,7 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
             this._tmpBuff.splice(i, 1);
              if(child.object && child.localName !== 'three-js-scene' && child.localName !== 'three-js-orbitcontrols')
             {
-              console.log("in root: child", child.localName, "added to ", this.localName);
+              //console.log("in root: child", child.localName, "added to ", this.localName);
               this.scene.add(child.object);
             }
             else if(child.object && child.localName === 'three-js-orbitcontrols')
@@ -72,7 +72,7 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
             }
             else
             {
-              console.log("in root: OTHER: child", child.localName, "added to ", this.localName);
+              //console.log("in root: OTHER: child", child.localName, "added to ", this.localName);
             }
           }
         }  
@@ -276,7 +276,7 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
 		    captureScreen(callback, this.renderer.domElement, width, height);
 	    },
       add3: function(child) {
-        console.log("child", child.localName)
+        //console.log("child", child.localName)
         //TODO: do this MUCH better
         if( child.localName === 'three-js-scene')
         {
