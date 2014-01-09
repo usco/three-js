@@ -132,9 +132,9 @@
           console.log("bla: renderer",this.renderer, "scene", this.scene);
           this.init();
         }
-
       });
     },
+    //public api
     addEffect:function(name, effect)
     {
       console.log("adding effect",name, effect);
@@ -164,6 +164,11 @@
         console.log("composer", this.composer);
       }
     },
+    //use for resizing etc
+    update:function()
+    {
+
+    }
   });
   </script>
 </polymer-element>

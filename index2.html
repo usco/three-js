@@ -14,6 +14,31 @@
       </style>
   </head>
 <body>
+  <!--Experimental-->
+  <polymer-element name="object-attrs" >
+
+    <template>
+      <style>
+        position:absolute;
+        left:0px;
+        top:0px;
+        width:100px;
+        backgroud:red;
+        height:100px;
+      </style>
+        Bla bla
+    
+    </template>
+    <script>Polymer('object-attrs',{
+      object: null,
+      ready: function()
+      {
+        
+      }
+    });
+    </script>
+  </polymer-element>
+
   <three-js>
     <three-stats id="stats" show></three-stats>
     <three-js-combinedCamera tracking x="100" y="100" z="200" orientation="top" cameraUp=[0,0,1] ></three-js-combinedCamera>
@@ -54,6 +79,7 @@
     </three-effect-composer>
 
   </three-js>
+
 
   <script>
     window.addEventListener('WebComponentsReady', function() {

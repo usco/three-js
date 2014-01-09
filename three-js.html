@@ -15,13 +15,39 @@
 
 <polymer-element name="three-js" attributes="renderNow fullScreen postProcess"
 on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" 
-on-track="{{track}}" 
-touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPointerDown}}" on-pointerup="{{onPointerUp}}">
+on-track="{{track}}"
+touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPointerDown}}" on-pointerup="{{onPointerUp}}" >
 <template>
     <style>
       :host {
         display: block;
         position: relative;
+
+         /*make things unselectable, cross browser*/
+		      -webkit-touch-callout: none;
+		      -webkit-user-select: none;
+		      -khtml-user-select: none;
+		      -moz-user-select: none;
+		      -ms-user-select: none;
+		      user-select: none;
+
+        * {
+		      opacity: 1;
+          transition: opacity 300ms;
+          position: absolute;
+		      overflow:hidden;
+		      background-color:#fff;
+		
+		      /*make things unselectable, cross browser*/
+		      -webkit-touch-callout: none;
+		      -webkit-user-select: none;
+		      -khtml-user-select: none;
+		      -moz-user-select: none;
+		      -ms-user-select: none;
+		      user-select: none;
+	      }
+
+
       }
       canvas {
         position: absolute;
@@ -30,6 +56,15 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
         bottom: 0;
         left: 0;
         z-index:0;
+
+        cursor:default;
+        /*make things unselectable, cross browser*/
+		      -webkit-touch-callout: none;
+		      -webkit-user-select: none;
+		      -khtml-user-select: none;
+		      -moz-user-select: none;
+		      -ms-user-select: none;
+		      user-select: none;
       }
     </style>
   </template>
@@ -114,6 +149,7 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
         this.convertColor(this.bg);
 		    renderer.setClearColor( this.bg, 1 );	  
 
+        //if lightdom this.appendChild(renderer.domElement);
         this.shadowRoot.appendChild(renderer.domElement);
         this.renderer = renderer;
       },
