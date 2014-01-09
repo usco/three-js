@@ -118,8 +118,6 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
       },
       setupHelpers: function()
       {
-        console.log("setting up helpers");
-        this.hierarchyRoot =  this.querySelector('[hierarchyRoot]').object;
         var activeScene = document.querySelectorAll('three-js-scene[active]')[0];
         this.hierarchyRoot = activeScene.querySelector('[hierarchyRoot]').object;
         
@@ -129,11 +127,7 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
         //TODO: move this?
         this.selectionHelper.viewWidth = this.width;
         this.selectionHelper.viewHeight = this.height;
-
-
-        //console.log("test", test);
       },
-
       //event handlers
       onResize: function()
       {
@@ -142,7 +136,6 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
 	      this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
 
         //resize all that is needed
-
         //BUG in firefox: dpr is not 1 on desktop, scaling issue ensue, so forcing to "1"
         this.dpr=1;
 		    this.resUpscaler = 1;
@@ -234,6 +227,14 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
           }
       },
       //public api
+      toggleScene:function( name )
+      {
+        //TODO: cleanup
+        console.log("scenes", this.scenes);
+        var scene = this.scenes[name];
+        if(scene) this.scene = scene; this.setupHelpers(); this.scene.add( this.camera);
+
+      },
       clearScene:function()
       {
         while (this.hierarchyRoot.children.length > 0) {
