@@ -14,9 +14,10 @@
 <link rel="import" href="three-stats.html">
 
 <polymer-element name="three-js" attributes="renderNow fullScreen postProcess"
-on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" 
+on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" on-three-js-get-camera="{{getCamera}}" 
 on-track="{{track}}"
-touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPointerDown}}" on-pointerup="{{onPointerUp}}" >
+touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPointerDown}}" on-pointerup="{{onPointerUp}}" 
+>
 <template>
     <style>
       :host {
@@ -67,6 +68,13 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
 		      user-select: none;
       }
     </style>
+
+    <!--experimental
+    <input type="range" value="{{hue}}" min="0" max="2" step="0.1" style="z-index:9999999;position: absolute; display:block">
+    <input type="text" value="{{hue}}" style="z-index:9999999;position: absolute;top:30px; display:block">
+    <content select="three-js-scene" id="scene-inner"> </content>-->
+    <content select="three-effect-composer" id="effects"> </content> 
+
   </template>
   <script>
     Polymer('three-js', {
@@ -76,6 +84,8 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
 
       selectedObject : null,
       highlightedObject: null,
+
+      hue:3.0,
 
       //generic custom element callbacks
       created: function() {
@@ -184,9 +194,9 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
 		    this.camera.updateProjectionMatrix();
 		    this.renderer.setSize( this.width,this.height );
 
-        if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
+        if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true && this.finalComposer)
         {
-          this.finalComposer.setSize(this.hRes, this.vRes)
+          this.finalComposer.setSize(this.hRes, this.vRes);
         }
         this.selectionHelper.viewWidth = this.width;
         this.selectionHelper.viewHeight = this.height;
@@ -318,7 +328,7 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
 		    captureScreen(callback, this.renderer.domElement, width, height);
 	    },
       add3: function(child) {
-        //console.log("child", child.localName)
+        console.log("child", child.localName,child)
         //TODO: do this MUCH better
         if( child.localName === 'three-js-scene')
         {
@@ -341,6 +351,14 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
         if( child.localName === 'three-js-orbitcontrols')
         {
           this._tmpBuff.push(child);
+        }
+
+        if( child.localName === 'three-effect-composer')
+        {
+          console.log("adding effect composer");
+          this.finalComposer = child.composer;
+          this.finalComposer.setSize(this.width, this.height);
+
         }
 
         if(!this.scene)
@@ -370,6 +388,10 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
       },
       getScene: function(event) {
         event.detail.scene = this.scene;
+        //return this.scene;
+      },
+      getCamera: function(event) {
+        event.detail.camera = this.camera;
         //return this.scene;
       },
       //
@@ -433,7 +455,7 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
         if (! this.camera) {
           console.log('no camera');
           return;}
-        if (this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
+        if (this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true && this.finalComposer)
         {
           //necessary hack for effectomposer
           THREE.EffectComposer.camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );

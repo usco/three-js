@@ -26,20 +26,18 @@
         backgroud:red;
         height:100px;
       </style>
-        Bla bla
+        Bla bla <input type="range" >
     
     </template>
     <script>Polymer('object-attrs',{
-      object: null,
       ready: function()
       {
-        
       }
     });
     </script>
   </polymer-element>
-
-  <three-js>
+  
+  <three-js postProcess >
     <three-stats id="stats" show></three-stats>
     <three-js-combinedCamera tracking x="100" y="100" z="200" orientation="top" cameraUp=[0,0,1] ></three-js-combinedCamera>
     <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" autoRotate> </three-js-orbitControls>
@@ -73,9 +71,10 @@
       </three-js-object>
     </three-js-scene>
 
-
-    <three-effect-composer>
+    <three-effect-composer >
       <vignette-fx> </vignette-fx>
+      <hueSaturation-fx hue="{{hue}}" saturation="1.0"> </hueSaturation-fx>
+      <!--<kaleido-fx> </kaleido-fx>-->
     </three-effect-composer>
 
   </three-js>
@@ -108,7 +107,7 @@
 
       cube.add(sphere)
 
-      threeViewer.toggleScene("aiaiai");
+      //threeViewer.toggleScene("aiaiai");
 
       //threeViewer.add3(cube);
       //threeViewer.add3(sphere);

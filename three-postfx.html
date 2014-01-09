@@ -4,8 +4,6 @@
 <script src="lib/postProcessing/MaskPass.js"></script>
 <script src="lib/postProcessing/shaders/CopyShader.js"></script>
 
-<script src="lib/postProcessing/shaders/VignetteShader.js"></script>
-
 <polymer-element name="three-post-fx" attributes="name">
   <script>Polymer('three-post-fx',{
     name: "default",
@@ -21,8 +19,11 @@
   </script>
 </polymer-element>
 
+<script src="lib/postProcessing/shaders/VignetteShader.js"></script>
+
 <polymer-element name="vignette-fx" extends="three-post-fx">
   <script>Polymer('vignette-fx',{
+    name: 'vignette',
     effect: null,
     offset : 0.4,
     darkness: 5,
@@ -49,14 +50,18 @@
   </script>
 </polymer-element>
 
+
+<script src="lib/postProcessing/shaders/KaleidoShader.js"></script>
+
 <polymer-element name="kaleido-fx" extends="three-post-fx">
   <script>Polymer('kaleido-fx',{
+    name:'kaleido',
     effect: null,
-    sides: 6.0,
+    sides: 2.0,
     angle: 0.0,
     ready: function()
     {
-      this.effect = new THREE.ShaderPass(THREE.KaleidoShader);
+      this.effect = new THREE.ShaderPass(THREE.KaleidoShader); 
       this.effect.uniforms["sides"].value = this.sides;
       this.effect.uniforms["angle"].value = this.angle;
     }
@@ -65,7 +70,7 @@
 </polymer-element>
 
 <polymer-element name="sepia-fx" extends="three-post-fx">
-  <script>Polymer('kaleido-fx',{
+  <script>Polymer('sepia-fx',{
     effect: null,
     amount: 6.0,
     ready: function()
@@ -77,14 +82,27 @@
   </script>
 </polymer-element>
 
-<polymer-element name="hueSaturation-fx" extends="three-post-fx">
-  <script>Polymer('kaleido-fx',{
+<script src="lib/postProcessing/shaders/HueSaturationShader.js"></script>
+
+<polymer-element name="hueSaturation-fx" extends="three-post-fx" attributes="hue saturation">
+  <script>Polymer('hueSaturation-fx',{
+    name:'hue-saturation',
     effect: null,
     hue: 0.0,
     saturation: 0.0,
+    observe: {
+       hue: 'uniformsChanged',
+       saturation: 'uniformsChanged'
+    },
     ready: function()
     {
       this.effect = new THREE.ShaderPass(THREE.HueSaturationShader);
+      this.effect.uniforms["hue"].value = this.hue;
+      this.effect.uniforms["saturation"].value = this.saturation;
+    },
+    uniformsChanged:function()
+    {
+      console.log("uniforms changed",this.hue)
       this.effect.uniforms["hue"].value = this.hue;
       this.effect.uniforms["saturation"].value = this.saturation;
     }
@@ -92,9 +110,8 @@
   </script>
 
 
-<polymer-element name="three-effect-composer" >
-  <!--
-    <template>
+<polymer-element name="three-effect-composer" attributes="hue">
+  <!--<template>
     <style>
       :host {
         opacity: 0.6;
@@ -104,7 +121,7 @@
       }
       :host:hover { opacity: 1; }
     </style>
-      <content select="three-post-process" id="postFx"></content>
+      <content select="hueSaturation-fx" id="postFx"></content>
   </template>-->
   <script>Polymer('three-effect-composer',{
     enabled: true,
@@ -114,9 +131,11 @@
 
     renderer: null,
     composer: null,
+
+    hue:0,
     enteredView:function()
     {
-      console.log("effect composer entered view");
+      console.log("effect composer entered view",this.hue);
       /*alt method to get scene
       var activeScene = document.querySelectorAll('three-js-scene[active]')[0];
       this.hierarchyRoot = activeScene.querySelector('[hierarchyRoot]').object;*/
@@ -126,11 +145,14 @@
         if (detail) {this.renderer = detail.renderer;}
         var detail = this.fire('three-js-get-scene', {});
         if (detail) {this.scene = detail.scene;}
+        var detail = this.fire('three-js-get-camera', {});
+        if (detail) {this.camera = detail.camera;}
 
-        if(this.scene && this.renderer)
+        if(this.scene && this.renderer && this.camera)
         {
           console.log("bla: renderer",this.renderer, "scene", this.scene);
           this.init();
+          this.addToParent3();
         }
       });
     },
@@ -140,6 +162,14 @@
       console.log("adding effect",name, effect);
       this.effects.push( effect );
     },
+    addToParent3: function() {
+        if (this.parentNode.add3 && !this.objectParent) {
+          this.objectParent = this.parentNode;
+          this.parentNode.add3(this);
+          var parentName = this.parentNode.localName;
+          //console.log('[%s]: request adding to [%s]', this.localName + (this.id ? '#' + this.id : ''), parentName);
+        }
+      },
     init:function()
     {
       console.log("inititalizing effect composer");
@@ -160,7 +190,7 @@
             this.composer.addPass( effect );
         }
         //make sure the last pass renders to screen
-        this.composer.passes[this.finalComposer.passes.length-1].renderToScreen = true;
+        this.composer.passes[this.composer.passes.length-1].renderToScreen = true;
         console.log("composer", this.composer);
       }
     },
