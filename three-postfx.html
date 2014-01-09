@@ -5,40 +5,96 @@
 <script src="lib/postProcessing/shaders/CopyShader.js"></script>
 
 <script src="lib/postProcessing/shaders/VignetteShader.js"></script>
-<script src="lib/postProcessing/VignetteEffect.js"></script>
 
-<polymer-element name="three-post-process" attributes="name">
-  <script>Polymer('three-post-effect',{
-    name:"default",
-    effectJs: "huzzah",
-    enteredView:function()
-    { console.log("post process in view",this.parentNode);
-      if(this.parentNode)
-      {
-          this.parentNode.addEffect(this.effectJs+" "+this.name);
-      }
-    }
-    });
-  </script>
-</polymer-element>
-
-<polymer-element name="vignette-effect" extends="three-post-effect">
-  <script>Polymer('three-post-process',{
-    name:"default",
-    effectJs: "huzzah",
+<polymer-element name="three-post-fx" attributes="name">
+  <script>Polymer('three-post-fx',{
+    name: "default",
+    effect: null,
     enteredView:function()
     { 
       if(this.parentNode)
       {
-          this.parentNode.addEffect(this.effectJs+" "+this.name);
+          this.parentNode.addEffect(this.name, this.effect);
       }
     }
-    });
+  });
   </script>
 </polymer-element>
 
+<polymer-element name="vignette-fx" extends="three-post-fx">
+  <script>Polymer('vignette-fx',{
+    effect: null,
+    offset : 0.4,
+    darkness: 5,
+    ready: function()
+    {
+      this.effect = new THREE.ShaderPass(THREE.VignetteShader);
+      this.effect.uniforms["offset"].value = this.offset;
+      this.effect.uniforms["darkness"].value = this.darkness;
+    }
+  });
+  </script>
+</polymer-element>
+
+<polymer-element name="brightness-fx" extends="three-post-fx">
+  <script>Polymer('brightness-fx',{
+    effect: null,
+    amount: 0.5,
+    ready: function()
+    {
+      this.effect = new THREE.ShaderPass(THREE.BrigthnessShader);
+      this.effect.uniforms["amount"].value = this.amount;
+    }
+  });
+  </script>
+</polymer-element>
+
+<polymer-element name="kaleido-fx" extends="three-post-fx">
+  <script>Polymer('kaleido-fx',{
+    effect: null,
+    sides: 6.0,
+    angle: 0.0,
+    ready: function()
+    {
+      this.effect = new THREE.ShaderPass(THREE.KaleidoShader);
+      this.effect.uniforms["sides"].value = this.sides;
+      this.effect.uniforms["angle"].value = this.angle;
+    }
+  });
+  </script>
+</polymer-element>
+
+<polymer-element name="sepia-fx" extends="three-post-fx">
+  <script>Polymer('kaleido-fx',{
+    effect: null,
+    amount: 6.0,
+    ready: function()
+    {
+      this.effect = new THREE.ShaderPass(THREE.SepiaShader);
+      this.effect.uniforms["amount"].value = this.amount;
+    }
+  });
+  </script>
+</polymer-element>
+
+<polymer-element name="hueSaturation-fx" extends="three-post-fx">
+  <script>Polymer('kaleido-fx',{
+    effect: null,
+    hue: 0.0,
+    saturation: 0.0,
+    ready: function()
+    {
+      this.effect = new THREE.ShaderPass(THREE.HueSaturationShader);
+      this.effect.uniforms["hue"].value = this.hue;
+      this.effect.uniforms["saturation"].value = this.saturation;
+    }
+  });
+  </script>
+
+
 <polymer-element name="three-effect-composer" >
-  <template>
+  <!--
+    <template>
     <style>
       :host {
         opacity: 0.6;
@@ -49,40 +105,65 @@
       :host:hover { opacity: 1; }
     </style>
       <content select="three-post-process" id="postFx"></content>
-  </template>
+  </template>-->
   <script>Polymer('three-effect-composer',{
-    renderer: null,
+    enabled: true,
     effects: [],
-    addEffect:function(effect)
+    resolutionBase : 1,
+    resolutionMultiplier : 1.5,
+
+    renderer: null,
+    composer: null,
+    enteredView:function()
     {
-      console.log("adding effect",effect);
+      console.log("effect composer entered view");
+      /*alt method to get scene
+      var activeScene = document.querySelectorAll('three-js-scene[active]')[0];
+      this.hierarchyRoot = activeScene.querySelector('[hierarchyRoot]').object;*/
+
+      this.async(function() {
+        var detail = this.fire('three-js-get-renderer', {});
+        if (detail) {this.renderer = detail.renderer;}
+        var detail = this.fire('three-js-get-scene', {});
+        if (detail) {this.scene = detail.scene;}
+
+        if(this.scene && this.renderer)
+        {
+          console.log("bla: renderer",this.renderer, "scene", this.scene);
+          this.init();
+        }
+
+      });
+    },
+    addEffect:function(name, effect)
+    {
+      console.log("adding effect",name, effect);
+      this.effects.push( effect );
     },
     init:function()
     {
-      if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true)
+      console.log("inititalizing effect composer");
+      if(this.renderer instanceof THREE.WebGLRenderer && this.enabled)
       {
-        //shaders, post processing etc
-        var resolutionBase = 1;
-        var resolutionMultiplier = 1.5;
+        //shaders, post processing etc, various passes and rtts
+        var renderPass = new THREE.RenderPass(this.scene, this.camera);
+        var copyPass = new THREE.ShaderPass( THREE.CopyShader );
 
-        //various passes and rtts
-        var renderPass = new THREE.RenderPass(this.scene, this.camera)
-        var copyPass = new THREE.ShaderPass( THREE.CopyShader )
-        
-        var vignetteEffect = new VignetteEffect();
-
-        this.fxaaResolutionMultiplier = resolutionBase/resolutionMultiplier;
-        var composerResolutionMultiplier = resolutionBase*resolutionMultiplier;
-
-        this.finalComposer = new THREE.EffectComposer( this.renderer )
+        this.composer = new THREE.EffectComposer( this.renderer );
 
         //prepare the final render passes
-        this.finalComposer.addPass( renderPass );
-        this.finalComposer.addPass( vignetteEffect.pass );
+        this.composer.addPass( renderPass );
+
+        for(var i=0; i<this.effects.length;i++)
+        {
+            var effect = this.effects[i];
+            this.composer.addPass( effect );
+        }
         //make sure the last pass renders to screen
-        this.finalComposer.passes[this.finalComposer.passes.length-1].renderToScreen = true;
+        this.composer.passes[this.finalComposer.passes.length-1].renderToScreen = true;
+        console.log("composer", this.composer);
       }
-  },
+    },
   });
   </script>
 </polymer-element>

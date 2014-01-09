@@ -14,7 +14,8 @@
 <link rel="import" href="three-stats.html">
 
 <polymer-element name="three-js" attributes="renderNow fullScreen postProcess"
-on-three-js-get-renderer="{{getRenderer}}" on-track="{{track}}" 
+on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" 
+on-track="{{track}}" 
 touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPointerDown}}" on-pointerup="{{onPointerUp}}">
 <template>
     <style>
@@ -330,6 +331,10 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
         event.detail.renderer = this.renderer;
         console.log("here")
         //return this.renderer;
+      },
+      getScene: function(event) {
+        event.detail.scene = this.scene;
+        //return this.scene;
       },
       //
       track: function(event) {

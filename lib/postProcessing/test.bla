@@ -1,8 +1,0 @@
-<script type="x-shader/x-vertex" id="sphere-vs">
-
-void main() {
-	gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-}
-
-</script>
-
