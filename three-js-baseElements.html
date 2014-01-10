@@ -44,7 +44,8 @@
         this.updatePosition();
       },
       showChanged: function() {
-        this.object.visible = this.show; //TODO: propagate to children
+        if(this.object.toggle){ this.object.toggle(this.show);}
+        else{this.object.visible = this.show;} //TODO: propagate to children
       },
       //public api
       setPosition: function(x, y, z) {

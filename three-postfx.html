@@ -21,15 +21,24 @@
 
 <script src="lib/postProcessing/shaders/VignetteShader.js"></script>
 
-<polymer-element name="vignette-fx" extends="three-post-fx">
+<polymer-element name="vignette-fx" extends="three-post-fx" attributes="offset darkness">
   <script>Polymer('vignette-fx',{
     name: 'vignette',
     effect: null,
     offset : 0.4,
     darkness: 5,
+    observe: {
+       offset: 'uniformsChanged',
+       darkness: 'uniformsChanged'
+    },
     ready: function()
     {
       this.effect = new THREE.ShaderPass(THREE.VignetteShader);
+      this.effect.uniforms["offset"].value = this.offset;
+      this.effect.uniforms["darkness"].value = this.darkness;
+    },
+    uniformsChanged:function()
+    {
       this.effect.uniforms["offset"].value = this.offset;
       this.effect.uniforms["darkness"].value = this.darkness;
     }
@@ -102,7 +111,6 @@
     },
     uniformsChanged:function()
     {
-      console.log("uniforms changed",this.hue)
       this.effect.uniforms["hue"].value = this.hue;
       this.effect.uniforms["saturation"].value = this.saturation;
     }
@@ -110,7 +118,7 @@
   </script>
 
 
-<polymer-element name="three-effect-composer" attributes="hue">
+<polymer-element name="three-effect-composer" >
   <!--<template>
     <style>
       :host {

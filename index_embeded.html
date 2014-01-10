@@ -13,12 +13,12 @@
   </head>
 <body>
   <!--Experimental-->
-  <polymer-element name="object-attrs" attributes="autorotate fullscreen axes xpos width depth height radius " >
+  <polymer-element name="object-attrs" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" >
 
     <template>
       <style>
       </style>
-        <div style="z-index:9999;position:absolute">
+        <div style="z-index:9999;position:absolute" on-click="{{onclick}}" on-mousedown="{{onmdown}}">
             <span> Object controls</span>
             <div>
               X position <input type="range" value="{{xpos}}">
@@ -42,14 +42,37 @@
             </div>
 
             <span> View controls</span>
-            Autorotate view <input type="checkbox"  checked="{{autorotate}}">
-            <input type="text" value="{{autorotate}}">
+            <div>
+              Autorotate view <input type="checkbox"  checked="{{autorotate}}">
+              <input type="text" value="{{autorotate}}">
+            </div>
+            <div>
+              Show axes <input type="checkbox" checked="{{axes}}">
+              <input type="text" value="{{axes}}">
+            </div>
+            <div>
+              Fullscreen <input type="checkbox" checked="{{fullscreen}}">
+              <input type="text" value="{{fullscreen}}">
+            </div>
+            </br>
+            <span> Fx controls</span>
+            <div>
+              Saturation <input type="range" step="0.1" min="0" max="10"  value="{{saturation}}">
+              <input type="text" value="{{saturation}}" >
+            </div>
+            <div>
+              Hue <input type="range" step="0.01" min="0" max="1" value="{{hue}}">
+              <input type="text" value="{{hue}}">
+            </div>
 
-            Show axes <input type="checkbox" checked="{{axes}}">
-            <input type="text" value="{{axes}}">
-
-            Fullscreen <input type="checkbox" checked="{{fullscreen}}">
-            <input type="text" value="{{fullscreen}}">
+            <div>
+              Darkness <input type="range" step="0.1" min="0" max="10"  value="{{darkness}}">
+              <input type="text" value="{{darkness}}" >
+            </div>
+            <div>
+              Offset <input type="range" step="0.01" min="0" max="1" value="{{offset}}">
+              <input type="text" value="{{offset}}">
+            </div>
         </div>
         <three-js postProcess fullscreen="{{fullscreen}}">
           <three-stats id="stats" show></three-stats>
@@ -58,15 +81,22 @@
 
           <three-js-scene name="caramba" active>
             <three-js-object hierarchyRoot>
-              <three-js-cube x="{{xpos}}" color="blue" w="{{width}}" d="{{depth}}" h="{{height}}" > </three-js-cube>
+              <three-js-cube x="{{xpos}}" color="orange" w="{{width}}" d="{{depth}}" h="{{height}}" > </three-js-cube>
               <three-js-sphere color="blue" r="{{radius}}"  > </three-js-sphere>
             </three-js-object>
 
             <three-js-object helpersRoot>
               <three-axis-helper show="{{axes}}"> </three-axis-helper>
+              <three-js-light x="50" y="30" z="200"></three-js-light>
+              <three-js-light kind="spot" x="-150" y="350" rx="90" shadow></three-js-light>
             </three-js-object>
           </three-js-scene>
 
+          <three-effect-composer >
+            <vignette-fx darkness="{{darkness}}" offset="{{offset}}"> </vignette-fx>
+            <hueSaturation-fx hue="{{hue}}" saturation="{{saturation}}"> </hueSaturation-fx>
+            <!--<kaleido-fx> </kaleido-fx>-->
+          </three-effect-composer>
       
         </three-js>
     
@@ -77,6 +107,20 @@
       depth:17,
       height:17,
       radius: 25,
+      onclick:function(event)
+      {
+        this.pauseEvent(event)
+      },
+      onmdown:function(event)
+      { this.pauseEvent(event);
+      },
+      pauseEvent:function(e){
+          if(e.stopPropagation) e.stopPropagation();
+          //if(e.preventDefault) e.preventDefault();
+          e.cancelBubble=true;
+          e.returnValue=false;
+          return false;
+      }
     });
     </script>
   </polymer-element>
