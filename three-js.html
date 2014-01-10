@@ -13,6 +13,33 @@
 <link rel="import" href="three-postfx.html">
 <link rel="import" href="three-stats.html">
 
+
+<!--Essentials:
+- view data : width & height
+
+-renderer
+-scene
+-camera
+-controls
+
+renderer needs:
+-view data
+-scene
+-camera
+
+scene needs:
+
+camera needs:
+-view data
+
+controls needs:
+- camera
+- renderer
+
+
+
+-->
+
 <polymer-element name="three-js" attributes="renderNow fullScreen postProcess"
 on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" on-three-js-get-camera="{{getCamera}}" 
 on-track="{{track}}"
@@ -72,8 +99,8 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
     <!--experimental
     <input type="range" value="{{hue}}" min="0" max="2" step="0.1" style="z-index:9999999;position: absolute; display:block">
     <input type="text" value="{{hue}}" style="z-index:9999999;position: absolute;top:30px; display:block">
-    <content select="three-js-scene" id="scene-inner"> </content>-->
-    <content select="three-effect-composer" id="effects"> </content> 
+    <content select="three-js-scene" id="scene-inner"> </content>
+    <content select="three-effect-composer" id="effects"> </content> -->
 
   </template>
   <script>
@@ -124,6 +151,7 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
             }
           }
         }  
+        console.log("ready",this,"_elementPrepared",this._elementPrepared,"inserted", this.__inserted,"upgraded", this.__upgraded__);
       },
       enteredView:function()
       {
@@ -138,6 +166,8 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
         this.setupHelpers();
         this.animate();
         this.onResize();
+
+        console.log("entered",this,"_elementPrepared",this._elementPrepared,"inserted", this.__inserted,"upgraded", this.__upgraded__);
       },
       //initialization methods
       setupRenderer: function()
@@ -165,15 +195,19 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
       },
       setupHelpers: function()
       {
+        console.log("setup helpers");
         var activeScene = document.querySelectorAll('three-js-scene[active]')[0];
-        this.hierarchyRoot = activeScene.querySelector('[hierarchyRoot]').object;
-        
-        this.selectionHelper = new SelectionHelper({camera:this.camera,color:0x000000,textColor:0xffffff})
-		    this.selectionHelper.hiearchyRoot = this.hierarchyRoot.children;
+        if(activeScene)
+        {
+          this.hierarchyRoot = activeScene.querySelector('[hierarchyRoot]').object;
+          console.log("gne");
+          this.selectionHelper = new SelectionHelper({camera:this.camera,color:0x000000,textColor:0xffffff})
+		      this.selectionHelper.hiearchyRoot = this.hierarchyRoot.children;
 
-        //TODO: move this?
-        this.selectionHelper.viewWidth = this.width;
-        this.selectionHelper.viewHeight = this.height;
+          //TODO: move this?
+          this.selectionHelper.viewWidth = this.width;
+          this.selectionHelper.viewHeight = this.height;
+        }
       },
       //event handlers
       onResize: function()
@@ -189,17 +223,25 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
         this.hRes = this.width * this.dpr * this.resUpscaler;
         this.vRes = this.height * this.dpr * this.resUpscaler;
         
-		    this.camera.aspect = this.width / this.height;
-        this.camera.setSize(this.width,this.height);
-		    this.camera.updateProjectionMatrix();
+        if(this.camera)
+        {
+		      this.camera.aspect = this.width / this.height;
+          this.camera.setSize(this.width,this.height);
+		      this.camera.updateProjectionMatrix();
+        }
+        
 		    this.renderer.setSize( this.width,this.height );
 
         if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true && this.finalComposer)
         {
           this.finalComposer.setSize(this.hRes, this.vRes);
         }
-        this.selectionHelper.viewWidth = this.width;
-        this.selectionHelper.viewHeight = this.height;
+
+        if(this.selectionHelper)
+        {
+          this.selectionHelper.viewWidth = this.width;
+          this.selectionHelper.viewHeight = this.height;
+        }
       },
       onFullScreenChange:function()
       {
@@ -215,6 +257,8 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
 	    },
       onPointerMove:function(event)
       {
+        if(!this.selectionHelper) return;
+
         var event = event.impl || event;
         event = normalizeEvent(event);
         var x = event.offsetX;
@@ -238,6 +282,8 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
       },
       onPointerUp:function(event)
       {
+        if(!this.selectionHelper) return;
+
         var event = event.impl || event;
         normalizeEvent(event);
         var x = event.offsetX;
@@ -280,14 +326,12 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
         console.log("scenes", this.scenes);
         var scene = this.scenes[name];
         if(scene) this.scene = scene; this.setupHelpers(); this.scene.add( this.camera);
-
       },
       clearScene:function()
       {
         while (this.hierarchyRoot.children.length > 0) {
           this.hierarchyRoot.remove(this.hierarchyRoot.children[this.hierarchyRoot.children.length - 1]);
         }
-
         // cleanup without calling render (data needs to be cleaned up before a new scene can be generated)
         //see here https://github.com/mrdoob/three.js/issues/2760
         if(this.renderer instanceof THREE.WebGLRenderer)
@@ -327,55 +371,63 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
 		    }
 		    captureScreen(callback, this.renderer.domElement, width, height);
 	    },
-      add3: function(child) {
-        console.log("child", child.localName,child)
-        //TODO: do this MUCH better
-        if( child.localName === 'three-js-scene')
-        {
-          //console.log("scene blah", child,"attrs",child.attributes,child.attributes.getNamedItem("active") );
-          if(child.attributes.getNamedItem("active"))
-          {
-            console.log("scene", child.name,"is active")
-            if(this.scene) child.object.children = this.scene.children;
-            this.scene = child.object;
-          }
 
-          if(!this.scenes) this.scenes = {};
-          this.scenes[child.name] = child.object;
+      _injectScene: function(scene, active){
+
+        if(!this.scenes) this.scenes = {};
+        this.scenes[scene.name] = scene;
+
+        if(active && scene !== this.scene)
+        {
+          if(this.scene) scene.children = this.scene.children;
+          this.scene = scene;
+          console.log("scene", scene.name,"is active")
+        }
+      },
+      _injectCamera: function(camera){
+        this.camera = camera;
           
+        this.camera.aspect = this.width / this.height;
+        this.camera.setSize(this.width,this.height);
+		    this.camera.updateProjectionMatrix();
+
+        console.log("camera", camera, this.width, this.height);
+        console.log("camera is active")
+      },
+      _injectControls: function(controls){
+        this.controls = controls;
+        console.log("controls are active",controls)
+      },
+
+      add3: function(child) {
+        console.log("In root element : child", child.localName,child.object)
+
+        //TODO: do this MUCH better
+        if( child.localName === 'three-js-scene'){
+           var scene = child.object;
+           var active = child.attributes.getNamedItem("active");
+           this._injectScene(scene, active)
         }
         if (child.localName === 'three-js-camera' || child.localName === 'three-js-combinedcamera' ) {
-          this.camera = child.object;
+          var camera = child.object;
+          this._injectCamera(camera);
         }
 
         if( child.localName === 'three-js-orbitcontrols')
         {
-          this._tmpBuff.push(child);
+          var controls = child.object;
+          this.async(function()
+          {
+            child.init(this.camera,this.renderer);
+            this._injectControls(controls);
+          });
         }
-
         if( child.localName === 'three-effect-composer')
         {
           console.log("adding effect composer");
           this.finalComposer = child.composer;
           this.finalComposer.setSize(this.width, this.height);
-
         }
-
-        if(!this.scene)
-        {
-          if(!this._tmpBuff) this._tmpBuff = [];
-          this._tmpBuff.push(child);
-        }
-        else
-        {
-          if(child.object && child.localName !== 'three-js-scene' )
-          {this.scene.add(child.object);}
-          else
-          {
-            this.scene.add(child);
-          }
-        }
-        this.invalidate();
       },
       remove3: function(child) {
         this.scene.remove(child.object);
@@ -477,7 +529,7 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
       },
       update: function()
       {
-	        this.controls.update(); 
+	        if(this.controls) this.controls.update();
       },
       //utilities: TODO: move this to seperate js file
 	    convertColor: function(hex)

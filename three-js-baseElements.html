@@ -65,10 +65,6 @@
           this.object.receiveShadow = this.receiveShadow;
         }
       },
-      /*get position() {
-        return {x: this.x, y: this.y, z: this.z};
-      },*/
-
       add3: function(child) {
           //TODO: do this MUCH better
           if(!this.object )
@@ -228,32 +224,37 @@
   </script>
 </polymer-element>
 
-<polymer-element name="three-js-cubeGeometry" attributes="w h d extent">
+<polymer-element name="three-js-cubeGeometry" attributes="w h d">
   <script>
     Polymer('three-js-cubeGeometry', {
-      w: 20,
-      h: 20,
-      d: 20,
-      extent: 0,
-      observe: {
+      w: 1,
+      h: 1,
+      d: 1,
+      /*observe: {
        w: 'updateSize',
        h: 'updateSize',
        d: 'updateSize'
-      },
+      },*/
       ready: function() {
-        this.extentChanged();
+        //this.extentChanged();
         this.object = new THREE.CubeGeometry(1, 1, 1);
         this.super();
       },
+      /*
       extentChanged: function() {
         if (this.extent) {
           this.w = this.h = this.d = this.extent;
           this.object.applyMatrix( new THREE.Matrix4().makeScale( this.w, this.h, this.d ) );
         }
       },
-      updateSize: function() {
-        this.object.applyMatrix( new THREE.Matrix4().makeScale( this.w, this.h, this.d ) );
-      }
+      updateSize: function(newSize, oldSize) {
+        var wScale = oldSize- newSize;
+        console.log("updating size to:",this.w,newSize, oldSize, wScale);
+        this.object.scale.x = this.w;
+        this.object.scale.y = this.h;
+        this.object.scale.y = this.d;
+        //this.object.applyMatrix( new THREE.Matrix4().makeScale( wScale, 1, 1 ) );
+      }*/
     });
   </script>
 </polymer-element>
@@ -275,11 +276,30 @@
   </script>
 </polymer-element> 
 
-<polymer-element name="three-js-cube" extends="three-js-mesh" attributes="color w h d" noscript lightdom>
+<polymer-element name="three-js-cube" extends="three-js-mesh" attributes="color w d h">
   <template>
-    <three-js-cubeGeometry w="{{w}}" h="{{h}}" d="{{d}}" id="geom"></three-js-cubeGeometry>
+    <three-js-cubeGeometry id="geom"></three-js-cubeGeometry>
     <three-js-material kind="lambert" color="{{color}}" id="mat"></three-js-material>
   </template>
+  <script>
+    Polymer('three-js-cube', {
+    w:20,
+    d:20,
+    h:20,
+    observe: {
+       w: 'updateSize',
+       h: 'updateSize',
+       d: 'updateSize'
+      },
+  
+    updateSize: function() {
+        this.object.scale.x = this.w;
+        this.object.scale.y = this.d;
+        this.object.scale.z = this.h;
+        console.log("setting scale to ",this.w, this.d, this.h);
+      }
+    });
+  </script>
 </polymer-element>
 
 <polymer-element name="three-js-sphere" extends="three-js-mesh" attributes="color r" noscript lightdom>

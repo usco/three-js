@@ -15,12 +15,14 @@
       autoRotateSpeed:4.0,
       object: null,
       ready: function() {
-        this.object = new THREE.OrbitControls();//FIXME: hack !!
+        this.object = new THREE.OrbitControls();
       },
       init:function(camera, renderer)
       {
-        this.camera= camera;
-        this.object = new THREE.OrbitControls( this.camera, renderer.domElement, this.cameraUp );
+        this.object.object = camera;
+        this.object.domElement = renderer.domElement;
+        this.object.upVector = this.cameraUp;
+
 		    this.object.userPanSpeed = this.panSpeed;
 		    this.object.userZoomSpeed = this.zoomSpeed;
       	this.object.userRotateSpeed = this.rotateSpeed;
