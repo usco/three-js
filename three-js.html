@@ -4,7 +4,6 @@
 <script src="lib/helpers/selection-helper.js"></script>
 <script src="lib/helpers/normalizeEvent.js"></script>
 
-
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="three-js-baseElements.html">
 <link rel="import" href="three-js-cameras.html">
@@ -12,7 +11,6 @@
 <link rel="import" href="three-helpers.html">
 <link rel="import" href="three-postfx.html">
 <link rel="import" href="three-stats.html">
-
 
 <!--Essentials:
 - view data : width & height
@@ -35,9 +33,6 @@ camera needs:
 controls needs:
 - camera
 - renderer
-
-
-
 -->
 
 <polymer-element name="three-js" attributes="renderNow fullScreen postProcess"
@@ -46,55 +41,7 @@ on-track="{{track}}"
 touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPointerDown}}" on-pointerup="{{onPointerUp}}" 
 >
 <template>
-    <style>
-      :host {
-        display: block;
-        position: relative;
-
-         /*make things unselectable, cross browser*/
-		      -webkit-touch-callout: none;
-		      -webkit-user-select: none;
-		      -khtml-user-select: none;
-		      -moz-user-select: none;
-		      -ms-user-select: none;
-		      user-select: none;
-
-        * {
-		      opacity: 1;
-          transition: opacity 300ms;
-          position: absolute;
-		      overflow:hidden;
-		      background-color:#fff;
-		
-		      /*make things unselectable, cross browser*/
-		      -webkit-touch-callout: none;
-		      -webkit-user-select: none;
-		      -khtml-user-select: none;
-		      -moz-user-select: none;
-		      -ms-user-select: none;
-		      user-select: none;
-	      }
-
-
-      }
-      canvas {
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        z-index:0;
-
-        cursor:default;
-        /*make things unselectable, cross browser*/
-		      -webkit-touch-callout: none;
-		      -webkit-user-select: none;
-		      -khtml-user-select: none;
-		      -moz-user-select: none;
-		      -ms-user-select: none;
-		      user-select: none;
-      }
-    </style>
+  <link rel="stylesheet" type="text/css" href="three-js.css">
 
     <!--experimental
     <input type="range" value="{{hue}}" min="0" max="2" step="0.1" style="z-index:9999999;position: absolute; display:block">

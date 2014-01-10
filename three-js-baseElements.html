@@ -1,4 +1,4 @@
-<polymer-element name="three-js-object" attributes="name x y z rx ry rz castShadow receiveShadow" attributes="name" >
+<polymer-element name="three-js-object" attributes="name x y z rx ry rz castShadow receiveShadow show" attributes="name" >
   <script>
     Polymer('three-js-object', {
       name: '',
@@ -10,60 +10,47 @@
       rz: 0,
       castShadow: false,
       receiveShadow: false,
+      show: true,
       name : null,
       object: null,
       observe: {
        x: 'updatePosition',
        y: 'updatePosition',
        z: 'updatePosition'
-      },
+      },//element lifecycle callbacks
       created:function()
       {
           this.object = new THREE.Object3D();
           this.object.name = this.name;
       },
-      __addOrderedChildren:function()
-      {
-        //FIXME: workaround for bad child element insertion order
-        if(this._tmpBuff)
-        {
-          console.log("this._tmpBuff.length",this._tmpBuff.length, "of",this.name, this._tmpBuff)
-          for(var i=this._tmpBuff.length-1;i >= 0 ; i--)
-          {
-            var child = this._tmpBuff[i];
-            var childObj = child.object;
-            this._tmpBuff.splice(i, 1);
-
-            if(childObj) console.log("child", child.localName+"_"+child.object.name, "added to ", this.localName+"_"+this.object.name);
-            if(child.object && child.localName !== 'three-js-scene' )
-            {
-              //console.log("child", child.localName+"_"+child.object.name, "added to ", this.localName+"_"+this.object.name);
-              this.object.add(child.object);
-            }
-            else
-            {
-              //console.log("2 child", child.localName, "added to ", this.localName);
-              this.object.add(child);
-            }
-          }
-        }  
-        //this._tmpBuff = null; 
+      enteredView: function() {
+        /*
+        var l = '';
+        var p = this.parentNode;
+        while (p) {
+          l += ':' + p.localName;
+          p = p.parentNode || p.host;
+        }
+        console.log('[%s]: enteredView: parent chain: [%s]', this.localName + (this.id ? '#' + this.id : ''), l);
+        */
+        this.__addOrderedChildren();
+        this.addToParent3();
       },
+      leftView: function() {
+        this.removeFromParent3();
+      },
+      //attribute change handlers / various handlers
+      objectChanged: function() {
+        this.updatePosition();
+      },
+      showChanged: function() {
+        this.object.visible = this.show; //TODO: propagate to children
+      },
+      //public api
       setPosition: function(x, y, z) {
         this.x = x;
         this.y = y;
         this.z = z;
-      },
-      objectChanged: function() {
-        this.updatePosition();
-      },
-      updatePosition: function() {
-        if (this.object) {
-          this.object.position.set(Number(this.x), Number(this.y), Number(this.z));
-          this.object.rotation.set(this.rx * Math.PI/180, this.ry * Math.PI/180, this.rz * Math.PI/180);
-          this.object.castShadow = this.castShadow;
-          this.object.receiveShadow = this.receiveShadow;
-        }
       },
       add3: function(child) {
           //TODO: do this MUCH better
@@ -102,23 +89,42 @@
           console.log('[%s]: REMOVED from threejs-objectParent', this.localName + (this.id ? '#' + this.id : ''));
         }
       },
-      enteredView: function() {
-        /*
-        var l = '';
-        var p = this.parentNode;
-        while (p) {
-          l += ':' + p.localName;
-          p = p.parentNode || p.host;
-        }
-        console.log('[%s]: enteredView: parent chain: [%s]', this.localName + (this.id ? '#' + this.id : ''), l);
-        */
-        this.__addOrderedChildren();
-        this.addToParent3();
-        
+      //helpers
+      __addOrderedChildren:function()
+      {
+        //FIXME: workaround for bad child element insertion order
+        if(this._tmpBuff)
+        {
+          console.log("this._tmpBuff.length",this._tmpBuff.length, "of",this.name, this._tmpBuff)
+          for(var i=this._tmpBuff.length-1;i >= 0 ; i--)
+          {
+            var child = this._tmpBuff[i];
+            var childObj = child.object;
+            this._tmpBuff.splice(i, 1);
+
+            if(childObj) console.log("child", child.localName+"_"+child.object.name, "added to ", this.localName+"_"+this.object.name);
+            if(child.object && child.localName !== 'three-js-scene' )
+            {
+              //console.log("child", child.localName+"_"+child.object.name, "added to ", this.localName+"_"+this.object.name);
+              this.object.add(child.object);
+            }
+            else
+            {
+              //console.log("2 child", child.localName, "added to ", this.localName);
+              this.object.add(child);
+            }
+          }
+        }  
+        //this._tmpBuff = null; 
       },
-      leftView: function() {
-        this.removeFromParent3();
-      }
+      updatePosition: function() {
+        if (this.object) {
+          this.object.position.set(Number(this.x), Number(this.y), Number(this.z));
+          this.object.rotation.set(this.rx * Math.PI/180, this.ry * Math.PI/180, this.rz * Math.PI/180);
+          this.object.castShadow = this.castShadow;
+          this.object.receiveShadow = this.receiveShadow;
+        }
+      },
     });
   </script>
 </polymer-element>
@@ -262,10 +268,7 @@
 <polymer-element name="three-js-SphereGeometry" attributes="r">
   <script>
     Polymer('three-js-SphereGeometry', {
-      r: 10,
-      observe: {
-       r: 'updateSize',
-      },
+      r: 1,
       ready: function() {
         this.object = new THREE.SphereGeometry(1, 50, 50);
       },
@@ -291,12 +294,10 @@
        h: 'updateSize',
        d: 'updateSize'
       },
-  
     updateSize: function() {
         this.object.scale.x = this.w;
         this.object.scale.y = this.d;
         this.object.scale.z = this.h;
-        console.log("setting scale to ",this.w, this.d, this.h);
       }
     });
   </script>
@@ -304,9 +305,22 @@
 
 <polymer-element name="three-js-sphere" extends="three-js-mesh" attributes="color r" noscript lightdom>
   <template>
-    <three-js-sphereGeometry r="{{r}}" id="geom"></three-js-sphereGeometry>
+    <three-js-sphereGeometry id="geom"></three-js-sphereGeometry>
     <three-js-material kind="lambert" color="{{color}}" id="mat"></three-js-material>
   </template>
+  <script>
+    Polymer('three-js-sphere', {
+    r:10,
+    observe: {
+     r: 'updateSize',
+    },
+    updateSize: function() {
+        this.object.scale.x = this.r;
+        this.object.scale.y = this.r;
+        this.object.scale.z = this.r;
+    }
+    });
+  </script>
 </polymer-element>
 
 

@@ -1,0 +1,87 @@
+<html>
+  <head>
+    <title>Three.js polymer.js viewer example</title>
+      <script src="components/platform/platform.js"></script>
+      <link rel="import" href="components/polymer/polymer.html">
+      <link rel="import" href="components/polymer-three-js/three-js.html">
+
+      <style>
+         html, body, three-js {
+          left:0px;top:0px;width:100%;height:100%;background-color:#ffffff;      
+    }
+      </style>
+  </head>
+<body>
+  <!--Experimental-->
+  <polymer-element name="object-attrs" attributes="autorotate fullscreen axes xpos width depth height radius " >
+
+    <template>
+      <style>
+      </style>
+        <div style="z-index:9999;position:absolute">
+            <span> Object controls</span>
+            <div>
+              X position <input type="range" value="{{xpos}}">
+              <input type="text" value="{{xpos}}">
+            </div>
+            <div>
+              Width <input type="range" value="{{width}}" min=1>
+              <input type="text" value="{{width}}">
+            </div>
+            <div>
+              Depth <input type="range" value="{{depth}}" min=1>
+              <input type="text" value="{{depth}}">
+            </div>
+            <div>
+              Height <input type="range" value="{{height}}" min=1>
+              <input type="text" value="{{height}}">
+            </div>
+            <div>
+              Sphere radius <input type="range" value="{{radius}}" min=1>
+              <input type="text" value="{{radius}}">
+            </div>
+
+            <span> View controls</span>
+            Autorotate view <input type="checkbox"  checked="{{autorotate}}">
+            <input type="text" value="{{autorotate}}">
+
+            Show axes <input type="checkbox" checked="{{axes}}">
+            <input type="text" value="{{axes}}">
+
+            Fullscreen <input type="checkbox" checked="{{fullscreen}}">
+            <input type="text" value="{{fullscreen}}">
+        </div>
+        <three-js postProcess fullscreen="{{fullscreen}}">
+          <three-stats id="stats" show></three-stats>
+          <three-js-combinedCamera tracking x="100" y="100" z="200" orientation="top" cameraUp=[0,0,1] ></three-js-combinedCamera>
+          <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" autoRotate="{{autorotate}}"> </three-js-orbitControls>
+
+          <three-js-scene name="caramba" active>
+            <three-js-object hierarchyRoot>
+              <three-js-cube x="{{xpos}}" color="blue" w="{{width}}" d="{{depth}}" h="{{height}}" > </three-js-cube>
+              <three-js-sphere color="blue" r="{{radius}}"  > </three-js-sphere>
+            </three-js-object>
+
+            <three-js-object helpersRoot>
+              <three-axis-helper show="{{axes}}"> </three-axis-helper>
+            </three-js-object>
+          </three-js-scene>
+
+      
+        </three-js>
+    
+    </template>
+    <script>Polymer('object-attrs',{
+      xpos:50,
+      width:17,
+      depth:17,
+      height:17,
+      radius: 25,
+    });
+    </script>
+  </polymer-element>
+  
+  <object-attrs></object-attrs>
+
+</body>
+</html>
