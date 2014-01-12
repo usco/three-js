@@ -39,6 +39,8 @@ controls needs:
 on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" on-three-js-get-camera="{{getCamera}}" 
 on-track="{{track}}"
 touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPointerDown}}" on-pointerup="{{onPointerUp}}" 
+on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" tabindex="0"
+
 >
 <template>
   <link rel="stylesheet" type="text/css" href="three-js.css">
@@ -57,10 +59,10 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
       postProcess: false,
 
       selectedObject : null,
+      selectedObjects: [],
       highlightedObject: null,
 
-      hue:3.0,
-
+      keys:[],
       //generic custom element callbacks
       created: function() {
         this.width = 0;
@@ -143,7 +145,8 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
       setupHelpers: function()
       {
         console.log("setup helpers");
-        var activeScene = document.querySelectorAll('three-js-scene[active]')[0];
+        var activeScene = this.querySelectorAll('three-js-scene[active]')[0];
+        console.log("activeScene",activeScene,this.querySelectorAll('three-js-scene'))
         if(activeScene)
         {
           this.hierarchyRoot = activeScene.querySelector('[hierarchyRoot]').object;
@@ -196,11 +199,21 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
         this.fullScreen = !(!document.fullscreenElement &&    // alternative standard method
         !document.mozFullScreenElement && !document.webkitFullscreenElement);
       },
+      onKeyPress:function(event)
+      {
+        //console.log("key pressed")
+      },
       onKeyDown:function(event)
 	    {//overidable method stand in
+        this.keys[event.keyCode] = true;
+        this.shiftPress = event.shiftKey;
+        //console.log("key down")
 	    },
       onKeyUp:function(event)
 	    {//overidable method stand in
+        this.keys[event.keyCode] = false;
+        this.shiftPress = event.shiftKey;
+        //console.log("keys",this.keys);
 	    },
       onPointerMove:function(event)
       {
@@ -225,6 +238,12 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
         this._noMove = true;
         this._actionInProgress = true;
         this._pushStart = new Date().getTime();
+
+			  //set focus so keyboard binding works
+			  if( document.activeElement != this.impl)
+			  {
+				  this.impl.focus();
+        }
 
       },
       onPointerUp:function(event)
@@ -251,7 +270,15 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
           else if( selected != null && selected != undefined)
           {
             this.selectionHelper.selectObjectAt(x,y)
-            this.selectedObject = selected
+            this.selectedObject = selected;
+
+            //multi select handling
+            if(!(this.shiftPress))
+            {
+              this.selectedObjects=[];
+            }
+            if( this.selectedObjects.indexOf(selected)==-1 ) this.selectedObjects.push(selected);
+            
           }
           else
           {
@@ -259,6 +286,9 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
             {
               this.selectedObject = null;
 					    this.selectionHelper._unSelect();
+
+              //multiselect
+              this.selectedObjects=[];
             }
             else
             {
@@ -354,10 +384,15 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
            var scene = child.object;
            var active = child.attributes.getNamedItem("active");
            this._injectScene(scene, active)
+
+           if(this.scene && this.camera) this.setupHelpers();
+            
         }
         if (child.localName === 'three-js-camera' || child.localName === 'three-js-combinedcamera' ) {
           var camera = child.object;
           this._injectCamera(camera);
+
+          if(this.scene && this.camera) this.setupHelpers();
         }
 
         if( child.localName === 'three-js-orbitcontrols')
@@ -431,11 +466,11 @@ touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPoint
       },
       highlightedObjectChanged:function(oldHighlight)
       {
-        console.log("highlighted object changed",this.highlightedObject);
+        //console.log("highlighted object changed",this.highlightedObject);
       },
       selectedObjectChanged:function(oldSelection)
       {
-         console.log("SELECTED object changed",this.selectedObject);
+         //console.log("SELECTED object changed",this.selectedObject);
       },
       invalidate: function() {
         this.validateJob = this.job(this.validateJob, this.validate, 250);
