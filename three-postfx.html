@@ -147,18 +147,17 @@
       /*alt method to get scene
       var activeScene = document.querySelectorAll('three-js-scene[active]')[0];
       this.hierarchyRoot = activeScene.querySelector('[hierarchyRoot]').object;*/
-
       this.async(function() {
-        var detail = this.fire('three-js-get-renderer', {});
+        var detail = this.fire('three-js-get-renderer', {}).detail;
         if (detail) {this.renderer = detail.renderer;}
-        var detail = this.fire('three-js-get-scene', {});
+        var detail = this.fire('three-js-get-scene', {}).detail;
         if (detail) {this.scene = detail.scene;}
-        var detail = this.fire('three-js-get-camera', {});
+        var detail = this.fire('three-js-get-camera', {}).detail;
         if (detail) {this.camera = detail.camera;}
-
+        
         if(this.scene && this.renderer && this.camera)
         {
-          console.log("bla: renderer",this.renderer, "scene", this.scene);
+          //console.log("bla: renderer",this.renderer, "scene", this.scene);
           this.init();
           this.addToParent3();
         }
@@ -167,7 +166,7 @@
     //public api
     addEffect:function(name, effect)
     {
-      console.log("adding effect",name, effect);
+      //console.log("adding effect",name, effect);
       this.effects.push( effect );
     },
     addToParent3: function() {

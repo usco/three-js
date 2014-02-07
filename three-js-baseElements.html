@@ -325,14 +325,18 @@
 </polymer-element>
 
 
-<polymer-element name="three-js-light" extends="three-js-object" attributes="kind color intensity distance angle exponent shadow">
+<polymer-element name="three-js-light" extends="three-js-object" attributes="kind color secColor intensity distance angle exponent shadow">
   <script>
     Polymer('three-js-light', {
       kinds: {
         point: 'PointLight',
-        spot: 'SpotLight'
+        spot: 'SpotLight',
+        dir:  'DirectionalLight',
+        ambient:'AmbientLight',
+        hemi:'HemisphereLight'
       },
       color: 0xFFFFFF,
+      secColor: 0xFFFFFF, // for hemilight
       shadow: false,
       intensity: 1,
       distance: 0,
@@ -340,7 +344,13 @@
       exponent: 8,
       ready: function() {
         var kind = this.kinds[this.kind] || this.kinds.point;
+        if(kind == "HemisphereLight")
+        {
+         this.object = new THREE[kind](this.color,this.secColor, this.intensity);
+        }
+        else{
         this.object = new THREE[kind](this.color, this.intensity, this.distance, this.angle * Math.PI/180, this.exponent);
+        }
         if (this.shadow) {
           this.object.castShadow = true;
           this.object.shadowMapWidth = 1024;

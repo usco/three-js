@@ -179,7 +179,7 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         }
         
 		    this.renderer.setSize( this.width,this.height );
-
+        console.log("postProcess",this.postProcess, "comp",this.finalComposer);
         if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true && this.finalComposer)
         {
           this.finalComposer.setSize(this.hRes, this.vRes);
@@ -359,17 +359,16 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       },
       _injectCamera: function(camera){
         this.camera = camera;
-          
         this.camera.aspect = this.width / this.height;
         this.camera.setSize(this.width,this.height);
 		    this.camera.updateProjectionMatrix();
 
-        console.log("camera", camera, this.width, this.height);
-        console.log("camera is active")
+        //console.log("camera", camera, this.width, this.height);
+        //console.log("camera is active")
       },
       _injectControls: function(controls){
         this.controls = controls;
-        console.log("controls are active",controls)
+        //console.log("controls are active",controls)
       },
 
       add3: function(child) {
@@ -510,7 +509,9 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
 	        if(this.controls) this.controls.update();
           for(var i=0;i<this.updatables.length;i++)//any external items needing the same "heartbeat" can register "updatables"
           {
-            this.updatables[i].update();
+            try{
+            this.updatables[i]();
+            }catch(error){}
           }
       },
       //utilities: TODO: move this to seperate js file
