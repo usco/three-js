@@ -35,7 +35,7 @@ controls needs:
 - renderer
 -->
 
-<polymer-element name="three-js" attributes="renderNow fullScreen postProcess"
+<polymer-element name="three-js" attributes="renderNow fullScreen postProcess selectedObjects highlightedObject"
 on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" on-three-js-get-camera="{{getCamera}}" 
 on-track="{{track}}"
 touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPointerDown}}" on-pointerup="{{onPointerUp}}" 
@@ -57,11 +57,10 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       renderNow: false,
       fullScreen: false,
       postProcess: false,
-
-      selectedObject : null,
+      
       selectedObjects: [],
       highlightedObject: null,
-
+    
       keys:[],
       //generic custom element callbacks
       created: function() {
@@ -69,8 +68,7 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         this.height = 0;
         this.bg = "rgb(255, 255, 255)";
 
-        //this.scene = new THREE.Scene();
-        //this.hierarchyRoot = new THREE.Object3D();
+        this.updatables = [];
       },
       ready: function() {
         this.setupRenderer();
@@ -270,21 +268,19 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
           else if( selected != null && selected != undefined)
           {
             this.selectionHelper.selectObjectAt(x,y)
-            this.selectedObject = selected;
 
             //multi select handling
             if(!(this.shiftPress))
             {
               this.selectedObjects=[];
             }
-            if( this.selectedObjects.indexOf(selected)==-1 ) this.selectedObjects.push(selected);
+            if( this.selectedObjects.indexOf(selected)== -1 ){this.selectedObjects.push(selected)};
             
           }
           else
           {
             if (this._longAction == false)
             {
-              this.selectedObject = null;
 					    this.selectionHelper._unSelect();
 
               //multiselect
@@ -512,6 +508,10 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       update: function()
       {
 	        if(this.controls) this.controls.update();
+          for(var i=0;i<this.updatables.length;i++)//any external items needing the same "heartbeat" can register "updatables"
+          {
+            this.updatables[i].update();
+          }
       },
       //utilities: TODO: move this to seperate js file
 	    convertColor: function(hex)
