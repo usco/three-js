@@ -129,8 +129,8 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         }
 		    renderer.setSize(this.offsetWidth, this.offsetHeight);
 
-		    renderer.shadowMapEnabled = this.showShadows;
-		    renderer.shadowMapAutoUpdate = this.showShadows;
+		    renderer.shadowMapEnabled = true;//this.showShadows;
+		    renderer.shadowMapAutoUpdate = true; //this.showShadows;
 		    renderer.shadowMapSoft = true;
 		    renderer.shadowMapType = THREE.PCFShadowMap; // options are THREE.BasicShadowMap | THREE.PCFShadowMap | THREE.PCFSoftShadowMap
         this.convertColor(this.bg);
@@ -148,10 +148,8 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         if(activeScene)
         {
           this.hierarchyRoot = activeScene.querySelector('[hierarchyRoot]').object;
-          console.log("gne");
           this.selectionHelper = new SelectionHelper({camera:this.camera,color:0x000000,textColor:0xffffff})
 		      this.selectionHelper.hiearchyRoot = this.hierarchyRoot.children;
-
           //TODO: move this?
           this.selectionHelper.viewWidth = this.width;
           this.selectionHelper.viewHeight = this.height;

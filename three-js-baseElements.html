@@ -352,20 +352,35 @@
         this.object = new THREE[kind](this.color, this.intensity, this.distance, this.angle * Math.PI/180, this.exponent);
         }
         if (this.shadow) {
+          console.log("prout", this.shadow,this.object);
           this.object.castShadow = true;
           this.object.shadowMapWidth = 1024;
           this.object.shadowMapHeight = 1024;
           this.object.shadowCameraNear = 500;
-          this.object.shadowCameraFar = 4000;
+          this.object.shadowCameraFar = 4000;//3500
           this.object.shadowCameraFov = 30;
-          this.object.shadowBias = 0.0001;
-          this.object.shadowDarkness = 0.5;
+          this.object.shadowBias = 0.0001;//-0.0001;
+          this.object.shadowDarkness = 0.5;		//dirLight.shadowDarkness = 0.35;
+
+          /*var d = 50;
+		      dirLight.shadowCameraLeft = -d;
+		      dirLight.shadowCameraRight = d;
+		      dirLight.shadowCameraTop = d;
+		      dirLight.shadowCameraBottom = -d;
+          dirLight.onlyShadow = true;
+
+          var shadowConst = 0.8;
+          dirLight.shadowDarkness = shadowConst * dirLight.intensity;*/
+
         }
         this.object.name = this.name;
         this.super();
+        if(kind == "DirectionalLight" ) this.object.castShadow = true;
       },
       updatePosition: function() {
         this.super();
+        var kind = this.kinds[this.kind] || this.kinds.point;
+        if(kind == "DirectionalLight") this.object.castShadow = true;
         //console.log('updatePosition:', this.kind, this)
       }
     });
