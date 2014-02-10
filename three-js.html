@@ -1,5 +1,5 @@
 <script src="lib/Detector.js"></script>
-<script src="lib/three.min.js"></script>
+<script src="lib/three.js"></script>
 <script src="lib/helpers/screen-capture.js"></script>
 <script src="lib/helpers/selection-helper.js"></script>
 <script src="lib/helpers/normalizeEvent.js"></script>
@@ -44,13 +44,12 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
 >
 <template>
   <link rel="stylesheet" type="text/css" href="three-js.css">
-
     <!--experimental
     <input type="range" value="{{hue}}" min="0" max="2" step="0.1" style="z-index:9999999;position: absolute; display:block">
     <input type="text" value="{{hue}}" style="z-index:9999999;position: absolute;top:30px; display:block">
-    <content select="three-js-scene" id="scene-inner"> </content>
-    <content select="three-effect-composer" id="effects"> </content> -->
-
+    <content select="three-js-scene" id="scene-inner"> </content>-->
+    <content select="drag-drop" id="dragDropLayer"> </content> 
+    <content select="three-stats" ></content>
   </template>
   <script>
     Polymer('three-js', {
