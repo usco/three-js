@@ -40,14 +40,10 @@ on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" 
 on-track="{{track}}"
 touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPointerDown}}" on-pointerup="{{onPointerUp}}" 
 on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" tabindex="0"
-
 >
 <template>
   <link rel="stylesheet" type="text/css" href="three-js.css">
-    <!--experimental
-    <input type="range" value="{{hue}}" min="0" max="2" step="0.1" style="z-index:9999999;position: absolute; display:block">
-    <input type="text" value="{{hue}}" style="z-index:9999999;position: absolute;top:30px; display:block">
-    <content select="three-js-scene" id="scene-inner"> </content>-->
+    <content select="three-js-scene" id="scene-inner"> </content>
     <content select="drag-drop" id="dragDropLayer"> </content> 
     <content select="three-stats" ></content>
   </template>
@@ -56,17 +52,14 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       renderNow: false,
       fullScreen: false,
       postProcess: false,
-      
       selectedObjects: [],
       highlightedObject: null,
-    
       keys:[],
       //generic custom element callbacks
       created: function() {
         this.width = 0;
         this.height = 0;
         this.bg = "rgb(255, 255, 255)";
-
         this.updatables = [];
       },
       ready: function() {
@@ -97,13 +90,11 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
             }
           }
         }  
-        console.log("ready",this,"_elementPrepared",this._elementPrepared,"inserted", this.__inserted,"upgraded", this.__upgraded__);
       },
       enteredView:function()
       {
         //setup various handlers
         window.addEventListener("resize",this.onResize.bind(this));
-
         if (this.requestFullscreen) document.addEventListener("fullscreenchange", this.onFullScreenChange.bind(this), false);
         if (this.mozRequestFullScreen) document.addEventListener("mozfullscreenchange", this.onFullScreenChange.bind(this), false);
         if (this.webkitRequestFullScreen) document.addEventListener("webkitfullscreenchange", this.onFullScreenChange.bind(this), false);
@@ -112,20 +103,14 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         this.setupHelpers();
         this.animate();
         this.onResize();
-
-        console.log("entered",this,"_elementPrepared",this._elementPrepared,"inserted", this.__inserted,"upgraded", this.__upgraded__);
       },
       //initialization methods
       setupRenderer: function()
       {
         if ( Detector.webgl )
-        {
-				    var renderer = new THREE.WebGLRenderer( {antialias:true, preserveDrawingBuffer:true} );
-        }
+        {var renderer = new THREE.WebGLRenderer( {antialias:true, preserveDrawingBuffer:true} );}
 		    else
-        {
-				    var renderer = new THREE.CanvasRenderer(); 
-        }
+        { var renderer = new THREE.CanvasRenderer(); }
 		    renderer.setSize(this.offsetWidth, this.offsetHeight);
 
 		    renderer.shadowMapEnabled = true;//this.showShadows;
@@ -141,9 +126,10 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       },
       setupHelpers: function()
       {
-        console.log("setup helpers");
-        var activeScene = this.querySelectorAll('three-js-scene[active]')[0];
-        console.log("activeScene",activeScene,this.querySelectorAll('three-js-scene'))
+        //console.log("setup helpers");
+        var activeScenes = this.querySelectorAll('three-js-scene[active]');
+        console.log("activeScenes",activeScenes)
+        var activeScene = activeScenes[0];
         if(activeScene)
         {
           this.hierarchyRoot = activeScene.querySelector('[hierarchyRoot]').object;
@@ -176,7 +162,6 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         }
         
 		    this.renderer.setSize( this.width,this.height );
-        console.log("postProcess",this.postProcess, "comp",this.finalComposer);
         if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true && this.finalComposer)
         {
           this.finalComposer.setSize(this.hRes, this.vRes);
@@ -208,7 +193,6 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
 	    {//overidable method stand in
         this.keys[event.keyCode] = false;
         this.shiftPress = event.shiftKey;
-        //console.log("keys",this.keys);
 	    },
       onPointerMove:function(event)
       {
@@ -272,7 +256,6 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
               this.selectedObjects=[];
             }
             if( this.selectedObjects.indexOf(selected)== -1 ){this.selectedObjects.push(selected)};
-            
           }
           else
           {
@@ -293,7 +276,7 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       toggleScene:function( name )
       {
         //TODO: cleanup
-        console.log("scenes", this.scenes);
+        console.log("scenes", this.scene);
         var scene = this.scenes[name];
         if(scene) this.scene = scene; this.setupHelpers(); this.scene.add( this.camera);
       },
@@ -309,7 +292,7 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
           this.renderer.initWebGLObjects(this.scene);
         }
       },
-	    addToScene: function ( object )
+	    addToScene: function ( object, sceneName )
 	    {
 		    try
 		    {
@@ -317,7 +300,7 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
 		    }
 		    catch(error)
 		    {
-			    console.log("Failed to add object",object, "to scene: error", error)
+			    console.log("Failed to add object",object, "to scene: error", error.message)
 		    }
 	    },
       removeFromScene : function( object )
@@ -351,7 +334,12 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         {
           if(this.scene) scene.children = this.scene.children;
           this.scene = scene;
-          console.log("scene", scene.name,"is active")
+          //console.log("scene", scene.name,"is active")
+        }
+        
+        if(this.scene && this.camera)
+        {
+            this.fire("sceneready", {scene:this.scene,camera:this.camera});
         }
       },
       _injectCamera: function(camera){
@@ -359,9 +347,6 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         this.camera.aspect = this.width / this.height;
         this.camera.setSize(this.width,this.height);
 		    this.camera.updateProjectionMatrix();
-
-        //console.log("camera", camera, this.width, this.height);
-        //console.log("camera is active")
       },
       _injectControls: function(controls){
         this.controls = controls;
@@ -370,7 +355,6 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
 
       add3: function(child) {
         console.log("In root element : child", child.localName,child.object)
-
         //TODO: do this MUCH better
         if( child.localName === 'three-js-scene'){
            var scene = child.object;
@@ -398,7 +382,6 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         }
         if( child.localName === 'three-effect-composer')
         {
-          console.log("adding effect composer");
           this.finalComposer = child.composer;
           this.finalComposer.setSize(this.width, this.height);
         }
@@ -409,7 +392,6 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       },
       getRenderer: function(event) {
         event.detail.renderer = this.renderer;
-        console.log("here")
         //return this.renderer;
       },
       getScene: function(event) {
@@ -479,7 +461,6 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       //other
       render: function() {
         if (! this.camera) {
-          console.log('no camera');
           return;}
         if (this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true && this.finalComposer)
         {
@@ -493,6 +474,10 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         else
         {
           this.renderer.render( this.scene, this.camera );
+          /*renderer.clear();
+		renderer.render( scene, camera );
+		renderer.render( sceneHelpers, camera );*/
+      
         }
       },
       animate: function() 

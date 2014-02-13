@@ -119,20 +119,9 @@
 
 
 <polymer-element name="three-effect-composer" >
-  <!--<template>
-    <style>
-      :host {
-        opacity: 0.6;
-        transition: opacity 400ms ease-in-out;
-         color:green;
-        display:block;
-      }
-      :host:hover { opacity: 1; }
-    </style>
-      <content select="hueSaturation-fx" id="postFx"></content>
-  </template>-->
   <script>Polymer('three-effect-composer',{
     enabled: true,
+    active:false,
     effects: [],
     resolutionBase : 1,
     resolutionMultiplier : 1.5,
@@ -140,7 +129,6 @@
     renderer: null,
     composer: null,
 
-    hue:0,
     enteredView:function()
     {
       console.log("effect composer entered view",this.hue);
@@ -158,28 +146,15 @@
         if(this.scene && this.renderer && this.camera)
         {
           //console.log("bla: renderer",this.renderer, "scene", this.scene);
-          this.init();
+          this._init();
           this.addToParent3();
         }
       });
     },
-    //public api
-    addEffect:function(name, effect)
+    //initialization methods
+    _init:function()
     {
-      //console.log("adding effect",name, effect);
-      this.effects.push( effect );
-    },
-    addToParent3: function() {
-        if (this.parentNode.add3 && !this.objectParent) {
-          this.objectParent = this.parentNode;
-          this.parentNode.add3(this);
-          var parentName = this.parentNode.localName;
-          //console.log('[%s]: request adding to [%s]', this.localName + (this.id ? '#' + this.id : ''), parentName);
-        }
-      },
-    init:function()
-    {
-      console.log("inititalizing effect composer");
+      //console.log("inititalizing effect composer");
       if(this.renderer instanceof THREE.WebGLRenderer && this.enabled)
       {
         //shaders, post processing etc, various passes and rtts
@@ -198,14 +173,27 @@
         }
         //make sure the last pass renders to screen
         this.composer.passes[this.composer.passes.length-1].renderToScreen = true;
-        console.log("composer", this.composer);
+        this.composer.__element = this;
       }
     },
-    //use for resizing etc
-    update:function()
+    //attribute change handlers
+    effectsChanged:function()
     {
-
-    }
+      this.active = true = (this.effects.length>0)
+    },
+    //public api
+    addEffect:function(name, effect)
+    {
+      this.effects.push( effect );
+    },
+    addToParent3: function() {
+      if (this.parentNode.add3 && !this.objectParent) {
+        this.objectParent = this.parentNode;
+        this.parentNode.add3(this);
+        var parentName = this.parentNode.localName;
+        //console.log('[%s]: request adding to [%s]', this.localName + (this.id ? '#' + this.id : ''), parentName);
+      }
+    },
   });
   </script>
 </polymer-element>
