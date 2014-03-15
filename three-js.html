@@ -52,7 +52,7 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       renderNow: false,
       fullScreen: false,
       postProcess: false,
-      selectedObjects: [],
+      selectedObjects: null,
       highlightedObject: null,
       keys:[],
       //generic custom element callbacks
@@ -60,7 +60,22 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         this.width = 0;
         this.height = 0;
         this.bg = "rgb(255, 255, 255)";
-        this.updatables = [];
+        this.updatables = [];//storage for all items that need to be synch with the update method
+        this.selectedObjects = [];
+        
+        this.observer = new ArrayObserver(this.selectedObjects);
+        this.observer.open(function(splices) {
+          console.log("something changed");
+          // respond to changes to the elements of arr.
+          splices.forEach(function(splice) {
+            console.log("foobar");
+            console.log(splice.index,splice.removed,splice.addedCount ); // index position that the change occurred.
+            //splice.removed; // an array of values representing the sequence of elements which were removed
+            //splice.addedCount; // the number of elements which were inserted.
+          });
+        });
+        
+        
       },
       ready: function() {
         this.setupRenderer();
@@ -249,13 +264,31 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
           else if( selected != null && selected != undefined)
           {
             this.selectionHelper.selectObjectAt(x,y)
-
             //multi select handling
             if(!(this.shiftPress))
             {
-              this.selectedObjects=[];
+              //no shift pressed: single selection
+              //this.selectedObjects=.length = 0;
+              //this.selectedObjects.push(selected);
+              this.selectedObjects=[selected];
             }
-            if( this.selectedObjects.indexOf(selected)== -1 ){this.selectedObjects.push(selected)};
+            else
+            {
+              var tmpArray = [];
+              tmpArray = this.selectedObjects.slice(0);
+              //necessary hack to work with polymer change handlers
+              
+               var index = tmpArray.indexOf(selected);
+               if(index>-1) //already present, remove selection
+               {
+                tmpArray.splice(index,1);
+               }
+               else//not yet present, add selection
+               {
+                tmpArray.push( selected );
+               }
+               this.selectedObjects = tmpArray;
+            }
           }
           else
           {
@@ -264,7 +297,7 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
 					    this.selectionHelper._unSelect();
 
               //multiselect
-              this.selectedObjects=[];
+              this.selectedObjects=[];//.length=0;//=[];
             }
             else
             {
@@ -445,6 +478,19 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       selectedObjectChanged:function(oldSelection)
       {
          //console.log("SELECTED object changed",this.selectedObject);
+      },
+      selectedObjectsChanged:function(oldSelections, newSelections)
+      {
+        function diff(a,b)
+        {
+          return a.filter(function(x) { return b.indexOf(x) < 0; })
+        }
+        var added = diff( newSelections, oldSelections);
+        var removed = diff( oldSelections, newSelections);
+        //console.log("added items",added,"removed", removed);
+        
+        if(added.length>0) this.asyncFire("selectionsAdded",added);
+        if(removed.length>0) this.asyncFire("selectionsRemoved",removed);
       },
       invalidate: function() {
         this.validateJob = this.job(this.validateJob, this.validate, 250);
