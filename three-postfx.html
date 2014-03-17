@@ -12,7 +12,7 @@
     { 
       if(this.parentNode)
       {
-          this.parentNode.addEffect(this.name, this.effect);
+          this.parentNode.addEffect(this);
       }
     }
   });
@@ -118,20 +118,31 @@
   </script>
 
 
-<polymer-element name="three-effect-composer" >
+<polymer-element name="three-effect-composer" attributes="name renderTarget2 toScreen">
   <script>Polymer('three-effect-composer',{
+    name : "",
     enabled: true,
     active:false,
-    effects: [],
+    
+    effects: null,
     resolutionBase : 1,
     resolutionMultiplier : 1.5,
+    width: window.innerWidth || 1,
+    height: height = window.innerHeight || 1,
 
     renderer: null,
     composer: null,
+    target: null,
+    renderTarget2:null,
+    toScreen:false,
 
+    created:function()
+    {
+      this.effects = [];
+    },
     enteredView:function()
     {
-      console.log("effect composer entered view",this.hue);
+      //console.log("effect composer entered view");
       /*alt method to get scene
       var activeScene = document.querySelectorAll('three-js-scene[active]')[0];
       this.hierarchyRoot = activeScene.querySelector('[hierarchyRoot]').object;*/
@@ -145,7 +156,6 @@
         
         if(this.scene && this.renderer && this.camera)
         {
-          //console.log("bla: renderer",this.renderer, "scene", this.scene);
           this._init();
           this.addToParent3();
         }
@@ -158,33 +168,53 @@
       if(this.renderer instanceof THREE.WebGLRenderer && this.enabled)
       {
         //shaders, post processing etc, various passes and rtts
-        var renderPass = new THREE.RenderPass(this.scene, this.camera);
-        var copyPass = new THREE.ShaderPass( THREE.CopyShader );
-
-        this.composer = new THREE.EffectComposer( this.renderer );
-
+        var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
+        this.renderTarget = new THREE.WebGLRenderTarget( this.width, this.height, renderTargetParameters );
+        this.composer = new THREE.EffectComposer( this.renderer, this.renderTarget );
         //prepare the final render passes
-        this.composer.addPass( renderPass );
-
+        
         for(var i=0; i<this.effects.length;i++)
         {
-            var effect = this.effects[i];
-            this.composer.addPass( effect );
+          var effectElement = this.effects[i];
+          if(effectElement.init) effectElement.init(this.renderer, this.scene, this.camera);
+          
+          var effect = effectElement.effect;
+          this.composer.addPass( effect );
         }
+        console.log(this.name + " effects",this.composer.passes);
+        
+        // 
         //make sure the last pass renders to screen
-        this.composer.passes[this.composer.passes.length-1].renderToScreen = true;
+        if(this.toScreen)
+        {
+          this.composer.passes[this.composer.passes.length-1].renderToScreen = true;
+        }
         this.composer.__element = this;
+        this.renderTarget2 = this.composer.renderTarget2;
+        
+        this.composer.subComposers = [];
       }
     },
     //attribute change handlers
     effectsChanged:function()
     {
-      this.active = true = (this.effects.length>0)
+      this.active = (this.effects.length>0)
     },
     //public api
-    addEffect:function(name, effect)
+    addEffect:function(effect)
     {
       this.effects.push( effect );
+    },
+    add3:function ( child )
+    {
+      if( child.localName === 'three-effect-composer')
+      {
+        //console.log("adding sub composer");
+        this.composer.subComposers.push( child.composer );
+        
+        //FIXME:hack
+        this.renderTarget2 = this.composer.renderTarget2;
+      }
     },
     addToParent3: function() {
       if (this.parentNode.add3 && !this.objectParent) {
