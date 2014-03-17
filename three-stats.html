@@ -2,11 +2,47 @@
 <polymer-element name="three-stats" attributes="show" >
 	<template>
     <style>
-      @host{
-        *{ position:absolute; top:0px;z-index:99999}
+      :host{
+        position:absolute; top:0px;z-index:99999
       }
     </style>
 		<div id="stats" hidden?="{{!show}}"></div>
 	</template>
-	<script src="three-stats.js"></script>
+	<script>
+	  Polymer('three-stats', {
+	    show:      false,
+	    updatable: true,
+		  ready: function() {
+			  this.init();
+		  },
+		  enteredView:function(){
+		    this.addToParent3();
+		  },
+		  init:function()
+		  {
+			  stats = new Stats();
+			  stats.domElement.style.left = '100px';
+			  stats.domElement.style.zIndex = 100;
+			  this.$.stats.appendChild( stats.domElement );
+			  this.stats = stats;
+		  },
+		  update:function()
+		  {
+			  this.stats.update();
+		  },
+		  addToParent3: function() {
+        if (this.parentNode.add3 && !this.objectParent) {
+          this.objectParent = this.parentNode;
+          this.parentNode.add3(this);
+          console.log("adding three-stats");
+        }
+      },
+      removeFromParent3: function() {
+        if (this.objectParent) {
+          this.objectParent.remove3(this);
+          this.objectParent = null;
+        }
+      },
+		});
+	</script>
 </polymer-element>
