@@ -62,20 +62,6 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         this.bg = "rgb(255, 255, 255)";
         this.updatables = [];//storage for all items that need to be synch with the update method
         this.selectedObjects = [];
-        
-        this.observer = new ArrayObserver(this.selectedObjects);
-        this.observer.open(function(splices) {
-          console.log("something changed");
-          // respond to changes to the elements of arr.
-          splices.forEach(function(splice) {
-            console.log("foobar");
-            console.log(splice.index,splice.removed,splice.addedCount ); // index position that the change occurred.
-            //splice.removed; // an array of values representing the sequence of elements which were removed
-            //splice.addedCount; // the number of elements which were inserted.
-          });
-        });
-        
-        
       },
       ready: function() {
         this.setupRenderer();
@@ -387,8 +373,14 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       },
 
       add3: function(child) {
-        console.log("In root element : child", child.localName,child.object)
+        //console.log("In root element : child", child.localName,child.object)
         //TODO: do this MUCH better
+        if(child.updatable)
+        {
+          //console.log("updatable, child", child);
+          this.updatables.push( child );
+        }
+        
         if( child.localName === 'three-js-scene'){
            var scene = child.object;
            var active = child.attributes.getNamedItem("active");
@@ -515,6 +507,29 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
           THREE.EffectComposer.quad = new THREE.Mesh( new THREE.PlaneGeometry( 2, 2 ), null );
           THREE.EffectComposer.scene = new THREE.Scene();
           THREE.EffectComposer.scene.add( THREE.EffectComposer.quad );
+          
+          //FIXME:hack
+          //console.log("this.finalComposer",this.finalComposer.subComposers);
+          if(this.finalComposer.subComposers)
+          {
+            for(var i=0;i<this.finalComposer.subComposers.length;i++)
+            {
+              this.finalComposer.subComposers[i].render();
+            }
+          }
+          //hack
+          if(this.finalComposer.subComposers)
+          {
+            //console.log("rendering",this.finalComposer.subComposers);
+            var normal  = this.finalComposer.subComposers[0].renderTarget2;
+            var depth   = this.finalComposer.subComposers[1].renderTarget2;
+            
+            var lastPass = this.finalComposer.passes[this.finalComposer.passes.length-2];
+            //throw new Error("sf");
+            lastPass.uniforms[ 'tNormal' ].value  = normal;
+            lastPass.uniforms[ 'tDepth' ].value   = depth;
+          }
+          
           this.finalComposer.render();
         }
         else
@@ -538,15 +553,20 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
           for(var i=0;i<this.updatables.length;i++)//any external items needing the same "heartbeat" can register "updatables"
           {
             try{
-            this.updatables[i]();
-            }catch(error){}
+            if(this.updatables[i].update)
+            {
+              this.updatables[i].update();
+            }
+            else{
+            this.updatables[i]();}
+            }catch(error){};//console.log("error in update", error.message);}
           }
       },
       //utilities: TODO: move this to seperate js file
 	    convertColor: function(hex)
 	    {
-        hex = parseInt("0x"+hex.split('#').pop(),16);
-        return  hex;
+        hex = new THREE.Color().setStyle(hex);
+        this.bg = hex;
 	    },
       _setStyle:function()
       {
@@ -556,6 +576,8 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
 	      this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
         //setup backround color
 	      this.bg = cs.getPropertyValue("background-color");
+	      this.convertColor(this.bg);
+		    this.renderer.setClearColor( this.bg, 1 );	  
       },
     });
   </script>
