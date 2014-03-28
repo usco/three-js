@@ -475,6 +475,8 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       {
         function diff(a,b)
         {
+          var a = a || [];
+          var b = b || [];
           return a.filter(function(x) { return b.indexOf(x) < 0; })
         }
         var added = diff( newSelections, oldSelections);
@@ -518,7 +520,7 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
             }
           }
           //hack
-          if(this.finalComposer.subComposers)
+          if(this.finalComposer.subComposers && this.finalComposer.subComposers.length>0)
           {
             //console.log("rendering",this.finalComposer.subComposers);
             var normal  = this.finalComposer.subComposers[0].renderTarget2;
