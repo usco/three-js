@@ -20,7 +20,8 @@
       init:function(camera, renderer)
       {
         this.object.object = camera;
-        this.object.domElement = renderer.domElement;
+        //this.object.domElement = renderer.domElement;
+        this.object.setDomElement( renderer.domElement);
         this.object.upVector = this.cameraUp;
 
 		    this.object.userPanSpeed = this.panSpeed;
