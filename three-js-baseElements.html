@@ -1,4 +1,4 @@
-<polymer-element name="three-js-object" attributes="name x y z rx ry rz castShadow receiveShadow show" attributes="name" >
+<polymer-element name="three-js-object" attributes="name x y z rx ry rz castShadow receiveShadow show" >
   <script>
     Polymer('three-js-object', {
       name: '',
@@ -22,12 +22,12 @@
       created:function()
       {
           this.object = new THREE.Object3D();
-          this.object.name = this.name;
       },
       ready:function()
       {
          this.object.castShadow = this.castShadow;
          this.object.receiveShadow = this.receiveShadow;
+         this.object.name = this.name;
       },
       enteredView: function() {
         /*
@@ -145,11 +145,11 @@
 
 <polymer-element name="three-js-scene" extends="three-js-object">
   <template>
-  <content select="three-object"></content>
+    <content select="three-object"></content>
   </template>
   <script>Polymer('three-js-scene',{
-      name:"customScene",
-      created: function(){
+      ready: function(){
+        this.super();
         this.object = new THREE.Scene();
         this.object.name = this.name;
       }

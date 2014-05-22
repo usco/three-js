@@ -4,7 +4,9 @@
 <script src="lib/helpers/selection-helper.js"></script>
 <script src="lib/helpers/normalizeEvent.js"></script>
 
-<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="components/polymer/polymer.html">
+<!--<script src="components/PointerEvents/pointerevents.js"></script>
+<script src="components/pointer/pointergestures.js"></script>-->
 <link rel="import" href="three-js-baseElements.html">
 <link rel="import" href="three-js-cameras.html">
 <link rel="import" href="three-js-controls.html">
@@ -37,8 +39,7 @@ controls needs:
 
 <polymer-element name="three-js" attributes="renderNow fullScreen postProcess selectedObjects highlightedObject"
 on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" on-three-js-get-camera="{{getCamera}}" 
-on-track="{{track}}"
-touch-action="none" on-pointermove="{{onPointerMove}}" on-pointerdown="{{onPointerDown}}" on-pointerup="{{onPointerUp}}" 
+touch-action="none" on-track="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}" 
 on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" tabindex="0"
 >
 <template>
@@ -52,6 +53,8 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       renderNow: false,
       fullScreen: false,
       postProcess: false,
+      scenes:null,
+      activeScenes:null,
       selectedObjects: null,
       highlightedObject: null,
       keys:[],
@@ -60,6 +63,9 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         this.width = 0;
         this.height = 0;
         this.bg = "rgb(255, 255, 255)";
+        
+        this.scenes = {};
+        this.activeScenes = {};
         this.updatables = [];//storage for all items that need to be synch with the update method
         this.selectedObjects = [];
       },
@@ -85,10 +91,6 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
               this.controls = child.object;
               //this.controls.addEventListener("change",function(){console.log("controls changed")})
             }
-            else
-            {
-              //console.log("in root: OTHER: child", child.localName, "added to ", this.localName);
-            }
           }
         }  
       },
@@ -99,7 +101,7 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         if (this.requestFullscreen) document.addEventListener("fullscreenchange", this.onFullScreenChange.bind(this), false);
         if (this.mozRequestFullScreen) document.addEventListener("mozfullscreenchange", this.onFullScreenChange.bind(this), false);
         if (this.webkitRequestFullScreen) document.addEventListener("webkitfullscreenchange", this.onFullScreenChange.bind(this), false);
-
+        
         this._setStyle();
         this.setupHelpers();
         this.animate();
@@ -118,8 +120,10 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
 		    renderer.shadowMapAutoUpdate = true; //this.showShadows;
 		    renderer.shadowMapSoft = true;
 		    renderer.shadowMapType = THREE.PCFShadowMap; // options are THREE.BasicShadowMap | THREE.PCFShadowMap | THREE.PCFSoftShadowMap
-        this.convertColor(this.bg);
-		    renderer.setClearColor( this.bg, 1 );	  
+		    renderer.autoClear = false;
+	      renderer.autoUpdateScene = false;
+	      this._convertColor(this.bg);
+		    renderer.setClearColor( this.bg, 1 );	
 
         //if lightdom this.appendChild(renderer.domElement);
         this.shadowRoot.appendChild(renderer.domElement);
@@ -129,8 +133,16 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       {
         //console.log("setup helpers");
         var activeScenes = this.querySelectorAll('three-js-scene[active]');
-        console.log("activeScenes",activeScenes)
-        var activeScene = activeScenes[0];
+        for(var i = 0 ;i< activeScenes.length;i++)
+        {
+          var scene = activeScenes[i];
+          
+          this.activeScenes[ scene.name ] = scene.object;
+          this.scenes[ activeScenes[i].name] = scene.object;
+        }
+        
+        var activeScene = scene;
+        
         if(activeScene)
         {
           this.hierarchyRoot = activeScene.querySelector('[hierarchyRoot]').object;
@@ -140,6 +152,7 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
           this.selectionHelper.viewWidth = this.width;
           this.selectionHelper.viewHeight = this.height;
         }
+        
       },
       //event handlers
       onResize: function()
@@ -224,7 +237,6 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
 			  {
 				  this.impl.focus();
         }
-
       },
       onPointerUp:function(event)
       {
@@ -299,8 +311,11 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         var scene = this.scenes[name];
         if(scene) this.scene = scene; this.setupHelpers(); this.scene.add( this.camera);
       },
-      clearScene:function()
+      clearScene:function(sceneName)
       {
+        var scene = this.scenes[sceneName];
+        if(!(scene)) return;
+        
         while (this.hierarchyRoot.children.length > 0) {
           this.hierarchyRoot.remove(this.hierarchyRoot.children[this.hierarchyRoot.children.length - 1]);
         }
@@ -308,25 +323,35 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         //see here https://github.com/mrdoob/three.js/issues/2760
         if(this.renderer instanceof THREE.WebGLRenderer)
         {
-          this.renderer.initWebGLObjects(this.scene);
+          this.renderer.initWebGLObjects(scene);
         }
       },
 	    addToScene: function ( object, sceneName )
 	    {
+	      //if no scene name is given take the first one
+	      if(!(sceneName)) for (var sceneName in this.scenes) if (this.scenes.hasOwnProperty(sceneName)) break;
+	      
+	      var scene = this.scenes[sceneName];
+        if(!(scene)) {console.log("no valid scene found"); return;};
+
 		    try
-		    {
-			    this.hierarchyRoot.add( object );
+		    { 
+			    scene.add( object );
 		    }
 		    catch(error)
 		    {
 			    console.log("Failed to add object",object, "to scene: error", error.message)
 		    }
 	    },
-      removeFromScene : function( object )
+      removeFromScene : function( object, sceneName )
       {
+        if(!(sceneName)) for (var sceneName in this.scenes) if (this.scenes.hasOwnProperty(sceneName)) break;
+	      var scene = this.scenes[sceneName];
+        if(!(scene)) {console.log("no valid scene found"); return;};
+        
         try
 		    {
-			    this.hierarchyRoot.remove( object );
+			    scene.remove( object );
 		    }
 		    catch(error)
 		    {
@@ -343,41 +368,11 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
 		    }
 		    captureScreen(callback, this.renderer.domElement, width, height);
 	    },
-
-      _injectScene: function(scene, active){
-
-        if(!this.scenes) this.scenes = {};
-        this.scenes[scene.name] = scene;
-
-        if(active && scene !== this.scene)
-        {
-          if(this.scene) scene.children = this.scene.children;
-          this.scene = scene;
-          //console.log("scene", scene.name,"is active")
-        }
-        
-        if(this.scene && this.camera)
-        {
-            this.fire("sceneready", {scene:this.scene,camera:this.camera});
-        }
-      },
-      _injectCamera: function(camera){
-        this.camera = camera;
-        this.camera.aspect = this.width / this.height;
-        this.camera.setSize(this.width,this.height);
-		    this.camera.updateProjectionMatrix();
-      },
-      _injectControls: function(controls){
-        this.controls = controls;
-        //console.log("controls are active",controls)
-      },
-
       add3: function(child) {
-        //console.log("In root element : child", child.localName,child.object)
+        console.log("In root element : adding child", child.localName,child.object)
         //TODO: do this MUCH better
         if(child.updatable)
         {
-          //console.log("updatable, child", child);
           this.updatables.push( child );
         }
         
@@ -417,33 +412,18 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       },
       getRenderer: function(event) {
         event.detail.renderer = this.renderer;
-        //return this.renderer;
+        return this.renderer;
       },
       getScene: function(event) {
         event.detail.scene = this.scene;
-        //return this.scene;
+        event.detail.activeScenes = this.activeScenes;
+        return this.scene;
       },
       getCamera: function(event) {
         event.detail.camera = this.camera;
-        //return this.scene;
+        return this.scene;
       },
-      //
-      track: function(event) {
-        //this.render();
-        //this.controls.update();
-        return;
-        var obj = this.camera;
-        var obj = this.querySelector('[tracking]').object;
-        //console.log("tracking",obj)
-        if (obj) {
-          // TODO(sjmiles): accumulating derivatives is numerically unstable
-          // integrating samples over a single track sequence is a better practice
-          // make this easier to do properly
-          obj.position.x += event.ddx;
-          obj.position.z += event.ddy;
-          this.render();
-        }
-      },
+      
       //attribute change handlers / various handlers
       renderNowChanged: function() {
         this.render();
@@ -481,7 +461,6 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         }
         var added = diff( newSelections, oldSelections);
         var removed = diff( oldSelections, newSelections);
-        //console.log("added items",added,"removed", removed);
         
         if(added.length>0) this.asyncFire("selectionsAdded",added);
         if(removed.length>0) this.asyncFire("selectionsRemoved",removed);
@@ -500,8 +479,8 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       },
       //other
       render: function() {
-        if (! this.camera) {
-          return;}
+        if (! this.camera) {return;}
+        
         if (this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true && this.finalComposer)
         {
           //necessary hack for effectomposer
@@ -527,20 +506,35 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
             var depth   = this.finalComposer.subComposers[1].renderTarget2;
             
             var lastPass = this.finalComposer.passes[this.finalComposer.passes.length-2];
-            //throw new Error("sf");
             lastPass.uniforms[ 'tNormal' ].value  = normal;
             lastPass.uniforms[ 'tDepth' ].value   = depth;
           }
-          
+          //var lastPass = this.finalComposer.passes[this.finalComposer.passes.length-1];
+          //lastPass.renderToScreen = true;
+          this.renderer.clear();
+          for(var key in this.activeScenes)
+          {
+            var activeScene = this.activeScenes[key];
+            activeScene.updateMatrixWorld();
+            this.renderer.render(activeScene, this.camera);
+          }
           this.finalComposer.render();
         }
         else
         {
-          this.renderer.render( this.scene, this.camera );
-          /*renderer.clear();
-		renderer.render( scene, camera );
-		renderer.render( sceneHelpers, camera );*/
-      
+          this.renderer.clear();
+          try{
+            for(var key in this.activeScenes)
+            {
+              var activeScene = this.activeScenes[key];
+              activeScene.updateMatrixWorld();
+              this.renderer.render(activeScene, this.camera);
+            }
+          }
+          catch(error)
+          {
+            this.renderer.render( this.scene, this.camera );
+          }
         }
       },
       animate: function() 
@@ -555,21 +549,49 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
           for(var i=0;i<this.updatables.length;i++)//any external items needing the same "heartbeat" can register "updatables"
           {
             try{
-            if(this.updatables[i].update)
-            {
-              this.updatables[i].update();
-            }
-            else{
-            this.updatables[i]();}
-            }catch(error){};//console.log("error in update", error.message);}
+              if(this.updatables[i].update)
+              {
+                this.updatables[i].update();
+              }
+              else{
+                this.updatables[i]();
+              }
+            }catch(error){};
           }
       },
-      //utilities: TODO: move this to seperate js file
-	    convertColor: function(hex)
+      //helpers: TODO: move some of these to seperate js file
+	    _convertColor: function(hex)
 	    {
         hex = new THREE.Color().setStyle(hex);
         this.bg = hex;
 	    },
+      _injectScene: function(scene, active){
+
+        if(!this.scenes) this.scenes = {};
+        this.scenes[scene.name] = scene;
+
+        if(active && scene !== this.scene)
+        {
+          if(this.scene) scene.children = this.scene.children;
+          this.scene = scene;
+          //console.log("scene", scene.name,"is active")
+        }
+        
+        if(this.scene && this.camera)
+        {
+            this.fire("sceneready", {scene:this.scene,camera:this.camera});
+        }
+      },
+      _injectCamera: function(camera){
+        this.camera = camera;
+        this.camera.aspect = this.width / this.height;
+        this.camera.setSize(this.width,this.height);
+		    this.camera.updateProjectionMatrix();
+      },
+      _injectControls: function(controls){
+        this.controls = controls;
+        console.log("controls are active",controls)
+      },
       _setStyle:function()
       {
 	      //setup width & height
@@ -578,7 +600,7 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
 	      this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
         //setup backround color
 	      this.bg = cs.getPropertyValue("background-color");
-	      this.convertColor(this.bg);
+	      this._convertColor(this.bg);
 		    this.renderer.setClearColor( this.bg, 1 );	  
       },
     });

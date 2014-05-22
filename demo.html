@@ -1,0 +1,188 @@
+<html>
+  <head>
+    <title>Three.js polymer.js viewer example</title>
+      <script src="components/platform/platform.js"></script>
+      <link rel="import" href="components/polymer/polymer.html">
+      <link rel="import" href="three-js.html">
+
+      <style>
+         html, body, three-js, test-viewer{
+      margin: 0;
+      position: absolute;
+      height: 100%;
+      width:100%;
+      
+      -webkit-touch-callout: none;
+		-webkit-user-select: none;
+		-khtml-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+    }
+      </style>
+  </head>
+<body>
+  <!--<div id="toto" style="width:100%; height:100%; background:blue" touch-action="none">sdfsf</div>-->
+  <!--Experimental-->
+  <polymer-element name="test-viewer" touch-action="none" on-down="{{ptrDown}}">
+  
+    <template>
+      <three-js postProcess id="threeJs" >
+      <three-stats id="stats" show></three-stats>
+      <three-js-combinedCamera tracking x="100" y="100" z="200" orientation="top" cameraUp=[0,0,1] ></three-js-combinedCamera>
+      <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" autoRotate> </three-js-orbitControls>
+
+      <three-js-scene name="caramba" active>
+        <three-js-object hierarchyRoot>
+          <three-js-cube x="-45" color="pink" w="24"> </three-js-cube>
+          <!--<three-js-cube x="150" color="blue" w="17" name="container" id="foo">
+            <three-js-cube z="30" rx="40" rz="30" color="red" w="13" name="inner" id="bar"> </three-js-cube>
+            <three-js-sphere z="40" x="40" rx="-40" rz="30"  color="orange" r="17" name="inner2" id="boom"> </three-js-sphere>
+          </three-js-cube>-->
+        </three-js-object>
+
+        <three-js-object helpersRoot> 
+          <three-axis-helper> </three-axis-helper>
+          <three-js-light x="50" y="30" z="200"></three-js-light>
+          <three-js-light kind="spot" x="-150" y="350" rx="90" shadow></three-js-light>
+        </three-js-object>
+      </three-js-scene>
+
+      <three-js-scene name="aiaiai" active>
+        <three-js-object name="rootObject" hierarchyRoot> 
+          <three-js-cube color="yellow" w="13"> </three-js-cube>
+        </three-js-object>
+
+        <three-js-object> 
+          <three-axis-helper> </three-axis-helper>
+          <three-js-light x="50" y="30" z="200"></three-js-light>
+          <three-js-light kind="spot" x="-150" y="350" rx="90" shadow></three-js-light>
+        </three-js-object>
+      </three-js-scene>
+      
+      
+      <!--throwing ideas around
+      <three-view>
+        <three-js-scene name="main">
+        </three-js-scene>
+        <three-js-scene name="helpers">
+        </three-js-scene>
+        
+        <three-effect-composer ignore="helpers">
+          <vignette-fx> </vignette-fx>
+        </three-effect-composer>
+        
+      </three-view>
+      
+      <three-viewport>
+        <three-js-scene>
+        </three-js-scene>
+        
+        <three-effect-composer >
+          <vignette-fx> </vignette-fx>
+          <hueSaturation-fx hue="{{hue}}" saturation="1.0"> </hueSaturation-fx>
+        </three-effect-composer>
+      </three-viewport>-->
+
+      <three-effect-composer ignore=["caramba"]>
+        <vignette-fx> </vignette-fx>
+        <!--<hueSaturation-fx hue="{{hue}}" saturation="1.0"> </hueSaturation-fx>-->
+      </three-effect-composer>
+
+  </three-js>
+
+    </template>
+    <script>Polymer("test-viewer", {
+    
+      ptrDown:function()
+      {
+      },
+      addToScene:function(object,sceneName)
+      {
+        this.threeJs = this.$.threeJs;
+        this.threeJs.addToScene(object,sceneName);
+      }
+    });
+    </script>
+  </polymer-element>
+  
+  <polymer-element name="object-attrs" >
+    <template>
+      <style>
+        position:absolute;
+        left:0px;
+        top:0px;
+        width:100px;
+        backgroud:red;
+        height:100px;
+      </style>
+        Bla bla <input type="range" >
+    </template>
+    <script>Polymer('object-attrs',{
+      ready: function()
+      {
+      }
+    });
+    </script>
+  </polymer-element>
+  
+  
+  <test-viewer></test-viewer>
+
+  <script>
+          /* var toto= document.querySelector("#toto");
+      var enterLeave= document.querySelector("#enterLeave");
+      console.log("toto", toto);
+      toto.addEventListener("pointerdown", function(inEvent) {
+        console.log("pointer down");
+        });*/
+      window.addEventListener('polymer-ready', function() {
+        console.log("web components ready");
+
+	    var threeViewer = document.querySelector('test-viewer');
+      console.log("threeViewer",threeViewer)
+      //example : adding 3D shapes to viewer''
+      var geometry = new THREE.CubeGeometry( 50, 50, 50 ); 
+      geometry.computeCentroids();
+    	geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+	    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
+	    var cube = new THREE.Mesh(geometry, material);
+      cube.name = "TestCube";
+      cube.position.set(-100,30,30);
+      //add to scene
+
+      var geometry = new THREE.SphereGeometry(12, 20,20);
+      geometry.computeCentroids();
+    	geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+      var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
+      var sphere = new THREE.Mesh(geometry, material);
+      sphere.name = "testSphere";
+      sphere.position.set(50,0,30);
+
+      cube.add(sphere)
+      
+      threeViewer.addToScene( cube );
+
+      //threeViewer.toggleScene("aiaiai");
+
+      //threeViewer.add3(cube);
+      //threeViewer.add3(sphere);
+
+      //clearing a scene
+      //threeViewer.clearScene();
+
+      //add things back
+      //threeViewer.addToScene(cube);
+      //threeViewer.addToScene(sphere);
+
+      //remove cube only
+      //threeViewer.removeFromScene(cube);
+
+    });
+      
+    
+  </script>  
+</body>
+</html>
