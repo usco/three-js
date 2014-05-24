@@ -1,10 +1,10 @@
-<polymer-element name="three-js-controls">
+<polymer-element name="three-js-controls" constructor="threeJsControls" noscript>
+
 </polymer-element>
 
-<script src="lib/OrbitControls.js"></script>
-  
 
-<polymer-element name="three-js-orbitControls" attributes="cameraUp panSpeed zoomSpeed rotateSpeed autoRotate">
+<script src="lib/OrbitControls.js"></script>
+<polymer-element name="three-js-orbitControls" extends="three-js-controls" attributes="cameraUp panSpeed zoomSpeed rotateSpeed autoRotate">
   <script>
     Polymer('three-js-orbitControls', {
       autoRotate: false,

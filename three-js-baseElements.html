@@ -1,4 +1,4 @@
-<polymer-element name="three-js-object" attributes="name x y z rx ry rz castShadow receiveShadow show" >
+<polymer-element name="three-js-object" constructor="threeJsObject" attributes="name x y z rx ry rz castShadow receiveShadow show" >
   <script>
     Polymer('three-js-object', {
       name: '',
@@ -75,7 +75,7 @@
           }
           else
           {
-            if(child.object && child.localName !== 'three-js-scene' )
+            if(child.object && !(child instanceof( threeJsScene )) )
             {
               this.object.add(child.object);
               //console.log("std path child", child.localName+"_"+child.object.name, "added to ", this.localName+"_"+this.object.name);
@@ -92,7 +92,7 @@
           this.objectParent = this.parentNode;
           this.parentNode.add3(this);
           var parentName = this.parentNode.localName;
-          //console.log('[%s]: request adding to [%s]', this.localName + (this.id ? '#' + this.id : ''), parentName);
+          console.log('[%s]: request adding to [%s]', this.localName + (this.id ? '#' + this.id : ''), parentName);
         }
       },
       removeFromParent3: function() {
@@ -140,21 +140,6 @@
       },
     });
   </script>
-</polymer-element>
-
-
-<polymer-element name="three-js-scene" extends="three-js-object">
-  <template>
-    <content select="three-object"></content>
-  </template>
-  <script>Polymer('three-js-scene',{
-      ready: function(){
-        this.super();
-        this.object = new THREE.Scene();
-        this.object.name = this.name;
-      }
-    });
-    </script>
 </polymer-element>
 
 
@@ -238,6 +223,7 @@
           this.__addOrderedChildren();
           this.addToParent3();
         }
+        
       },
     });
   </script>
@@ -259,6 +245,7 @@
         this.object = new THREE.CubeGeometry(1, 1, 1);
         this.super();
       },
+      
       /*
       extentChanged: function() {
         if (this.extent) {
@@ -332,61 +319,6 @@
         this.object.scale.y = this.r;
         this.object.scale.z = this.r;
     }
-    });
-  </script>
-</polymer-element>
-
-
-<polymer-element name="three-js-light" extends="three-js-object" attributes="kind color secColor intensity distance angle exponent castShadow">
-  <script>
-    Polymer('three-js-light', {
-      kinds: {
-        point: 'PointLight',
-        spot: 'SpotLight',
-        dir:  'DirectionalLight',
-        ambient:'AmbientLight',
-        hemi:'HemisphereLight'
-      },
-      color: 0xFFFFFF,
-      secColor: 0xFFFFFF, // for hemilight
-      intensity: 1,
-      distance: 0,
-      angle: 60,
-      exponent: 8,
-      ready: function() {
-        this.object.castShadow = this.shadow;
-        var kind = this.kinds[this.kind] || this.kinds.point;
-        if(kind == "HemisphereLight")
-        {
-         this.object = new THREE[kind](this.color,this.secColor, this.intensity);
-        }
-        else{
-        this.object = new THREE[kind](this.color, this.intensity, this.distance, this.angle * Math.PI/180, this.exponent);
-        }
-        if (this.castShadow) {
-          this.object.castShadow = this.castShadow;
-          this.object.shadowMapWidth = 1024;
-          this.object.shadowMapHeight = 1024;
-          this.object.shadowCameraNear = 500;
-          this.object.shadowCameraFar = 4000;//3500
-          this.object.shadowCameraFov = 30;
-          this.object.shadowBias = 0.0001;//-0.0001;
-          this.object.shadowDarkness = 0.5;		//dirLight.shadowDarkness = 0.35;
-          /*var d = 50;
-		      dirLight.shadowCameraLeft = -d;
-		      dirLight.shadowCameraRight = d;
-		      dirLight.shadowCameraTop = d;
-		      dirLight.shadowCameraBottom = -d;
-          dirLight.onlyShadow = true;
-          var shadowConst = 0.8;
-          dirLight.shadowDarkness = shadowConst * dirLight.intensity;*/
-        }
-        this.object.name = this.name;
-        this.super();
-      },
-      updatePosition: function() {
-        this.super();
-      }
     });
   </script>
 </polymer-element>

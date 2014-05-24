@@ -1,5 +1,5 @@
 
-<polymer-element name="three-js-camera" extends="three-js-object" attributes="aspect fov lookAt">
+<polymer-element name="three-js-camera" extends="three-js-object" constructor="threeJsCamera" attributes="aspect fov near far lookAt up">
   <script>
     Polymer('three-js-camera', {
       lookAt: '',
@@ -7,12 +7,27 @@
       fov: 40,
       near : 0.2,
       far: 1000,
+      up:[0,1,0],
       object: null,
       ready: function() {
+        this.cameraUp = new THREE.Vector3(this.up[0],this.up[1],this.up[2]);  
       },
       updatePosition: function() {
         this.super();
         this.lookAtChanged();
+      },
+      //attribute change handlers
+      aspectChanged:function() {
+        this.object.aspect = this.aspect;
+      },
+      fovChanged:function() {
+        this.object.fov = this.fov;
+      },
+      nearChanged:function() {
+        this.object.near = this.near;
+      },
+      farChanged:function() {
+        this.object.far = this.far;
       },
       lookAtChanged: function() {
         if(this.lookAt)
@@ -52,10 +67,9 @@
 
 <script src="lib/CombinedCamera.js"></script>
 
-<polymer-element name="three-js-combinedCamera" extends="three-js-camera" attributes="cameraUp projection orientation">
+<polymer-element name="three-js-combinedCamera" extends="three-js-camera" attributes="projection orientation">
   <script>
     Polymer('three-js-combinedCamera', {
-      cameraUp : [0,1,0],
       projection: "perspective",
       orientation: "diagonal",
       object: null,
@@ -63,7 +77,6 @@
         this.super();      
         //todo: read camera params from camera config/settings ?
 		    this.defaultCameraPosition = new THREE.Vector3(100,100,200);
-        this.cameraUp = new THREE.Vector3(this.cameraUp[0],this.cameraUp[1],this.cameraUp[2]);  
         this.camera = new THREE.CombinedCamera(
           this.width,
           this.height,

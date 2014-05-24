@@ -118,7 +118,7 @@
   </script>
 
 
-<polymer-element name="three-effect-composer" attributes="name renderTarget2 toScreen ignore">
+<polymer-element name="three-effect-composer" constructor="threeJsFxComposer" attributes="name renderTarget2 toScreen ignore">
   <script>Polymer('three-effect-composer',{
     name : "",
     enabled: true,
@@ -134,6 +134,8 @@
     composer: null,
     target: null,
     renderTarget2:null,
+    renderOutput:null,
+    
     toScreen:true,
     
     ignore:[],//list of scene names to ignore
@@ -155,19 +157,18 @@
         if (detail) {this.scene = detail.scene;this.activeScenes = detail.activeScenes}
         var detail = this.fire('three-js-get-camera', {}).detail;
         if (detail) {this.camera = detail.camera;}
-        
-        if(this.scene && this.renderer && this.camera)
-        {
+        console.log("lkmkl");
+        /*if(this.scene && this.renderer && this.camera)
+        {*/
           this._init();
           console.log("foo");
           this.addToParent3();
-        }
+        //}
       });
       window.addEventListener('resize',this.onResize.bind(this));
     },
     onResize:function(event)
     {
-      console.log("resize composer");
       this.width = window.innerWidth;
       this.height = window.innerHeight;
       //this.renderTarget.width = this.width;
@@ -183,25 +184,60 @@
     //FIXME: just for testing, needs refactoring
     _simpleInit:function()
     {
+      console.log("ignoring",this.ignore);
       //shaders, post processing etc, various passes and rtts
-      var renderPass = new THREE.RenderPass(this.scene, this.camera);
-
       this.composer = new THREE.EffectComposer( this.renderer );
 
       //prepare the final render passes
       //add a simple render pass first
-      
-      this.composer.addPass( renderPass );
+      for(var key in this.activeScenes)
+      {
+        var activeScene = this.activeScenes[key];
+        if(this.ignore.indexOf(key)==-1)
+        {
+          var renderPass = new THREE.RenderPass(activeScene, this.camera);//, null, false, false);  
+          renderPass.clear = false;
+          this.composer.addPass( renderPass );    
+        }
+      }
+      if(this.composer.passes.length>0) this.composer.passes[0].clear = true;
 
+      //do all post process 
       for(var i=0; i<this.effects.length;i++)
       {
           var effectElement = this.effects[i];
-          if(effectElement.init) effectElement.init(this.renderer, this.scene, this.camera);
+          //if(effectElement.init) effectElement.init(this.renderer, this.scene, this.camera);
           var pass = effectElement.effect;
           this.composer.addPass( pass );
       }
-      //make sure the last pass renders to screen
-      this.composer.passes[this.composer.passes.length-1].renderToScreen = true;
+      //if(this.composer.passes.length>1) this.composer.passes[this.composer.passes.length-1].clear = false;
+      
+      //now render scenes with no post processing
+      for(var key in this.activeScenes)
+      {
+        var activeScene = this.activeScenes[key];
+        if(this.ignore.indexOf(key)>-1)
+        {
+          var renderPass = new THREE.RenderPass(activeScene, this.camera, null, false, false);  
+          //HACK !!
+          renderPass.clear = false;
+          this.composer.addPass( renderPass );    
+        }
+      }
+      var lastPass = this.composer.passes[this.composer.passes.length-1];
+      lastPass.clearAlpha= false;
+      lastPass.clear = false;
+      //lastPass.clearColor= false;
+      //lastPass.needsSwap = true;
+
+      var copyPass = new THREE.ShaderPass( THREE.CopyShader );
+      this.composer.addPass( copyPass );
+      
+      if(this.toScreen)
+      {
+        //make sure the last pass renders to screen
+        this.composer.passes[this.composer.passes.length-1].renderToScreen = true;
+      }
       console.log(this.name + " effects",this.composer.passes);
     },
     _fullInit:function()

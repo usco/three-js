@@ -1,0 +1,28 @@
+
+<polymer-element name="three-js-scene" extends="three-js-object" constructor="threeJsScene" attributes="pickable">
+  <!--<template>
+    <content select="three-object"></content>
+  </template>-->
+  <script>Polymer('three-js-scene',{
+      pickable:false,
+      _camera :null,
+      ready: function(){
+        this.super();
+        this.object = new THREE.Scene();
+        this.object.name = this.name;
+      },
+      /*enteredView:function(){
+        if(!(this._camera))
+        {
+          var detail = this.fire('three-js-get-camera', {});
+          if (detail) {
+            console.log("blaaah camera",detail);
+          }
+        }
+      
+        //this.selectionHelper = new SelectionHelper({camera:this.camera,color:0x000000,textColor:0xffffff})
+		    //this.selectionHelper.hiearchyRoot = this.hierarchyRoot.children;
+      }*/
+    });
+  </script>
+</polymer-element>
