@@ -10,9 +10,12 @@
 <link rel="import" href="three-js-lights.html">
 <link rel="import" href="three-js-cameras.html">
 <link rel="import" href="three-js-controls.html">
-<link rel="import" href="three-helpers.html">
+<link rel="import" href="three-js-viewport.html">
 <link rel="import" href="three-postfx.html">
+
+<link rel="import" href="three-helpers.html">
 <link rel="import" href="three-stats.html">
+
 
 <!--Essentials:
 - view data : width & height
@@ -57,6 +60,8 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       scenes:null,
       activeScenes:null,
       
+      viewports:null,
+      
       selectedObjects: null,
       highlightedObject: null,
       
@@ -71,6 +76,8 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         
         this.scenes = {};
         this.activeScenes = {};
+        this.viewports = {};
+        
         this.updatables = [];//storage for all items that need to be synch with the update method
         this.selectedObjects = [];
       },
@@ -447,14 +454,12 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
           this.updatables.push( child );
         }
         if( child instanceof( threeJsScene ) ){
-           console.log("lkmk");
            var scene = child.object;
            var active = child.attributes.getNamedItem("active");
            
            this.scenes[ scene.name ] = scene;
            if(active) this.activeScenes[ scene.name ] = scene;
            //this._injectScene( sceneNode )
-
            /*var scene = activeScenes[i];
            this.activeScenes[ scene.name ] = scene.object;
            this.scenes[ activeScenes[i].name] = scene.object;*/
@@ -480,6 +485,11 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         {
           this.finalComposer = child.composer;
           this.finalComposer.setSize(this.width, this.height);
+        }
+        if( child instanceof threeJsViewport)
+        {
+          console.log("viewport added");
+          this.viewports[child.name] = child;
         }
       },
       remove3: function(child) {
@@ -596,12 +606,39 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
         else
         {
           this.renderer.clear();
-          for(var key in this.activeScenes)
+          
+          for(var key in this.viewports)
           {
-            var activeScene = this.activeScenes[key];
-            activeScene.updateMatrixWorld();
-            this.renderer.render(activeScene, this.camera);
+            var view = this.viewports[key];
+            
+            var left   = Math.floor( this.width  * view.left );
+					  var bottom = Math.floor( this.height * view.bottom );
+					  var width  = Math.floor( this.width  * view.width );
+					  var height = Math.floor( this.height * view.height );
+					  
+					  var renderer = this.renderer;
+					  renderer.setViewport( left, bottom, width, height );
+					  renderer.setScissor( left, bottom, width, height );
+					  renderer.enableScissorTest ( true );
+					  renderer.setClearColor( view.background );
+
+            var camera = view.camera;
+					  camera.aspect = width / height;
+					  camera.setSize(this.width,this.height);
+					  camera.updateProjectionMatrix();
+
+					  //renderer.render( scene, camera );
+					  
+					  for(var key in this.activeScenes)
+            {
+              var activeScene = this.activeScenes[key];
+              activeScene.updateMatrixWorld();
+              this.renderer.render(activeScene, camera);//this.camera);
+            }
+            
           }
+          return;
+          
         }
       },
       animate: function() 

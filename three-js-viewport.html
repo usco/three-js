@@ -1,0 +1,48 @@
+
+<polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId left bottom width height">
+  <script>
+    Polymer('three-js-viewport', {
+      object: null,
+      name: "",
+      cameraId:null,
+      camera:null,
+      left: 0,
+			bottom: 0,
+			width: 0.5,
+			height: 1.0,
+			background: new THREE.Color().setRGB( 0.5, 0.5, 0.7 ),
+      enteredView:function(){
+        console.log("in threejsviewport");
+        var camera = this.parentNode.querySelector(this.cameraId);
+        camera = camera.object;
+        console.log("camera", camera);
+        this.camera = camera;
+        this.addToParent3();
+      },
+      foo: function() {
+        /*eye: [ 0, 300, 1800 ],
+				up: [ 0, 1, 0 ],
+				fov: 30,*/
+      },
+			updateCamera: function ( camera, scene ) {
+			
+			},
+			addToParent3: function() {
+        if (this.parentNode.add3 && !this.objectParent) {
+          this.objectParent = this.parentNode;
+          this.parentNode.add3(this);
+          var parentName = this.parentNode.localName;
+          console.log('[%s]: request adding to [%s]', this.localName + (this.id ? '#' + this.id : ''), parentName);
+        }
+      },
+      removeFromParent3: function() {
+        if (this.objectParent) {
+          this.objectParent.remove3(this);
+          this.objectParent = null;
+          console.log('[%s]: REMOVED from threejs-objectParent', this.localName + (this.id ? '#' + this.id : ''));
+        }
+      },
+    });
+  </script>
+</polymer-element>
+

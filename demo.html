@@ -31,9 +31,11 @@
   <polymer-element name="test-viewer" touch-action="none" on-down="{{ptrDown}}">
   
     <template>
-      <three-js postProcess="true" id="threeJs" >
+      <three-js postProcess="false" id="threeJs" >
         <three-stats id="stats" show></three-stats>
-        <three-js-combinedCamera tracking x="100" y="100" z="200" orientation="top" up=[0,0,1] ></three-js-combinedCamera>
+        <three-js-combinedCamera id="cam1" lookAt="#bar" tracking x="100" y="50" z="200" orientation="top" up=[0,0,1]></three-js-combinedCamera>
+        <three-js-combinedCamera id="cam2" x="100" y="100" z="200" orientation="top" up=[0,0,1] ></three-js-combinedCamera>
+        
         <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" autoRotate> </three-js-orbitControls>
 
         <three-js-scene name="caramba" active>
@@ -56,6 +58,12 @@
           <three-axis-helper> </three-axis-helper>
         </three-js-scene>
         
+      
+      <three-js-viewport name="perspective" cameraId="#cam1" left=0 bottom=0 width=0.5 height=1.0>
+      </three-js-viewport>
+      
+      <three-js-viewport name="left" cameraId="#cam2" left=0.5 bottom=0 width=0.5 height=1.0> 
+      </three-js-viewport>
       
       <!--throwing ideas around
       <three-view>
