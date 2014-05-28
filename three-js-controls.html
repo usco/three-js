@@ -19,10 +19,7 @@
       },
       init:function(camera, domElement)
       {
-        //FIXME: replace renderer with dom element directly, we do not need any other 
-        //data from renderer
         this.object.object = camera;
-        //this.object.domElement = renderer.domElement;
         this.object.setDomElement( domElement);
         this.object.upVector = this.cameraUp;
 
@@ -32,8 +29,6 @@
 
 		    this.object.autoRotate = this.autoRotate;
 		    this.object.autoRotateSpeed = this.autoRotateSpeed;
-
-        //console.log("controls z up", this.cameraUp,"cam",camera,"rend",renderer)
       },
       addToParent3: function() {
         if (this.parentNode.add3 && !this.objectParent) {

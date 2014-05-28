@@ -1,21 +1,36 @@
 
-<polymer-element name="three-js-renderer" extends="three-js-object" constructor="threeJsRenderer" attributes="">
+<polymer-element name="three-js-renderer" constructor="foo" >
   <script>Polymer('three-js-renderer',{
-      ready: function(){
-        this.super();
-        //this.object = new THREE.Scene();
-        //this.object.name = this.name;
+      renderer:null,
+      enteredView:function()
+      {
+        this._setupRenderer();
+        this.addToParent3();
+        this.parentNode.shadowRoot.appendChild(this.renderer.domElement);
+        this.parentNode.onResize();
+      },
+      addToParent3: function() {
+        if (this.parentNode.add3 && !this.objectParent) {
+          this.objectParent = this.parentNode;
+          this.parentNode.add3(this);
+          var parentName = this.parentNode.localName;
+          console.log('[%s]: request adding to [%s]', this.localName + (this.id ? '#' + this.id : ''), parentName);
+        }
+      },
+      removeFromParent3: function() {
+        if (this.objectParent) {
+          this.objectParent.remove3(this);
+          this.objectParent = null;
+          console.log('[%s]: REMOVED from threejs-objectParent', this.localName + (this.id ? '#' + this.id : ''));
+        }
       },
     });
   </script>
 </polymer-element>
 
-<polymer-element name="three-js-webglRenderer" extends="three-js-renderer" constructor="threeJsWebglRenderer" attributes="antialias">
-  <script>Polymer('three-js-renderer',{
+<polymer-element name="three-js-webglRenderer"  extends="three-js-renderer"  attributes="antialias">
+  <script>Polymer('three-js-webglRenderer',{
       antialias:true,
-      ready: function(){
-        this.super();
-      },
        _setupRenderer: function()
       {
         if ( Detector.webgl )
@@ -30,11 +45,12 @@
 		    renderer.shadowMapType = THREE.PCFShadowMap; // options are THREE.BasicShadowMap | THREE.PCFShadowMap | THREE.PCFSoftShadowMap
 		    renderer.autoClear = false;
 	      renderer.autoUpdateScene = false;
-	      this._convertColor(this.bg);
-		    renderer.setClearColor( this.bg, 1 );	
+	      //this._convertColor(this.bg);
+		    //renderer.setClearColor( this.bg, 1 );	
 
-        //if lightdom this.appendChild(renderer.domElement);
-        this.shadowRoot.appendChild(renderer.domElement);
+        //if lightdom 
+        this.appendChild(renderer.domElement);
+        //this.shadowRoot.appendChild(renderer.domElement);
         this.renderer = renderer;
         
         var self = this;
@@ -117,6 +133,24 @@
         }, false);
         }
       },
+    });
+  </script>
+</polymer-element>
+
+<script src="lib/CSS3DRenderer.js"></script>
+<polymer-element name="three-js-css3dRenderer" extends="three-js-renderer">
+  <script>Polymer('three-js-css3dRenderer',{
+      _setupRenderer:function()
+      {
+        console.log("init css3D renderer");
+        var renderer = new THREE.CSS3DRenderer();
+        renderer.setSize(this.offsetWidth, this.offsetHeight);
+        renderer.domElement.style.position = 'absolute';
+        renderer.domElement.style.top = 0;
+		    //this.shadowRoot.appendChild(renderer.domElement);
+		    this.appendChild(renderer.domElement);
+		    this.renderer = renderer;
+      }
     });
   </script>
 </polymer-element>

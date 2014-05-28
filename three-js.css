@@ -1,11 +1,11 @@
 :host {
-    -webkit-touch-callout: none;
+    /*-webkit-touch-callout: none;
 		-webkit-user-select: none;
 		-khtml-user-select: none;
 		-moz-user-select: none;
 		-ms-user-select: none;
 		user-select: none;
-    position: absolute;
+    position: absolute;*/
     
   display:block;
 	* {
@@ -16,12 +16,12 @@
 		background-color:#fff;
 		
 		/*make things unselectable, cross browser*/
-		-webkit-touch-callout: none;
+		/*-webkit-touch-callout: none;
 		-webkit-user-select: none;
 		-khtml-user-select: none;
 		-moz-user-select: none;
 		-ms-user-select: none;
-		user-select: none;
+		user-select: none;*/
 	}
 
 	*:unresolved {
@@ -56,12 +56,12 @@ canvas {
 
         cursor:default;
         /*make things unselectable, cross browser*/
-      -webkit-touch-callout: none;
+      /*-webkit-touch-callout: none;
       -webkit-user-select: none;
       -khtml-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
-      user-select: none;
+      user-select: none;*/
 }
 
 /*
