@@ -19,6 +19,21 @@
 		-ms-user-select: none;
 		user-select: none;
     }
+    
+      #leftview{
+        position: absolute;
+        width: 50%;
+        height: 100%;
+        left: 50%;
+        z-index:1;
+      }
+      #perspectiveView{
+        position: absolute;
+        width: 50%;
+        height: 100%;
+        left: 0;
+        z-index:1;
+      }
       </style>
   </head>
 <body>
@@ -33,25 +48,27 @@
     <template>
       <three-js postProcess="false" id="threeJs" >
         <three-stats id="stats" show></three-stats>
-        <three-js-combinedCamera id="cam1" lookAt="#bar" tracking x="100" y="50" z="200" orientation="top" up=[0,0,1]></three-js-combinedCamera>
-        <three-js-combinedCamera id="cam2" x="100" y="100" z="200" orientation="top" up=[0,0,1] ></three-js-combinedCamera>
+        
+        <three-js-combinedCamera id="cam1" pos="[100,50,200]" orientation="top" ortho up=[0,0,1]></three-js-combinedCamera>
+        <three-js-combinedCamera id="cam2" pos="[100,100,200]" orientation="diagonal" up=[0,0,1] ></three-js-combinedCamera>
+        <three-js-combinedCamera id="cam3" pos="[100,100,200]" orientation="front" ortho up=[0,0,1] ></three-js-combinedCamera>
         
         <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" autoRotate> </three-js-orbitControls>
 
         <three-js-scene name="caramba" active>
           <three-js-object hierarchyRoot>
-            <three-js-cube x="-45" color="red" w="24"> </three-js-cube>
+            <three-js-cube pos="[45,0,0]" color="red" w="24"> </three-js-cube>
           </three-js-object>
-            <three-js-light x="50" y="30" z="200"></three-js-light>
-            <three-js-light kind="spot" x="-150" y="350" rx="90" shadow></three-js-light>
+            <three-js-light pos="[50,30,200]"></three-js-light>
+            <three-js-light kind="spot" pos=[150,350,90] shadow></three-js-light>
         </three-js-scene>
 
         <three-js-scene name="aiaiai" active>
           <three-js-object name="rootObject" hierarchyRoot> 
             <three-js-cube color="yellow" w="13"> </three-js-cube>
           </three-js-object>
-          <three-js-light x="50" y="30" z="200"></three-js-light>
-          <three-js-light kind="spot" x="-150" y="350" rx="90" shadow></three-js-light>
+          <three-js-light pos=[50,30,200]></three-js-light>
+          <three-js-light kind="spot" pos=[-150,350,90] shadow></three-js-light>
         </three-js-scene>
         
        <three-js-scene name="helpers" active>
@@ -59,10 +76,12 @@
         </three-js-scene>
         
       
-      <three-js-viewport name="perspective" cameraId="#cam1" left=0 bottom=0 width=0.5 height=1.0>
+      <three-js-viewport name="perspective" id="perspectiveView" cameraId="#cam1" left=0 bottom=0 width=0.5 height=1.0>
+        <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" > </three-js-orbitControls>
       </three-js-viewport>
       
-      <three-js-viewport name="left" cameraId="#cam2" left=0.5 bottom=0 width=0.5 height=1.0> 
+      <three-js-viewport name="left" id="leftView" cameraId="#cam2" left=0.5 bottom=0 width=0.5 height=1.0> 
+        <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" autoRotate> </three-js-orbitControls>
       </three-js-viewport>
       
       <!--throwing ideas around

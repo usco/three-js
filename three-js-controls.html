@@ -17,11 +17,13 @@
       ready: function() {
         this.object = new THREE.OrbitControls();
       },
-      init:function(camera, renderer)
+      init:function(camera, domElement)
       {
+        //FIXME: replace renderer with dom element directly, we do not need any other 
+        //data from renderer
         this.object.object = camera;
         //this.object.domElement = renderer.domElement;
-        this.object.setDomElement( renderer.domElement);
+        this.object.setDomElement( domElement);
         this.object.upVector = this.cameraUp;
 
 		    this.object.userPanSpeed = this.panSpeed;
@@ -45,15 +47,6 @@
       {
         this.cameraUp = new THREE.Vector3(this.cameraUp[0],this.cameraUp[1],this.cameraUp[2]);  
         this.addToParent3();   
-        /*
-        this.async(function() {
-          
-          var detail = this.fire('three-js-get-renderer', {});
-          if (detail) {
-            console.log("blaaah renderer",detail);
-            this.init(detail.renderer)
-          }
-        }, null, 1000);*/
       },
       //attribute change handlers
       autoRotateChanged:function()

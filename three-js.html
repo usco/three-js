@@ -48,6 +48,8 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
 <template>
   <link rel="stylesheet" type="text/css" href="three-js.css">
     <content select="three-js-scene" id="scene-inner"> </content>
+    <content select="three-js-viewport" id="viewports"></content>
+    <content select="three-effect-composer" id="composers"></content>
     <content select="drag-drop" id="dragDropLayer"> </content> 
     <content select="three-stats" ></content>
   </template>
@@ -477,7 +479,7 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
           var controls = child.object;
           this.async(function()
           {
-            child.init(this.camera, this.renderer);
+            child.init(this.camera, this.renderer.domElement);//.renderer);
             this._injectControls(controls);
           });
         }
@@ -592,16 +594,55 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
           //var lastPass = this.finalComposer.passes[this.finalComposer.passes.length-1];
           //lastPass.renderToScreen = true;
           this.renderer.clear();
-          //this.finalComposer.reset();
+          //this.finalComposer.reset();//THIS CAUSES BAD CRASHES!
           //HACK!
-          for(var key in this.activeScenes)
+          /*for(var key in this.activeScenes)
           {
             var activeScene = this.activeScenes[key];
             //activeScene.updateMatrixWorld();
             //this.renderer.render(activeScene, this.camera);
             activeScene.traverse( function ( child ) { if(child.material)child.material.depthTest = false; } )
           }
-          this.finalComposer.render();
+          this.finalComposer.render();*/
+          
+          /*renderer.setViewport( 0, 0, w, h );
+	        composer.render();
+
+	        renderer.clear( false, true, false ); // clear the depth buffer -- thanks @WestLangley!
+	        renderer.setViewport( 10, h - mapHeight - 10, mapWidth, mapHeight);
+	        mapComposer.render();*/
+	        
+	        for(var key in this.viewports)
+          {
+            var view = this.viewports[key];
+            
+            var left   = Math.floor( this.width  * view.left );
+					  var bottom = Math.floor( this.height * view.bottom );
+					  var width  = Math.floor( this.width  * view.width );
+					  var height = Math.floor( this.height * view.height );
+					  
+					  var renderer = this.renderer;
+					  renderer.setViewport( left, bottom, width, height );
+					  renderer.setScissor( left, bottom, width, height );
+					  renderer.enableScissorTest ( true );
+					  renderer.setClearColor( view.background );
+
+            var camera = view.camera;
+					  camera.aspect = width / height;
+					  camera.setSize(this.width,this.height);
+					  camera.updateProjectionMatrix();
+
+					  this.finalComposer.render();
+					  /*for(var key in this.activeScenes)
+            {
+              var activeScene = this.activeScenes[key];
+              activeScene.updateMatrixWorld();
+              this.renderer.render(activeScene, camera);//this.camera);
+            }*/
+            renderer.enableScissorTest ( false );
+          }
+          
+          
         }
         else
         {
@@ -633,12 +674,11 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
             {
               var activeScene = this.activeScenes[key];
               activeScene.updateMatrixWorld();
-              this.renderer.render(activeScene, camera);//this.camera);
+              renderer.render(activeScene, camera);//this.camera);
             }
-            
+            renderer.enableScissorTest ( false );
+            //renderer.clear( false, true, false );
           }
-          return;
-          
         }
       },
       animate: function() 
@@ -649,7 +689,7 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}" t
       },
       update: function()
       {
-	        if(this.controls) this.controls.update();
+	        //if(this.controls) this.controls.update();
           for(var i=0;i<this.updatables.length;i++)//any external items needing the same "heartbeat" can register "updatables"
           {
             try{

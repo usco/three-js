@@ -4,15 +4,17 @@
     Polymer('three-js-viewport', {
       object: null,
       name: "",
+      updatable:true,
       cameraId:null,
       camera:null,
       left: 0,
 			bottom: 0,
 			width: 0.5,
 			height: 1.0,
-			background: new THREE.Color().setRGB( 0.5, 0.5, 0.7 ),
+			background: new THREE.Color(),//.setRGB( 0.8, 0.5, 0.7 ),
       enteredView:function(){
         console.log("in threejsviewport");
+        this._setStyle();
         var camera = this.parentNode.querySelector(this.cameraId);
         camera = camera.object;
         console.log("camera", camera);
@@ -24,9 +26,24 @@
 				up: [ 0, 1, 0 ],
 				fov: 30,*/
       },
-			updateCamera: function ( camera, scene ) {
-			
-			},
+      update:function()
+      {
+        //console.log("updating viewport");
+        if(this.controls) this.controls.update();
+      },
+      add3:function(child){
+      
+        if( child instanceof threeJsControls )
+        {
+          var controls = child.object;
+          console.log("adding controls to viewport");
+          this.controls = controls;
+          this.async(function()
+          {
+            child.init(this.camera, this);
+          });
+        }
+      },
 			addToParent3: function() {
         if (this.parentNode.add3 && !this.objectParent) {
           this.objectParent = this.parentNode;
@@ -41,6 +58,26 @@
           this.objectParent = null;
           console.log('[%s]: REMOVED from threejs-objectParent', this.localName + (this.id ? '#' + this.id : ''));
         }
+      },
+      //helpers
+      _setStyle:function()
+      {
+	      //setup width & height
+	      var cs = window.getComputedStyle(this);
+	      this.width = parseInt(cs.getPropertyValue("width").replace("px",""));
+	      this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
+	      this.left = parseInt(cs.getPropertyValue("left").replace("px",""));
+	      //this.bottom = parseInt(cs.getPropertyValue("bottom").replace("px",""));
+	      
+	      this.width = this.width/this.parentNode.width;
+	      this.height= this.height/this.parentNode.height;
+	      this.left= this.left/this.parentNode.width;
+	      console.log("width etc", this.width, this.height, this.left);
+	      
+        //setup backround color
+	      this.bg = cs.getPropertyValue("background-color");
+	      //this._convertColor(this.bg);
+		    //this.renderer.setClearColor( this.bg, 1 );	  
       },
     });
   </script>
