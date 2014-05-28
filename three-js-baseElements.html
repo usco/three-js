@@ -1,23 +1,23 @@
-<polymer-element name="three-js-object" constructor="threeJsObject" attributes="name x y z rx ry rz castShadow receiveShadow show" >
+<polymer-element name="three-js-object" constructor="threeJsObject" attributes="name pos rot castShadow receiveShadow show" >
   <script>
     Polymer('three-js-object', {
       name: '',
-      x: 0,
-      y: 0,
-      z: 0,
-      rx: 0,
-      ry: 0,
-      rz: 0,
+      pos: [0,0,0],
+      rot: [0,0,0],
       castShadow: false,
       receiveShadow: false,
       show: true,
       name : null,
       object: null,
-      observe: {
-       x: 'updatePosition',
-       y: 'updatePosition',
-       z: 'updatePosition'
-      },
+      /*observe:{
+        pos:'updatePosition',
+        rot:'updatePosition'
+      },*/
+      /*observe: {
+       'pos.x': 'updatePosition',
+       'pos.y': 'updatePosition',
+       'pos.z': 'updatePosition'
+      }*/
       //element lifecycle callbacks
       created:function()
       {
@@ -28,17 +28,10 @@
          this.object.castShadow = this.castShadow;
          this.object.receiveShadow = this.receiveShadow;
          this.object.name = this.name;
+         this.object.position.set( this.pos[0],this.pos[1],this.pos[2]);
+         this.object.rotation.set( this.rot[0],this.rot[1],this.rot[2]);
       },
       enteredView: function() {
-        /*
-        var l = '';
-        var p = this.parentNode;
-        while (p) {
-          l += ':' + p.localName;
-          p = p.parentNode || p.host;
-        }
-        console.log('[%s]: enteredView: parent chain: [%s]', this.localName + (this.id ? '#' + this.id : ''), l);
-        */
         this.__addOrderedChildren();
         this.addToParent3();
       },
@@ -61,9 +54,9 @@
       },
       //public api
       setPosition: function(x, y, z) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.pos.x = x;
+        this.pos.y = y;
+        this.pos.z = z;
       },
       add3: function(child) {
           //TODO: do this MUCH better
@@ -132,8 +125,13 @@
       },
       updatePosition: function() {
         if (this.object) {
-          this.object.position.set(Number(this.x), Number(this.y), Number(this.z));
-          this.object.rotation.set(this.rx * Math.PI/180, this.ry * Math.PI/180, this.rz * Math.PI/180);
+          console.log("updating position");
+          //this.object.position.set(Number(this.pos[0]), Number(this.pos[1]), Number(this.pos[2]));
+          //if(this.pos[0]) != this.object.position
+          this.pos = [this.object.position.x,this.object.position.y,this.object.position.z];
+          //this.object.position.set(Number(this.pos.x), Number(this.pos.y), Number(this.pos.z));
+          //this.object.rotation.set(this.rot.x, this.rot.y, this.rot.z);
+          //this.object.rotation.set(this.rot.x * Math.PI/180, this.rot.y * Math.PI/180, this.rot.z * Math.PI/180);
           this.object.castShadow = this.castShadow;
           this.object.receiveShadow = this.receiveShadow;
         }

@@ -4,7 +4,7 @@
 <script src="lib/postProcessing/MaskPass.js"></script>
 <script src="lib/postProcessing/shaders/CopyShader.js"></script>
 
-<polymer-element name="three-post-fx" attributes="name">
+<polymer-element name="three-post-fx" constructor="threeJsPostFx" attributes="name">
   <script>Polymer('three-post-fx',{
     name: "default",
     effect: null,
@@ -118,7 +118,7 @@
   </script>
 
 
-<polymer-element name="three-effect-composer" constructor="threeJsFxComposer" attributes="name renderTarget2 toScreen ignore">
+<polymer-element name="three-effect-composer" constructor="threeJsFxComposer" attributes="name renderTarget2 toScreen ignore output input">
   <script>Polymer('three-effect-composer',{
     name : "",
     enabled: true,
@@ -139,6 +139,7 @@
     toScreen:true,
     
     ignore:[],//list of scene names to ignore
+    output:"diffuse", //can be either diffuse, normal, depth
 
     created:function()
     {
@@ -187,6 +188,9 @@
       console.log("ignoring",this.ignore);
       //shaders, post processing etc, various passes and rtts
       this.composer = new THREE.EffectComposer( this.renderer );
+      
+      var viewports = this.parentNode.querySelectorAll("three-js-viewport");
+      console.log("viewports", viewports);
 
       //prepare the final render passes
       //add a simple render pass first

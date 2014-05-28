@@ -12,10 +12,10 @@
       ready: function() {
         this.cameraUp = new THREE.Vector3(this.up[0],this.up[1],this.up[2]);  
       },
-      updatePosition: function() {
+      /*updatePosition: function() {
         this.super();
         this.lookAtChanged();
-      },
+      },*/
       //attribute change handlers
       aspectChanged:function() {
         this.object.aspect = this.aspect;
@@ -67,11 +67,12 @@
 
 <script src="lib/CombinedCamera.js"></script>
 
-<polymer-element name="three-js-combinedCamera" extends="three-js-camera" attributes="projection orientation">
+<polymer-element name="three-js-combinedCamera" extends="three-js-camera" attributes="projection orientation ortho">
   <script>
     Polymer('three-js-combinedCamera', {
       projection: "perspective",
       orientation: "diagonal",
+      ortho:false,
       object: null,
       ready: function() {
         this.super();      
@@ -91,9 +92,9 @@
         
         this.object = this.camera;
       },
-      updatePosition: function() {
+      /*updatePosition: function() {
         this.super();
-      },
+      },*/
       //attribute change handlers / various handlers
       projectionChanged:function()
 	    {
@@ -109,14 +110,24 @@
 				    //this.selectionHelper.isOrtho = false;
 		    }
 	    },
+	    orthoChanged:function()
+	    {
+	      if(this.ortho)
+	      {
+	        this.camera.toOrthographic();
+	      }
+	      else{
+	        this.camera.toPerspective();
+	      }
+	    },
       orientationChanged:function()
 	    {
-			    //console.log("orientation changed to", this.orientation);
+			    console.log("orientation changed to", this.orientation);
           var orientation = this.orientation;
           var methodName = "to"+orientation.charAt(0).toUpperCase() + orientation.slice(1)+"View";
           try{
             this.camera[methodName]();
-          }catch(error){}
+          }catch(error){console.log(error);}
 	    },
   
     });
