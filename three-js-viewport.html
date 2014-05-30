@@ -1,5 +1,5 @@
 
-<polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId left bottom width height">
+<polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId composerId left bottom width height postProcess">
   <script>
     Polymer('three-js-viewport', {
       object: null,
@@ -7,6 +7,12 @@
       updatable:true,
       cameraId:null,
       camera:null,
+      controls:null,
+      composerId:null,
+      composer:null,
+      
+      postProcess:false,
+      
       left: 0,
 			bottom: 0,
 			width: 0.5,
@@ -15,21 +21,66 @@
       enteredView:function(){
         console.log("in threejsviewport");
         this._setStyle();
-        var camera = this.parentNode.querySelector(this.cameraId);
-        camera = camera.object;
-        console.log("camera", camera);
-        this.camera = camera;
+        var camera   = this.parentNode.querySelector(this.cameraId);
+        if(camera) this.camera = camera = camera.object;
+        
+        var composer = this.parentNode.querySelector(this.composerId);
+        if(composer) this.composer = composer = composer.composer;
+        
         this.addToParent3();
-      },
-      foo: function() {
-        /*eye: [ 0, 300, 1800 ],
-				up: [ 0, 1, 0 ],
-				fov: 30,*/
       },
       update:function()
       {
-        //console.log("updating viewport");
         if(this.controls) this.controls.update();
+      },
+      render:function(renderer, activeScenes, width, height)
+      {
+        var left   = Math.floor( width  * this.left );
+				var bottom = Math.floor( height * this.bottom );
+			  var width  = Math.floor( width  * this.width );
+				var height = Math.floor( height * this.height );
+
+        if(this.postProcess && this.composer)
+        {
+            renderer.setViewport( left, bottom, width, height );
+            //FIXME: hack !
+            if(this.composer.camera != this.camera)
+            {
+              this.composer.altInit(renderer, activeScenes, this.camera);
+              console.log("this.width, this.height",width, height);
+              this.composer.composer.setSize(width, height);
+            }
+            this.composer.render();
+            
+             /*composer.render();
+	        renderer.clear( false, true, false ); // clear the depth buffer -- thanks @WestLangley!
+
+	        mapComposer.render();*/
+        }
+        else
+        {   
+          try{
+			      renderer.setViewport( left, bottom, width, height );
+			      renderer.setScissor( left, bottom, width, height );
+			      renderer.enableScissorTest ( true );
+			      }catch(error){}
+            renderer.setClearColor( this.background );
+
+            var camera = this.camera;
+			      camera.aspect = width / height;
+			      camera.setSize(width,height);
+			      camera.updateProjectionMatrix();
+			      
+			      for(var key in activeScenes)
+            {
+              var activeScene = activeScenes[key];
+              activeScene.updateMatrixWorld();
+              renderer.render(activeScene, camera);
+            }
+            try{
+            renderer.enableScissorTest ( false );
+            }catch(error){}
+        }
       },
       add3:function(child){
       
@@ -42,6 +93,11 @@
           {
             child.init(this.camera, this);
           });
+        }
+        if(child instanceof threeJsFxComposer )
+        {
+          console.log("adding fx composer to viewport");
+          this.composer = child;
         }
       },
 			addToParent3: function() {
@@ -68,11 +124,14 @@
 	      this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
 	      this.left = parseInt(cs.getPropertyValue("left").replace("px",""));
 	      //this.bottom = parseInt(cs.getPropertyValue("bottom").replace("px",""));
+	      this.realWidth = this.width;
+	      this.realHeight = this.height;
 	      
 	      this.width = this.width/this.parentNode.width;
 	      this.height= this.height/this.parentNode.height;
 	      this.left= this.left/this.parentNode.width;
 	      console.log("width etc", this.width, this.height, this.left);
+	       
 	      
         //setup backround color
 	      this.bg = cs.getPropertyValue("background-color");

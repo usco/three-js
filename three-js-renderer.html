@@ -147,6 +147,7 @@
         renderer.setSize(this.offsetWidth, this.offsetHeight);
         renderer.domElement.style.position = 'absolute';
         renderer.domElement.style.top = 0;
+        renderer.domElement.style.zIndex = 1;
 		    //this.shadowRoot.appendChild(renderer.domElement);
 		    this.appendChild(renderer.domElement);
 		    this.renderer = renderer;

@@ -470,6 +470,7 @@ tabindex="0">
         }
         if( child instanceof( foo ) ){
           console.log("adding renderer", child);
+          this.renderer = child.renderer;
           this.renderers.push( child.renderer );
         }
         if( child instanceof( threeJsScene ) ){
@@ -586,6 +587,21 @@ tabindex="0">
       render: function() {
         if (! this.camera) {return;}
         
+        
+        for(var i=0; i<this.renderers.length;i++)
+          {
+            var renderer = this.renderers[i];
+            try{renderer.clear();}catch(error){};
+          
+            for(var key in this.viewports)
+            {
+              var view = this.viewports[key];
+              view.render(renderer, this.activeScenes, this.width, this.height);
+              renderer.clear( false, true, false );
+            }
+        }
+        return;
+        
         if (this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true && this.finalComposer)
         {
           //FIXME:hack
@@ -629,6 +645,7 @@ tabindex="0">
 	        renderer.setViewport( 10, h - mapHeight - 10, mapWidth, mapHeight);
 	        mapComposer.render();*/
 	        
+	        /*
 	        for(var key in this.viewports)
           {
             var view = this.viewports[key];
@@ -650,16 +667,56 @@ tabindex="0">
 					  camera.updateProjectionMatrix();
 
 					  this.finalComposer.render();
-					  /*for(var key in this.activeScenes)
-            {
-              var activeScene = this.activeScenes[key];
-              activeScene.updateMatrixWorld();
-              this.renderer.render(activeScene, camera);//this.camera);
-            }*/
+					  //for(var key in this.activeScenes)
+            //{
+            //  var activeScene = this.activeScenes[key];
+            //  activeScene.updateMatrixWorld();
+            //  this.renderer.render(activeScene, camera);//this.camera);
+            //}
             renderer.enableScissorTest ( false );
-          }
+            
+            }*/
+            //ALT
+            for(var i=0; i<this.renderers.length;i++)
+          {
+            var renderer = this.renderers[i];
+            try{
+            renderer.clear();}catch(error){};
           
-          
+            for(var key in this.viewports)
+            {
+              var view = this.viewports[key];
+              
+              var left   = Math.floor( this.width  * view.left );
+					    var bottom = Math.floor( this.height * view.bottom );
+					    var width  = Math.floor( this.width  * view.width );
+					    var height = Math.floor( this.height * view.height );
+					    
+					    try{
+					    renderer.setViewport( left, bottom, width, height );
+					    renderer.setScissor( left, bottom, width, height );
+					    renderer.enableScissorTest ( true );
+					    }catch(error){}
+              renderer.setClearColor( view.background );
+
+              var camera = view.camera;
+					    camera.aspect = width / height;
+					    camera.setSize(width,height);
+					    camera.updateProjectionMatrix();
+					    
+					    for(var key in this.activeScenes)
+              {
+                var activeScene = this.activeScenes[key];
+                activeScene.updateMatrixWorld();
+                this.finalComposer.render();
+                //renderer.render(activeScene, camera);
+              }
+              try{
+              renderer.enableScissorTest ( false );
+              }catch(error){}
+              //renderer.clear( false, true, false );
+            }
+           }
         }
         else
         {

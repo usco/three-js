@@ -144,6 +144,8 @@
     created:function()
     {
       this.effects = [];
+      
+      this.viewports = {};
     },
     enteredView:function()
     {
@@ -158,7 +160,6 @@
         if (detail) {this.scene = detail.scene;this.activeScenes = detail.activeScenes}
         var detail = this.fire('three-js-get-camera', {}).detail;
         if (detail) {this.camera = detail.camera;}
-        console.log("lkmkl");
         /*if(this.scene && this.renderer && this.camera)
         {*/
           this._init();
@@ -183,6 +184,21 @@
     
     //initialization methods
     //FIXME: just for testing, needs refactoring
+    
+    altInit:function(renderer, activeScenes, camera)
+    {
+    
+      this.renderer = renderer;
+      this.activeScenes = activeScenes;
+      this.camera = camera;
+      this._simpleInit();
+      /*var detail = this.fire('three-js-get-renderer', {}).detail;
+        if (detail) {this.renderer = detail.renderer;}
+        var detail = this.fire('three-js-get-scene', {}).detail;
+        if (detail) {this.scene = detail.scene;this.activeScenes = detail.activeScenes}
+        var detail = this.fire('three-js-get-camera', {}).detail;
+        if (detail) {this.camera = detail.camera;}*/
+    },
     _simpleInit:function()
     {
       console.log("ignoring",this.ignore);
