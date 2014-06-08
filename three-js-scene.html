@@ -10,7 +10,14 @@
         this.super();
         this.object = new THREE.Scene();
         this.object.name = this.name;
+        this.object._pickable = this.pickable;
       },
+      //change handlers
+      pickableChanged:function()
+      {
+        console.log("pickable", this.pickable);
+        this.object._pickable = this.pickable;
+      }
       /*enteredView:function(){
         if(!(this._camera))
         {

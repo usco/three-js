@@ -1,5 +1,8 @@
 
-<polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId composerId left bottom width height postProcess">
+<polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId composerId left bottom width height postProcess"
+touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}" 
+>
+<!--on-track="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}"-->
   <script>
     Polymer('three-js-viewport', {
       object: null,
@@ -18,6 +21,7 @@
 			width: 0.5,
 			height: 1.0,
 			background: new THREE.Color(),//.setRGB( 0.8, 0.5, 0.7 ),
+			//base callbacks
       enteredView:function(){
         console.log("in threejsviewport");
         this._setStyle();
@@ -27,11 +31,133 @@
         var composer = this.parentNode.querySelector(this.composerId);
         if(composer) this.composer = composer = composer.composer;
         
+        this.selectionHelper = new SelectionHelper({camera:this.camera})
+        //TODO: move this?
+        this.selectionHelper.viewWidth = this.realWidth;
+        this.selectionHelper.viewHeight = this.realHeight;
+        
         this.addToParent3();
       },
+      //event handlers
+      onPointerMove:function(event)
+      {
+        //if(!this.selectionHelper) return;
+        //console.log("foo",this.name);
+        var event = event.impl || event;
+        event = normalizeEvent(event);
+        var x = event.offsetX;
+        var y = event.offsetY;
+        
+        var activeScenes = this.activeScenes;
+        
+        for(var key in activeScenes)
+        {
+          var activeScene = activeScenes[key];
+          if(!(activeScene._pickable)) continue;
+          this.selectionHelper.hiearchyRoot = activeScene.children;
+          this.parentNode.highlightedObject = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode);
+          if( this.parentNode.highlightedObject) break;
+        }
+        this._noMove = false;
+      },
+      onPointerDown:function(event)
+      {
+        var event = event.impl || event;
+        normalizeEvent(event);
+        var x = event.offsetX;
+        var y = event.offsetY;
+
+        this._noMove = true;
+        this._actionInProgress = true;
+        this._pushStart = new Date().getTime();
+
+			  //set focus so keyboard binding works
+			  /*if( document.activeElement != this.impl)
+			  {
+				  this.impl.focus();
+        }*/
+      },
+      onPointerUp:function(event)
+      {
+        var activeScenes = this.activeScenes;
+
+        var event = event.impl || event;
+        event = normalizeEvent(event);
+        var x = event.offsetX;
+        var y = event.offsetY;
+
+        this._actionInProgress = false;
+        var _pushEnd = new Date().getTime()
+        var _elapsed = _pushEnd - this._pushStart;
+        this._longAction = !(_elapsed <= 125);
+        this._longStaticTap = (_elapsed >= 300 && this._noMove == true);
+
+        var selected = null;
+        for(var key in activeScenes)
+        {
+          var activeScene = activeScenes[key];
+          if(!(activeScene._pickable)) continue;
+          this.selectionHelper.hiearchyRoot = activeScene.children;
+          selected = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode);
+          if( selected) break;
+        }
+
+        console.log("selected", selected,x,y);
+
+        if(this._longStaticTap)
+        {
+          this.fire("longstatictap",{position:{x:x,y:y}});
+        }
+        else if( selected != null && selected != undefined)
+        {
+          //this.selectionHelper.selectObjectAt(x,y)
+          //multi select handling
+          if(!(this.parentNode.shiftPress))
+          {
+            //no shift pressed: single selection
+            //this.selectedObjects=.length = 0;
+            //this.selectedObjects.push(selected);
+            this.parentNode.selectedObjects=[selected];
+          }
+          else
+          {
+            var tmpArray = [];
+            tmpArray = this.parentNode.selectedObjects.slice(0);
+            //necessary hack to work with polymer change handlers
+            
+             var index = tmpArray.indexOf(selected);
+             if(index>-1) //already present, remove selection
+             {
+              tmpArray.splice(index,1);
+             }
+             else//not yet present, add selection
+             {
+              tmpArray.push( selected );
+             }
+             this.parentNode.selectedObjects = tmpArray;
+          }
+        }
+        else
+        {
+          if (this._longAction == false)
+          {
+				    this.selectionHelper._unSelect();
+            //multiselect
+            this.parentNode.selectedObjects=[];
+          }
+          else
+          {
+            this.fire("longmovetap",{position:{x:x,y:y}});
+          }
+        }
+      },
+      
+      //api
       update:function()
       {
         if(this.controls) this.controls.update();
+        
+        
       },
       render:function(renderer, activeScenes, width, height)
       {
@@ -39,6 +165,8 @@
 				var bottom = Math.floor( height * this.bottom );
 			  var width  = Math.floor( width  * this.width );
 				var height = Math.floor( height * this.height );
+				
+				this.activeScenes = activeScenes;
 
         if(this.postProcess && this.composer)
         {
@@ -51,11 +179,6 @@
               this.composer.composer.setSize(width, height);
             }
             this.composer.render();
-            
-             /*composer.render();
-	        renderer.clear( false, true, false ); // clear the depth buffer -- thanks @WestLangley!
-
-	        mapComposer.render();*/
         }
         else
         {   

@@ -469,7 +469,6 @@ tabindex="0">
           this.updatables.push( child );
         }
         if( child instanceof( foo ) ){
-          console.log("adding renderer", child);
           this.renderer = child.renderer;
           this.renderers.push( child.renderer );
         }
@@ -479,12 +478,6 @@ tabindex="0">
            
            this.scenes[ scene.name ] = scene;
            if(active) this.activeScenes[ scene.name ] = scene;
-           //this._injectScene( sceneNode )
-           /*var scene = activeScenes[i];
-           this.activeScenes[ scene.name ] = scene.object;
-           this.scenes[ activeScenes[i].name] = scene.object;*/
-
-           //if(this.scene && this.camera) this._setupHelpers();
         }
         if( child instanceof threeJsCamera ) {
           var camera = child.object;
@@ -508,8 +501,11 @@ tabindex="0">
         }
         if( child instanceof threeJsViewport)
         {
-          console.log("viewport added");
           this.viewports[child.name] = child;
+          //selectedObjects and HighlightedObject is shared, inject it
+          child.selectedObjects = this.selectedObjects;
+          child.highlightedObject = this.highlightedObject;
+          
         }
       },
       remove3: function(child) {
@@ -570,6 +566,8 @@ tabindex="0">
         
         if(added.length>0) this.asyncFire("selectionsAdded",added);
         if(removed.length>0) this.asyncFire("selectionsRemoved",removed);
+        
+        console.log("SELECTED objects changed",this.selectedObjects);
       },
       invalidate: function() {
         this.validateJob = this.job(this.validateJob, this.validate, 250);

@@ -1,0 +1,199 @@
+<html>
+  <head>
+    <title>Three.js polymer.js viewer example</title>
+      <script src="components/platform/platform.js"></script>
+      <link rel="import" href="components/polymer/polymer.html">
+      <link rel="import" href="three-js.html">
+      
+      <!--additional elements-->
+      <link rel="import" href="demos/fx/edgedetect-pass.html">
+      <link rel="import" href="demos/grid/grid-helper.html">
+
+      <style>
+         html, body, three-js, test-viewer{
+      margin: 0;
+      position: absolute;
+      height: 100%;
+      width:100%;
+      
+      -webkit-touch-callout: none;
+		-webkit-user-select: none;
+		-khtml-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+    }
+    
+      #leftview{
+        position: absolute;
+        width: 50%;
+        height: 100%;
+        left: 50%;
+        z-index:1;
+      }
+      #perspectiveView{
+        position: absolute;
+        width: 50%;
+        height: 100%;
+        left: 0;
+        z-index:1;
+      }
+      </style>
+  </head>
+<body>
+  <!--Experimental-->
+  
+  <polymer-element name="test-viewer">
+ 
+    <template>
+      <three-js postProcess="true" id="threeJs" >
+        <three-stats id="stats" show></three-stats>
+        <three-js-webglRenderer id="webglRenderer"></three-js-webglRenderer>
+        <!--<three-js-css3dRenderer id="css3dRenderer"></three-js-css3dRenderer>-->
+        
+        <three-js-combinedCamera id="cam1" pos="[100,50,200]" orientation="diagonal" up=[0,0,1]></three-js-combinedCamera>
+        <three-js-combinedCamera id="cam2" pos="[100,100,200]" orientation="top" ortho up=[0,0,1] ></three-js-combinedCamera>
+        <three-js-combinedCamera id="cam3" pos="[100,100,200]" orientation="front" ortho up=[0,0,1] ></three-js-combinedCamera>
+        
+        <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" autoRotate> </three-js-orbitControls>
+
+        <three-js-scene name="caramba" active pickable>
+          <three-js-object hierarchyRoot>
+            <three-js-cube pos="[45,0,0]" color="red" w="24"> </three-js-cube>
+          </three-js-object>
+            <three-js-light pos="[50,30,200]"></three-js-light>
+            <three-js-light kind="spot" pos=[150,350,90] shadow></three-js-light>
+        </three-js-scene>
+
+        <three-js-scene name="aiaiai" active pickable>
+          <three-js-object name="rootObject" hierarchyRoot> 
+            <three-js-cube color="yellow" w="13"> </three-js-cube>
+          </three-js-object>
+          <three-js-light pos=[50,30,200]></three-js-light>
+          <three-js-light kind="spot" pos=[-150,350,90] shadow></three-js-light>
+        </three-js-scene>
+        
+       <three-js-scene name="helpers" active>
+          <three-js-light kind="spot" pos=[-150,350,90] shadow castShadow></three-js-light>
+          <three-axis-helper> </three-axis-helper>
+          <grid-helper  size=200 step=10 receiveShadow ></grid-helper>
+       </three-js-scene>
+      
+      <three-js-viewport name="perspective" id="perspectiveView" cameraId="#cam1" left=0 bottom=0 width=0.5 height=1.0 postProcess>
+        <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" > </three-js-orbitControls>
+        
+        <three-effect-composer ignore=["caramba","helpers"]>
+          <vignette-fx> </vignette-fx>
+          <hueSaturation-fx hue="0.5" saturation="1.0"> </hueSaturation-fx>
+        </three-effect-composer>
+      </three-js-viewport>
+      
+      <three-js-viewport name="left" id="leftView" cameraId="#cam2" left=0.5 bottom=0 width=0.5 height=1.0 postProcess> 
+        <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" autoRotate> </three-js-orbitControls>
+        <three-effect-composer ignore=["caramba","helpers"]>
+          <!--<edgeDetect-pass></edgeDetect-pass>-->
+          <!--<three-effect-composer material="MeshNormal" renderTarget2="{{normalRT}}">
+            <edgeDetect-pass></edgeDetect-pass>
+          </three-effect-composer>
+          <three-effect-composer material="MeshDepth" renderTarget2="{{depthRT}}">
+            <edgeDetect-pass></edgeDetect-pass>
+          </three-effect-composer>
+          <outline-fx tNormal="{{normalRT}}" tDepth="{{normalRT}}" color="{{outlineColor}}" strength="{{outlineStrength}}"> </outline-fx>  
+          -->
+          <!--<render-pass material="MeshNormal"></render-pass>-->
+        </three-effect-composer>
+      </three-js-viewport>
+
+      <three-effect-composer ignore=["caramba","helpers"]>
+        <vignette-fx> </vignette-fx>
+        <hueSaturation-fx hue="0.5" saturation="1.0"> </hueSaturation-fx>
+      </three-effect-composer>
+
+  </three-js>
+
+    </template>
+    <script>Polymer("test-viewer", {
+      addToScene:function(object,sceneName)
+      {
+        this.threeJs = this.$.threeJs;
+        this.threeJs.addToScene(object,sceneName);
+      }
+    });
+    </script>
+  </polymer-element>
+  
+  <polymer-element name="object-attrs" >
+    <template>
+      <style>
+        position:absolute;
+        left:0px;
+        top:0px;
+        width:100px;
+        backgroud:red;
+        height:100px;
+      </style>
+        Bla bla <input type="range" >
+    </template>
+    <script>Polymer('object-attrs',{
+      ready: function()
+      {
+      }
+    });
+    </script>
+  </polymer-element>
+  
+  
+  <test-viewer></test-viewer>
+  <div style="position:absolute;left:300px">sdfsdf </div>
+
+  <script>
+      window.addEventListener('polymer-ready', function() {
+        console.log("web components ready");
+
+	    var threeViewer = document.querySelector('test-viewer');
+      console.log("threeViewer",threeViewer)
+      //example : adding 3D shapes to viewer''
+      var geometry = new THREE.CubeGeometry( 50, 50, 50 ); 
+      geometry.computeCentroids();
+    	geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+	    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
+	    var cube = new THREE.Mesh(geometry, material);
+      cube.name = "TestCube";
+      cube.position.set(-100,30,30);
+      //add to scene
+
+      var geometry = new THREE.SphereGeometry(12, 20,20);
+      geometry.computeCentroids();
+    	geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+      var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
+      var sphere = new THREE.Mesh(geometry, material);
+      sphere.name = "testSphere";
+      sphere.position.set(50,0,30);
+
+      cube.add(sphere)
+      
+      //threeViewer.addToScene( cube );
+
+      //threeViewer.toggleScene("aiaiai");
+
+      //threeViewer.add3(cube);
+      //threeViewer.add3(sphere);
+
+      //clearing a scene
+      //threeViewer.clearScene();
+
+      //add things back
+      //threeViewer.addToScene(cube);
+      //threeViewer.addToScene(sphere);
+
+      //remove cube only
+      //threeViewer.removeFromScene(cube);
+
+    });
+      
+    
+  </script>  
+</body>
+</html>
