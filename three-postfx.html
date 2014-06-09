@@ -4,10 +4,11 @@
 <script src="lib/postProcessing/MaskPass.js"></script>
 <script src="lib/postProcessing/shaders/CopyShader.js"></script>
 
-<polymer-element name="three-post-fx" constructor="threeJsPostFx" attributes="name">
+<polymer-element name="three-post-fx" constructor="threeJsPostFx" attributes="name enabled">
   <script>Polymer('three-post-fx',{
     name: "default",
     effect: null,
+    enabled:true,
     enteredView:function()
     { 
       if(this.parentNode)
@@ -15,6 +16,57 @@
           this.parentNode.addEffect(this);
       }
     }
+  });
+  </script>
+</polymer-element>
+
+<!--can be used for depth, normal passes etc-->
+<polymer-element name="render-pass" constructor="threeJsRenderPass"  extends="three-post-fx" attributes="material">
+  <script>Polymer('render-pass',{
+    name: "render-pass",
+    effect: null,
+    material:null,
+    camera:null,
+    scene:null,
+    ready: function()
+    {
+      this._setEffect();
+    },
+    init:function(renderer, scene, camera)
+    {
+      this.scene = scene;
+      this.camera = camera;
+      console.log("init");
+      this._setEffect();
+    },
+    _setEffect:function()
+    {
+      var materialName = this.material+"Material";
+      var material = new THREE[materialName]()
+      //var material = new THREE.MeshNormalMaterial();
+      if(this.scene && this.camera)
+      {
+      this.effect = new THREE.RenderPass(this.scene, this.camera, material);
+      }
+      else
+      {
+      this.effect = null;
+      }
+    },
+    //attribute change handlers
+    materialChanged:function()
+    {
+      this._setEffect();
+    },
+    cameraChanged:function()
+    {
+      this._setEffect();
+    },
+    sceneChanged:function()
+    {
+      this._setEffect();
+    }
+    
   });
   </script>
 </polymer-element>
@@ -118,7 +170,7 @@
   </script>
 
 
-<polymer-element name="three-effect-composer" constructor="threeJsFxComposer" attributes="name renderTarget2 toScreen ignore output input">
+<polymer-element name="three-effect-composer" constructor="threeJsFxComposer" attributes="name renderTarget2 toScreen ignore output input material">
   <script>Polymer('three-effect-composer',{
     name : "",
     enabled: true,
@@ -138,14 +190,18 @@
     
     toScreen:true,
     
-    ignore:[],//list of scene names to ignore
+    ignore:null,//list of scene names to ignore
     output:"diffuse", //can be either diffuse, normal, depth
+    
+    material:null,//overrideMaterial
+    _subComposers: null,
 
     created:function()
     {
       this.effects = [];
-      
       this.viewports = {};
+      this.ignore = [];
+      this._subComposers = [];
     },
     enteredView:function()
     {
@@ -179,46 +235,57 @@
       this.resUpscaler=1;
       this.hRes = this.width * this.dpr * this.resUpscaler;
       this.vRes = this.height * this.dpr * this.resUpscaler;
-      this.composer.setSize(this.hRes, this.vRes);
+      if(this.composer) this.composer.setSize(this.hRes, this.vRes);
     },
-    
     //initialization methods
     //FIXME: just for testing, needs refactoring
-    
     altInit:function(renderer, activeScenes, camera)
     {
     
       this.renderer = renderer;
-      this.activeScenes = activeScenes;
       this.camera = camera;
-      this._simpleInit();
-      /*var detail = this.fire('three-js-get-renderer', {}).detail;
-        if (detail) {this.renderer = detail.renderer;}
-        var detail = this.fire('three-js-get-scene', {}).detail;
-        if (detail) {this.scene = detail.scene;this.activeScenes = detail.activeScenes}
-        var detail = this.fire('three-js-get-camera', {}).detail;
-        if (detail) {this.camera = detail.camera;}*/
-    },
-    _simpleInit:function()
-    {
-      console.log("ignoring",this.ignore);
-      //shaders, post processing etc, various passes and rtts
-      this.composer = new THREE.EffectComposer( this.renderer );
+      this.activeScenes = activeScenes;
+      this.postProcessScenes = [];
+      this.notProcessScenes = []
       
-      var viewports = this.parentNode.querySelectorAll("three-js-viewport");
-      console.log("viewports", viewports);
-
-      //prepare the final render passes
-      //add a simple render pass first
       for(var key in this.activeScenes)
       {
         var activeScene = this.activeScenes[key];
         if(this.ignore.indexOf(key)==-1)
         {
-          var renderPass = new THREE.RenderPass(activeScene, this.camera);//, null, false, false);  
-          renderPass.clear = false;
-          this.composer.addPass( renderPass );    
+          this.postProcessScenes[key] = activeScene;
         }
+        else
+        {
+          this.notProcessScenes[key] = activeScene;
+        }
+      }
+      console.log("rendering",this.postProcessScenes);
+      console.log("NOT rendering", this.notProcessScenes);
+      this._simpleInit();
+    },
+    _simpleInit:function()
+    {
+      //console.log("ignoring",this.ignore);
+      //shaders, post processing etc, various passes and rtts
+      var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
+      this.renderTarget = new THREE.WebGLRenderTarget( this.width, this.height, renderTargetParameters );
+      this.composer = new THREE.EffectComposer( this.renderer, this.renderTarget );
+      
+      var overrideMaterial = null;
+      if(this.material!=null)
+      {
+        var materialName = this.material+"Material";
+        overrideMaterial = new THREE[materialName]();
+      }
+      //prepare the final render passes
+      //add a simple render pass first
+      for(var key in this.postProcessScenes)
+      {
+        var scene = this.postProcessScenes[key];
+        var renderPass = new THREE.RenderPass(scene, this.camera, overrideMaterial);//, null, false, false);  
+        renderPass.clear = false;
+        this.composer.addPass( renderPass );    
       }
       if(this.composer.passes.length>0) this.composer.passes[0].clear = true;
 
@@ -226,70 +293,48 @@
       for(var i=0; i<this.effects.length;i++)
       {
           var effectElement = this.effects[i];
-          //if(effectElement.init) effectElement.init(this.renderer, this.scene, this.camera);
-          var pass = effectElement.effect;
-          this.composer.addPass( pass );
+          if( effectElement instanceof threeJsRenderPass)
+          {
+            if(effectElement.init) effectElement.init(this.renderer, this.scene, this.camera);
+          }
+          
+          if(effectElement.enabled)
+          {
+            var pass = effectElement.effect;
+            this.composer.addPass( pass );
+          }
       }
-      //if(this.composer.passes.length>1) this.composer.passes[this.composer.passes.length-1].clear = false;
+      //TODO:workarounds for multiple render passes:
+      //see https://github.com/mrdoob/three.js/issues/1234
       
       //now render scenes with no post processing
-      for(var key in this.activeScenes)
+      /*
+      for(var key in this.notProcessScenes)
       {
-        var activeScene = this.activeScenes[key];
-        if(this.ignore.indexOf(key)>-1)
-        {
-          var renderPass = new THREE.RenderPass(activeScene, this.camera, null, false, false);  
-          //HACK !!
-          renderPass.clear = false;
-          this.composer.addPass( renderPass );    
-        }
-      }
-      var lastPass = this.composer.passes[this.composer.passes.length-1];
-      lastPass.clearAlpha= false;
-      lastPass.clear = false;
-      //lastPass.clearColor= false;
-      //lastPass.needsSwap = true;
+        console.log("scene with no postfx", key);
+        var scene = this.notProcessScenes[key];
+        var renderPass = new THREE.RenderPass(scene, this.camera, null, false, false);  
+        //HACK !!
+        renderPass.clear = false;
+        this.composer.addPass( renderPass );    
+      }*/
+      //var lastPass = this.composer.passes[this.composer.passes.length-1];
+      //lastPass.clearAlpha= false;
+      //lastPass.clear = false;
 
       var copyPass = new THREE.ShaderPass( THREE.CopyShader );
       this.composer.addPass( copyPass );
       
-      if(this.toScreen)
+      if(this.toScreen)//make sure the last pass renders to screen
       {
-        //make sure the last pass renders to screen
         this.composer.passes[this.composer.passes.length-1].renderToScreen = true;
       }
       console.log(this.name + " effects",this.composer.passes);
+      
+        //this.composer.__element = this;
+        //this.renderTarget2 = this.composer.renderTarget2;
+        //this.composer.subComposers = [];
     },
-    _fullInit:function()
-    {
-      //shaders, post processing etc, various passes and rtts
-        var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
-        this.renderTarget = new THREE.WebGLRenderTarget( this.width, this.height, renderTargetParameters );
-        this.composer = new THREE.EffectComposer( this.renderer, this.renderTarget );
-        //prepare the final render passes
-        
-        for(var i=0; i<this.effects.length;i++)
-        {
-          var effectElement = this.effects[i];
-          if(effectElement.init) effectElement.init(this.renderer, this.scene, this.camera);
-          
-          var effect = effectElement.effect;
-          this.composer.addPass( effect );
-        }
-        console.log(this.name + " effects",this.composer.passes);
-        
-        //make sure the last pass renders to screen
-        if(this.toScreen)
-        {
-          this.composer.passes[this.composer.passes.length-1].renderToScreen = true;
-        }
-        this.composer.__element = this;
-        this.renderTarget2 = this.composer.renderTarget2;
-        
-        this.composer.subComposers = [];
-    },
-    
-    
     _init:function()
     {
       if(this.renderer instanceof THREE.WebGLRenderer && this.enabled)
@@ -305,7 +350,19 @@
     //internal methods
     render:function()
     {
+      for(var i=0;i<this._subComposers.length;i++)
+      {
+        this._subComposers[i].render();
+      }
       this.composer.render();
+      //clear depth buffer
+      this.renderer.clear( false, true, false );
+      //now render scenes with no post processing
+      for(var key in this.notProcessScenes)
+      {
+        var scene = this.notProcessScenes[key];
+        this.renderer.render(scene, this.camera);
+      }
     },
     //public api
     addEffect:function(effect)
@@ -316,9 +373,10 @@
     {
       if( child.localName === 'three-effect-composer')
       {
-        this.composer.subComposers.push( child.composer );
+        //this.composer.subComposers.push( child.composer );
+        this._subComposers.push( child );
         //FIXME:hack
-        this.renderTarget2 = this.composer.renderTarget2;
+        //this.renderTarget2 = this.composer.renderTarget2;
       }
     },
     addToParent3: function() {
