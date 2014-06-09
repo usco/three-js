@@ -49,7 +49,7 @@
       <three-js postProcess="true" id="threeJs" >
         <three-stats id="stats" show></three-stats>
         <three-js-webglRenderer id="webglRenderer"></three-js-webglRenderer>
-        <!--<three-js-css3dRenderer id="css3dRenderer"></three-js-css3dRenderer>-->
+        <three-js-css3dRenderer id="css3dRenderer"></three-js-css3dRenderer>
         
         <three-js-combinedCamera id="cam1" pos="[100,50,200]" orientation="diagonal" up=[0,0,1]></three-js-combinedCamera>
         <three-js-combinedCamera id="cam2" pos="[100,100,200]" orientation="top" ortho up=[0,0,1] ></three-js-combinedCamera>
@@ -77,6 +77,20 @@
           <three-js-light kind="spot" pos=[-150,350,90] shadow castShadow></three-js-light>
           <three-axis-helper> </three-axis-helper>
           <grid-helper  size=200 step=10 receiveShadow ></grid-helper>
+          
+          <three-js-css3dobject> 
+            <div style="position: absolute;font-size: 18px;">
+              <div style="color:blue"> SOME TEXT YEAH</div>
+              <input type="text" placeholder="science rulez"></input>
+              <template id="toto">
+                <div> qsdqds</div>
+              </template>
+              <template bind ref="toto" style="position:absolute;left:10px">
+              </template> 
+            </div>
+          </three-js-css3dobject>
+          
+          
        </three-js-scene>
       
       <three-js-viewport name="perspective" id="perspectiveView" cameraId="#cam1" left=0 bottom=0 width=0.5 height=1.0 postProcess>
@@ -154,7 +168,7 @@
       console.log("threeViewer",threeViewer)
       //example : adding 3D shapes to viewer''
       var geometry = new THREE.CubeGeometry( 50, 50, 50 ); 
-      geometry.computeCentroids();
+      //geometry.computeCentroids();
     	geometry.computeBoundingSphere();
       geometry.computeBoundingBox();
 	    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
@@ -164,7 +178,7 @@
       //add to scene
 
       var geometry = new THREE.SphereGeometry(12, 20,20);
-      geometry.computeCentroids();
+      //geometry.computeCentroids();
     	geometry.computeBoundingSphere();
       geometry.computeBoundingBox();
       var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );

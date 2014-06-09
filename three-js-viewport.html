@@ -168,7 +168,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 				
 				this.activeScenes = activeScenes;
 
-        if(this.postProcess && this.composer)
+        if(this.postProcess && this.composer && renderer instanceof THREE.WebGLRenderer)
         {
             renderer.setViewport( left, bottom, width, height );
             //FIXME: hack !

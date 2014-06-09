@@ -468,7 +468,7 @@ tabindex="0">
         {
           this.updatables.push( child );
         }
-        if( child instanceof( foo ) ){
+        if( child instanceof( threeJsRenderer ) ){
           this.renderer = child.renderer;
           this.renderers.push( child.renderer );
         }
@@ -496,16 +496,12 @@ tabindex="0">
         }
         if( child instanceof threeJsFxComposer)
         {
-          this.finalComposer = child.composer;
-          this.finalComposer.setSize(this.width, this.height);
+          /*this.finalComposer = child.composer;
+          this.finalComposer.setSize(this.width, this.height);*/
         }
         if( child instanceof threeJsViewport)
         {
           this.viewports[child.name] = child;
-          //selectedObjects and HighlightedObject is shared, inject it
-          child.selectedObjects = this.selectedObjects;
-          child.highlightedObject = this.highlightedObject;
-          
         }
       },
       remove3: function(child) {
@@ -567,7 +563,7 @@ tabindex="0">
         if(added.length>0) this.asyncFire("selectionsAdded",added);
         if(removed.length>0) this.asyncFire("selectionsRemoved",removed);
         
-        console.log("SELECTED objects changed",this.selectedObjects);
+        //console.log("SELECTED objects changed",this.selectedObjects);
       },
       invalidate: function() {
         this.validateJob = this.job(this.validateJob, this.validate, 250);
@@ -584,8 +580,7 @@ tabindex="0">
       //other
       render: function() {
         if (! this.camera) {return;}
-        
-        
+
         for(var i=0; i<this.renderers.length;i++)
           {
             var renderer = this.renderers[i];
@@ -595,7 +590,7 @@ tabindex="0">
             {
               var view = this.viewports[key];
               view.render(renderer, this.activeScenes, this.width, this.height);
-              renderer.clear( false, true, false );
+              try{ renderer.clear( false, true, false ); } catch(error){};
             }
         }
         return;
