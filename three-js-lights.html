@@ -1,31 +1,110 @@
-<polymer-element name="three-js-light" extends="three-js-object" attributes="kind color secColor intensity distance angle exponent castShadow">
+<polymer-element name="three-js-light" extends="three-js-object" attributes="color intensity">
   <script>
     Polymer('three-js-light', {
-      kinds: {
-        point: 'PointLight',
-        spot: 'SpotLight',
-        dir:  'DirectionalLight',
-        ambient:'AmbientLight',
-        hemi:'HemisphereLight'
-      },
       color: 0xFFFFFF,
-      secColor: 0xFFFFFF, // for hemilight
       intensity: 1,
-      distance: 0,
-      angle: 60,
-      exponent: 8,
       ready: function() {
-        this.object.castShadow = this.shadow;
-        var kind = this.kinds[this.kind] || this.kinds.point;
-        if(kind == "HemisphereLight")
-        {
-         this.object = new THREE[kind](this.color,this.secColor, this.intensity);
-        }
-        else{
-        this.object = new THREE[kind](this.color, this.intensity, this.distance, this.angle * Math.PI/180, this.exponent);
-        }
+        this.object = new THREE.Light(this.color);
+        this.object.name = this.name;
+        this.super();
+      },
+      colorChanged:function(){
+        this.object.color.set( this.color );
+      }
+    });
+  </script>
+</polymer-element>
+
+
+<polymer-element name="three-ambientLight" extends="three-js-light">
+  <script>
+    Polymer('three-ambientLight', {
+      ready: function() {
+        this.super();
+        this.object = new THREE.AmbientLight(this.color);
+      }
+    });
+  </script>
+</polymer-element>
+
+<polymer-element name="three-areaLight" extends="three-js-light" attributes="width height">
+  <script>
+    Polymer('three-areaLight', {
+      width:1.0,
+      height:1.0,
+      ready: function() {
+        this.super();
+        this.object = new THREE.AreaLight(this.color, this.intensity);
+      },
+      widthChanged:function() {
+        this.object.width = this.width;
+      },
+      heightChanged:function() {
+        this.object.height = this.height;
+      }
+    });
+  </script>
+</polymer-element>
+
+<polymer-element name="three-hemisphereLight" extends="three-js-light" attributes="gndColor">
+  <script>
+    Polymer('three-hemisphereLight', {
+      gndColor: 0xFFFFFF,
+      ready: function() {
+        this.super();
+        this.object = new THREE.HemisphereLight(this.color, this.gndColor, this.intensity);
+      },
+      gndColorChanged:function(){
+        this.object.groundColor.set( this.gndColor );
+      }
+    });
+  </script>
+</polymer-element>
+
+<polymer-element name="three-pointLight" extends="three-js-light" attributes="distance">
+  <script>
+    Polymer('three-pointLight', {
+      distance: 0,
+      created:function(){
+        this.super();
+      },
+      ready: function() {
+        this.super();
+        this.object = new THREE.PointLight(this.color, this.intensity, this.distance);
+      },
+      distanceChanged:function(){
+        this.object.distance = this.distance;
+      },
+    });
+  </script>
+</polymer-element>
+
+
+<polymer-element name="three-directionalLight" extends="three-js-light" attributes="target castShadow onlyShadow
+shadowMapWidth shadowMapHeight shadowCameraLeft shadowCameraRight shadowCameraTop shadowCameraBottom 
+shadowCameraNear shadowCameraFar shadowCameraFov
+shadowBias shadowDarkness">
+  <script>
+    Polymer('three-directionalLight', {
+      target: null,
+      castShadow:false,
+      onlyShadow:false,
+      created:function(){
+        this.super();
+        this.target = new THREE.Object3D();
+      },
+      ready: function() {
+        this.super();
+        this.object = new THREE.DirectionalLight(this.color, this.intensity);
+        this.object.target = this.target;
+        this.castShadowChanged();
+      },
+      targetChanged:function(){
+        this.object.target = this.target;
+      },
+      castShadowChanged:function(){
+        this.object.castShadow = this.castShadow;
         if (this.castShadow) {
-          this.object.castShadow = this.castShadow;
           this.object.shadowMapWidth = 1024;
           this.object.shadowMapHeight = 1024;
           this.object.shadowCameraNear = 500;
@@ -33,22 +112,53 @@
           this.object.shadowCameraFov = 30;
           this.object.shadowBias = 0.0001;//-0.0001;
           this.object.shadowDarkness = 0.5;		//dirLight.shadowDarkness = 0.35;
-          /*var d = 50;
-		      dirLight.shadowCameraLeft = -d;
-		      dirLight.shadowCameraRight = d;
-		      dirLight.shadowCameraTop = d;
-		      dirLight.shadowCameraBottom = -d;
-          dirLight.onlyShadow = true;
-          var shadowConst = 0.8;
-          dirLight.shadowDarkness = shadowConst * dirLight.intensity;*/
         }
-        this.object.name = this.name;
-        this.super();
       },
-      /*updatePosition: function() {
-        this.super();
-      }*/
+      //TODO: no point in handling these indivisually, as the component's 
+      //attribute shadows that of the three.js light
+      onlyShadowChanged:function(){
+        this.object.onlyShadow = this.onlyShadow;
+      },
+      shadowDarknessChanged:function(){
+        this.object.shadowDarkness = this.shadowDarkness;
+      },
+      shadowDarknessChanged:function(){
+        this.object.shadowDarkness = this.shadowDarkness;
+      }
     });
   </script>
 </polymer-element>
+
+<polymer-element name="three-spotLight" extends="three-directionalLight" 
+attributes="distance angle exponent">
+  <script>
+    Polymer('three-spotLight', {
+      distance: 0,
+      angle:Math.PI / 3,
+      exponent:10,
+      created:function(){
+        this.super();
+      },
+      ready: function() {
+        this.super();
+        this.object = new THREE.SpotLight(this.color, this.intensity, this.distance, this.angle, this.exponent );
+      },
+      distanceChanged:function(){
+        this.object.distance = this.distance;
+      },
+      angleChanged:function(){
+        this.object.angle = this.angle;
+      },
+      exponentChanged:function(){
+        this.object.exponent = this.exponent;
+      },
+    });
+  </script>
+</polymer-element>
+
+
+
+
+
+
 
