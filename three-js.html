@@ -4,7 +4,7 @@
 <script src="lib/helpers/selection-helper.js"></script>
 <script src="lib/helpers/normalizeEvent.js"></script>
 
-<link rel="import" href="components/polymer/polymer.html">
+<link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="three-js-baseElements.html">
 <link rel="import" href="three-js-renderer.html">
 <link rel="import" href="three-js-scene.html">
@@ -91,7 +91,7 @@ tabindex="0">
         this.selectedObjects = [];
       },
       ready: function() {
-        this._setupRenderer();
+        //this._setupRenderer();
       },
       enteredView:function()
       {
@@ -260,13 +260,13 @@ tabindex="0">
 		      this.camera.updateProjectionMatrix();
         }
         
-		    this.renderer.setSize( this.width,this.height );
+		    /*this.renderer.setSize( this.width,this.height );*/
 		    for(var i = 0; i<this.renderers.length;i++)
 		    {
 		      var renderer = this.renderers[i];
 		      renderer.setSize( this.width,this.height );
 		    }
-		    
+		    /*
         if(this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true && this.finalComposer)
         {
           this.finalComposer.setSize(this.hRes, this.vRes);
@@ -276,7 +276,7 @@ tabindex="0">
         {
           this.selectionHelper.viewWidth = this.width;
           this.selectionHelper.viewHeight = this.height;
-        }
+        }*/
       },
       onFullScreenChange:function()
       {
@@ -579,7 +579,7 @@ tabindex="0">
       },
       //other
       render: function() {
-        if (! this.camera) {return;}
+        //if (! this.camera) {return;}
 
         for(var i=0; i<this.renderers.length;i++)
           {
@@ -813,7 +813,7 @@ tabindex="0">
         //setup backround color
 	      this.bg = cs.getPropertyValue("background-color");
 	      this._convertColor(this.bg);
-		    this.renderer.setClearColor( this.bg, 1 );	  
+		    //this.renderer.setClearColor( this.bg, 1 );	  
       },
     });
   </script>
