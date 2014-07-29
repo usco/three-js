@@ -11,6 +11,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
       cameraId:null,
       camera:null,
       controls:null,
+      controlsId:null,
       composerId:null,
       composer:null,
       
@@ -18,35 +19,86 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
       
       left: 0,
 			bottom: 0,
-			width: 0.5,
+			width: 1.0,
 			height: 1.0,
-			background: new THREE.Color(),//.setRGB( 0.8, 0.5, 0.7 ),
+			background: new THREE.Color(),
+			
+			_pointerMoveTicks:0,
 			//base callbacks
       enteredView:function(){
-        console.log("in threejsviewport");
-        this._setStyle();
+        //console.log("in threejsviewport");
         var camera   = this.parentNode.querySelector(this.cameraId);
         if(camera) this.camera = camera = camera.object;
+        
+        var controls   = this.parentNode.querySelector(this.controlsId);
+        if(controls) this.controls = controls = controls.object;
         
         var composer = this.parentNode.querySelector(this.composerId);
         if(composer) this.composer = composer = composer.composer;
         
         this.selectionHelper = new SelectionHelper({camera:this.camera})
-        //TODO: move this?
-        this.selectionHelper.viewWidth = this.realWidth;
-        this.selectionHelper.viewHeight = this.realHeight;
-        
+
         this.addToParent3();
+        this.onResize();
+        
+        //alternative picking EXPERIMENTAL
+        this.mouse= {x:300,y:200};
+        this.pickingTexture = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight );
+				this.pickingTexture.generateMipmaps = false;
+        //setup various handlers
+        window.addEventListener("resize",this.onResize.bind(this));
+      },
+      
+      pick:function(renderer,scene,camera) {
+        var mouse = this.mouse;
+        var pickingData = [];
+				//render the picking scene off-screen
+				var pickingTexture = this.pickingTexture;
+				renderer.render( scene, camera, pickingTexture );
+				var gl = renderer.getContext();
+				//read the pixel under the mouse from the texture
+				var pixelBuffer = new Uint8Array( 4 );
+				gl.readPixels( mouse.x, pickingTexture.height - mouse.y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixelBuffer );
+
+				//interpret the pixel as an ID
+				var id = ( pixelBuffer[0] << 16 ) | ( pixelBuffer[1] << 8 ) | ( pixelBuffer[2] );
+				var data = pickingData[ id ];
+				//console.log("id", id);
+				if ( data)
+				{
+					//move our highlightBox so that it surrounds the picked object
+          console.log("data", data);
+			  }
+			  renderer.clear();
+			},
+      
+      //attribute change handlers
+      cameraChanged:function(oldCam,newCam){
+        if(this.controls) this.controls.container.init(this.camera, this);
+        this.selectionHelper.camera = this.camera;
       },
       //event handlers
+      onResize:function(){
+        this._setStyle();
+        this.selectionHelper.viewWidth = this.realWidth;
+        this.selectionHelper.viewHeight = this.realHeight;
+      },
       onPointerMove:function(event)
       {
         //if(!this.selectionHelper) return;
         //console.log("foo",this.name);
+        this._pointerMoveTicks++;
+        
+        if(this._pointerMoveTicks <5)return;
+        this._pointerMoveTicks=0;
         var event = event.impl || event;
         event = normalizeEvent(event);
         var x = event.offsetX;
         var y = event.offsetY;
+        
+        //FIXME:temporary hack
+        this.mouse.x = x;
+        this.mouse.y = y;
         
         var activeScenes = this.activeScenes;
         
@@ -57,6 +109,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
           this.selectionHelper.hiearchyRoot = activeScene.children;
           this.parentNode.highlightedObject = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode);
           if( this.parentNode.highlightedObject) break;
+          return;
         }
         this._noMove = false;
       },
@@ -70,7 +123,6 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
         this._noMove = true;
         this._actionInProgress = true;
         this._pushStart = new Date().getTime();
-
 			  //set focus so keyboard binding works
 			  /*if( document.activeElement != this.impl)
 			  {
@@ -101,8 +153,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
           selected = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode);
           if( selected) break;
         }
-
-        console.log("selected", selected,x,y);
+        //console.log("selected", selected,x,y);
 
         if(this._longStaticTap)
         {
@@ -115,7 +166,6 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
           if(!(this.parentNode.shiftPress))
           {
             //no shift pressed: single selection
-            //this.selectedObjects=.length = 0;
             //this.selectedObjects.push(selected);
             this.parentNode.selectedObjects=[selected];
           }
@@ -124,7 +174,6 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
             var tmpArray = [];
             tmpArray = this.parentNode.selectedObjects.slice(0);
             //necessary hack to work with polymer change handlers
-            
              var index = tmpArray.indexOf(selected);
              if(index>-1) //already present, remove selection
              {
@@ -151,13 +200,10 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
           }
         }
       },
-      
       //api
       update:function()
       {
         if(this.controls) this.controls.update();
-        
-        
       },
       render:function(renderer, activeScenes, width, height)
       {
@@ -175,7 +221,6 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
             if(this.composer.camera != this.camera)
             {
               this.composer.altInit(renderer, activeScenes, this.camera);
-              console.log("this.width, this.height",width, height);
               this.composer.composer.setSize(width, height);
             }
             this.composer.render();
@@ -198,7 +243,9 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
             {
               var activeScene = activeScenes[key];
               activeScene.updateMatrixWorld();
+              //this.pick(renderer, activeScene, camera);
               renderer.render(activeScene, camera);
+              
             }
             try{
             renderer.enableScissorTest ( false );
@@ -206,20 +253,24 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
         }
       },
       add3:function(child){
-      
         if( child instanceof threeJsControls )
         {
           var controls = child.object;
-          console.log("adding controls to viewport");
           this.controls = controls;
+          child.object.container = child;
+          /*if(!this.camera) return;
           this.async(function()
           {
             child.init(this.camera, this);
-          });
+          });*/
+        }
+        if( child instanceof threeJsCamera )
+        {
+          var camera = child.object;
+          this.camera = camera;
         }
         if(child instanceof threeJsFxComposer )
         {
-          console.log("adding fx composer to viewport");
           this.composer = child;
         }
       },
@@ -255,7 +306,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 	      this.left= this.left/this.parentNode.width;
 	      console.log("width etc", this.width, this.height, this.left);
 	       
-	      
+	      //THREE.Color.//.setRGB( 0.8, 0.5, 0.7 ),
         //setup backround color
 	      this.bg = cs.getPropertyValue("background-color");
 	      //this._convertColor(this.bg);
