@@ -1,5 +1,5 @@
 {
-  "name": "polymer-three-js",
+  "name": "three-js",
   "main": "index.html",
   "chromium-args": "--ignore-gpu-blacklist",
   "description": "three.js polymer custom elements",
@@ -18,7 +18,6 @@
   "dependencies": {
   },
   "devDependencies": {
-    "http-server": "~0.5.5"
   }
 }
 
