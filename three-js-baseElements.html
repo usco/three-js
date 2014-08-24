@@ -31,11 +31,11 @@
          this.object.position.set( this.pos[0],this.pos[1],this.pos[2]);
          this.object.rotation.set( this.rot[0],this.rot[1],this.rot[2]);
       },
-      enteredView: function() {
+      attached: function() {
         this.__addOrderedChildren();
         this.addToParent3();
       },
-      leftView: function() {
+      detached: function() {
         this.removeFromParent3();
       },
       //attribute change handlers / various handlers
@@ -120,8 +120,8 @@
               this.object.add(child);
             }
           }
-        }  
-        //this._tmpBuff = null; 
+        }
+        //this._tmpBuff = null;
       },
       updatePosition: function() {
         if (this.object) {
@@ -184,7 +184,7 @@
             break;
         }
       },
-      enteredView: function() {
+      attached: function() {
         this.init();
         this.super();
       }
@@ -202,7 +202,7 @@
         this.object = new THREE.Mesh();
         this.object.name = this.name;
       },
-      enteredView: function() {
+      attached: function() {
         //this.super();
         this.async('validate');
       },
@@ -221,7 +221,7 @@
           this.__addOrderedChildren();
           this.addToParent3();
         }
-        
+
       },
     });
   </script>
@@ -243,7 +243,7 @@
         this.object = new THREE.CubeGeometry(1, 1, 1);
         this.super();
       },
-      
+
       /*
       extentChanged: function() {
         if (this.extent) {
@@ -275,7 +275,7 @@
       }
     });
   </script>
-</polymer-element> 
+</polymer-element>
 
 <polymer-element name="three-js-cube" extends="three-js-mesh" attributes="color w d h">
   <template>
@@ -320,4 +320,3 @@
     });
   </script>
 </polymer-element>
-

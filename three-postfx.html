@@ -9,7 +9,7 @@
     name: "default",
     effect: null,
     enabled:true,
-    enteredView:function()
+    attached:function()
     { 
       if(this.parentNode)
       {
@@ -203,7 +203,7 @@
       this.ignore = [];
       this._subComposers = [];
     },
-    enteredView:function()
+    attached:function()
     {
       //console.log("effect composer entered view");
       /*alt method to get scene

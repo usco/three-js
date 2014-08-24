@@ -38,7 +38,7 @@
           console.log('[%s]: request adding to [%s]', this.localName + (this.id ? '#' + this.id : ''), parentName);
         }
       },
-      enteredView: function()
+      attached: function()
       {
         this.cameraUp = new THREE.Vector3(this.cameraUp[0],this.cameraUp[1],this.cameraUp[2]);  
         this.addToParent3();   

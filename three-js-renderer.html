@@ -2,7 +2,7 @@
 <polymer-element name="three-js-renderer" constructor="threeJsRenderer" >
   <script>Polymer('three-js-renderer',{
       renderer:null,
-      enteredView:function()
+      attached:function()
       {
         this._setupRenderer();
         this.addToParent3();

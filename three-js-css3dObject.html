@@ -20,7 +20,7 @@
       ready:function()
       {
       },
-      enteredView: function() {
+      attached: function() {
       
         var self = this;
         /*this.async(function(){
@@ -44,7 +44,7 @@
          this.object.rotation.set( this.rot[0],this.rot[1],this.rot[2]);*/
         this.addToParent3();
       },
-      leftView: function() {
+      detached: function() {
         this.removeFromParent3();
       },
       //attribute change handlers / various handlers

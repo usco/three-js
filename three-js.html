@@ -3,6 +3,7 @@
 <script src="lib/helpers/screen-capture.js"></script>
 <script src="lib/helpers/selection-helper.js"></script>
 <script src="lib/helpers/normalizeEvent.js"></script>
+<script src="lib/Octree.js"></script>
 
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="three-js-baseElements.html">
@@ -44,9 +45,9 @@ controls needs:
 -->
 
 <polymer-element name="three-js" attributes="renderNow fullScreen postProcess selectedObjects highlightedObject"
-on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" on-three-js-get-camera="{{getCamera}}" 
+on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" on-three-js-get-camera="{{getCamera}}"
 
-touch-action="none" on-track="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}" 
+touch-action="none" on-track="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}"
 on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}"
 tabindex="0">
 <template>
@@ -55,8 +56,8 @@ tabindex="0">
     <content select="three-js-viewport" id="viewports"></content>
     <content select="three-effect-composer" id="composers"></content>
     <content select="three-js-renderer" id="renderers"></content>
-    
-    <content select="drag-drop" id="dragDropLayer"> </content> 
+
+    <content select="drag-drop" id="dragDropLayer"> </content>
     <content select="three-stats" ></content>
   </template>
   <script>
@@ -64,46 +65,48 @@ tabindex="0">
       renderNow: false,
       fullScreen: false,
       postProcess: false,
-      
+
       scenes:null,
       activeScenes:null,
-      
+
       viewports:null,
-      
+
       selectedObjects: null,
       highlightedObject: null,
-      
+
       keys:[],
-      
+
       _animationId:null,
       //generic custom element callbacks
       created: function() {
         this.width = 0;
         this.height = 0;
         this.bg = "rgb(255, 255, 255)";
-        
+
         this.renderers = [];
         this.scenes = {};
         this.activeScenes = {};
         this.viewports = {};
-        
+
         this.updatables = [];//storage for all items that need to be synch with the update method
         this.selectedObjects = [];
       },
       ready: function() {
         //this._setupRenderer();
       },
-      enteredView:function()
+      attached:function()
       {
         //setup various handlers
         window.addEventListener("resize",this.onResize.bind(this));
         if (this.requestFullscreen) document.addEventListener("fullscreenchange", this.onFullScreenChange.bind(this), false);
         if (this.mozRequestFullScreen) document.addEventListener("mozfullscreenchange", this.onFullScreenChange.bind(this), false);
         if (this.webkitRequestFullScreen) document.addEventListener("webkitfullscreenchange", this.onFullScreenChange.bind(this), false);
-        
+
         this._setStyle();
         this._setupHelpers();
         this.animate();
+        //setInterval( this.update.bind(this), 1000 / 60 );
+        this.update();
         this.onResize();
       },
       //initialization methods
@@ -122,27 +125,27 @@ tabindex="0">
 		    renderer.autoClear = false;
 	      renderer.autoUpdateScene = false;
 	      this._convertColor(this.bg);
-		    renderer.setClearColor( this.bg, 1 );	
+		    renderer.setClearColor( this.bg, 1 );
 
         //if lightdom this.appendChild(renderer.domElement);
         this.shadowRoot.appendChild(renderer.domElement);
         this.renderer = renderer;
-        
+
         ///
         //necessary hack for effectomposer
         THREE.EffectComposer.camera = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
         THREE.EffectComposer.quad = new THREE.Mesh( new THREE.PlaneGeometry( 2, 2 ), null );
         THREE.EffectComposer.scene = new THREE.Scene();
         THREE.EffectComposer.scene.add( THREE.EffectComposer.quad );
-        
+
         var self = this;
         if ( Detector.webgl ){
         renderer.context.canvas.addEventListener("webglcontextlost", function(event) {
             event.preventDefault();
             console.log("webgl context lost");
             self.removeEventListener("webglcontextlost");
-            cancelAnimationFrame(this._animationId); 
-            
+            cancelAnimationFrame(this._animationId);
+
             function resetToInitialState(ctx) {
                 var numAttribs = ctx.getParameter(ctx.MAX_VERTEX_ATTRIBS);
                 var tmp = ctx.createBuffer();
@@ -215,30 +218,6 @@ tabindex="0">
         }, false);
         }
       },
-      _setupHelpers: function()
-      {
-        //console.log("setup helpers");
-        /*var activeScenes = this.querySelectorAll('three-js-scene[active]');
-        for(var i = 0 ;i< activeScenes.length;i++)
-        {
-          var scene = activeScenes[i];
-          
-          this.activeScenes[ scene.name ] = scene.object;
-          this.scenes[ activeScenes[i].name] = scene.object;
-        }
-        
-        var activeScene = scene;
-        if(activeScene)
-        {
-          this.hierarchyRoot = activeScene.querySelector('[hierarchyRoot]').object;
-          this.selectionHelper = new SelectionHelper({camera:this.camera,color:0x000000,textColor:0xffffff})
-		      this.selectionHelper.hiearchyRoot = activeScene.object.children;
-          //TODO: move this?
-          this.selectionHelper.viewWidth = this.width;
-          this.selectionHelper.viewHeight = this.height;
-        }*/
-        
-      },
       //event handlers
       onResize: function()
       {
@@ -252,14 +231,14 @@ tabindex="0">
 		    this.resUpscaler = 1;
         this.hRes = this.width * this.dpr * this.resUpscaler;
         this.vRes = this.height * this.dpr * this.resUpscaler;
-        
+
         if(this.camera)
         {
 		      this.camera.aspect = this.width / this.height;
           this.camera.setSize(this.width,this.height);
 		      this.camera.updateProjectionMatrix();
         }
-        
+
 		    /*this.renderer.setSize( this.width,this.height );*/
 		    for(var i = 0; i<this.renderers.length;i++)
 		    {
@@ -366,7 +345,7 @@ tabindex="0">
               var tmpArray = [];
               tmpArray = this.selectedObjects.slice(0);
               //necessary hack to work with polymer change handlers
-              
+
                var index = tmpArray.indexOf(selected);
                if(index>-1) //already present, remove selection
                {
@@ -410,7 +389,7 @@ tabindex="0">
       {
         var scene = this.scenes[sceneName];
         if(!(scene)) return;
-        
+
         /*while (this.hierarchyRoot.children.length > 0) {
           this.hierarchyRoot.remove(this.hierarchyRoot.children[this.hierarchyRoot.children.length - 1]);
         }*/
@@ -425,12 +404,12 @@ tabindex="0">
 	    {
 	      //if no scene name is given take the first one
 	      if(!(sceneName)) for (var sceneName in this.scenes) if (this.scenes.hasOwnProperty(sceneName)) break;
-	      
+
 	      var scene = this.scenes[sceneName];
         if(!(scene)) {console.log("no valid scene found"); return;};
 
 		    try
-		    { 
+		    {
 			    scene.add( object );
 		    }
 		    catch(error)
@@ -443,7 +422,7 @@ tabindex="0">
         if(!(sceneName)) for (var sceneName in this.scenes) if (this.scenes.hasOwnProperty(sceneName)) break;
 	      var scene = this.scenes[sceneName];
         if(!(scene)) {console.log("no valid scene found"); return;};
-        
+
         try
 		    {
 			    scene.remove( object );
@@ -475,7 +454,7 @@ tabindex="0">
         if( child instanceof( threeJsScene ) ){
            var scene = child.object;
            var active = child.attributes.getNamedItem("active");
-           
+
            this.scenes[ scene.name ] = scene;
            if(active) this.activeScenes[ scene.name ] = scene;
         }
@@ -521,7 +500,7 @@ tabindex="0">
         event.detail.camera = this.camera;
         return this.camera;
       },
-      
+
       //attribute change handlers / various handlers
       renderNowChanged: function() {
         this.render();
@@ -559,10 +538,10 @@ tabindex="0">
         }
         var added = diff( newSelections, oldSelections);
         var removed = diff( oldSelections, newSelections);
-        
+
         if(added.length>0) this.asyncFire("selectionsAdded",added);
         if(removed.length>0) this.asyncFire("selectionsRemoved",removed);
-        
+
         //console.log("SELECTED objects changed",this.selectedObjects);
       },
       invalidate: function() {
@@ -585,7 +564,7 @@ tabindex="0">
           {
             var renderer = this.renderers[i];
             try{renderer.clear();}catch(error){};
-          
+
             for(var key in this.viewports)
             {
               var view = this.viewports[key];
@@ -594,7 +573,7 @@ tabindex="0">
             }
         }
         return;
-        
+
         if (this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true && this.finalComposer)
         {
           //FIXME:hack
@@ -612,7 +591,7 @@ tabindex="0">
             //console.log("rendering",this.finalComposer.subComposers);
             var normal  = this.finalComposer.subComposers[0].renderTarget2;
             var depth   = this.finalComposer.subComposers[1].renderTarget2;
-            
+
             var lastPass = this.finalComposer.passes[this.finalComposer.passes.length-2];
             lastPass.uniforms[ 'tNormal' ].value  = normal;
             lastPass.uniforms[ 'tDepth' ].value   = depth;
@@ -630,24 +609,24 @@ tabindex="0">
             activeScene.traverse( function ( child ) { if(child.material)child.material.depthTest = false; } )
           }
           this.finalComposer.render();*/
-          
+
           /*renderer.setViewport( 0, 0, w, h );
 	        composer.render();
 
 	        renderer.clear( false, true, false ); // clear the depth buffer -- thanks @WestLangley!
 	        renderer.setViewport( 10, h - mapHeight - 10, mapWidth, mapHeight);
 	        mapComposer.render();*/
-	        
+
 	        /*
 	        for(var key in this.viewports)
           {
             var view = this.viewports[key];
-            
+
             var left   = Math.floor( this.width  * view.left );
 					  var bottom = Math.floor( this.height * view.bottom );
 					  var width  = Math.floor( this.width  * view.width );
 					  var height = Math.floor( this.height * view.height );
-					  
+
 					  var renderer = this.renderer;
 					  renderer.setViewport( left, bottom, width, height );
 					  renderer.setScissor( left, bottom, width, height );
@@ -667,7 +646,7 @@ tabindex="0">
             //  this.renderer.render(activeScene, camera);//this.camera);
             //}
             renderer.enableScissorTest ( false );
-            
+
             }*/
             //ALT
             for(var i=0; i<this.renderers.length;i++)
@@ -675,16 +654,16 @@ tabindex="0">
             var renderer = this.renderers[i];
             try{
             renderer.clear();}catch(error){};
-          
+
             for(var key in this.viewports)
             {
               var view = this.viewports[key];
-              
+
               var left   = Math.floor( this.width  * view.left );
 					    var bottom = Math.floor( this.height * view.bottom );
 					    var width  = Math.floor( this.width  * view.width );
 					    var height = Math.floor( this.height * view.height );
-					    
+
 					    try{
 					    renderer.setViewport( left, bottom, width, height );
 					    renderer.setScissor( left, bottom, width, height );
@@ -696,7 +675,7 @@ tabindex="0">
 					    camera.aspect = width / height;
 					    camera.setSize(width,height);
 					    camera.updateProjectionMatrix();
-					    
+
 					    for(var key in this.activeScenes)
               {
                 var activeScene = this.activeScenes[key];
@@ -718,16 +697,16 @@ tabindex="0">
             var renderer = this.renderers[i];
             try{
             renderer.clear();}catch(error){};
-          
+
             for(var key in this.viewports)
             {
               var view = this.viewports[key];
-              
+
               var left   = Math.floor( this.width  * view.left );
 					    var bottom = Math.floor( this.height * view.bottom );
 					    var width  = Math.floor( this.width  * view.width );
 					    var height = Math.floor( this.height * view.height );
-					    
+
 					    try{
 					    renderer.setViewport( left, bottom, width, height );
 					    renderer.setScissor( left, bottom, width, height );
@@ -739,7 +718,7 @@ tabindex="0">
 					    camera.aspect = width / height;
 					    camera.setSize(width,height);
 					    camera.updateProjectionMatrix();
-					    
+
 					    for(var key in this.activeScenes)
               {
                 var activeScene = this.activeScenes[key];
@@ -754,10 +733,9 @@ tabindex="0">
            }
         }
       },
-      animate: function() 
+      animate: function()
       {
-	      this.render();		
-	      this.update();
+	      this.render();
 	      this._animationId = requestAnimationFrame(this.animate.bind(this))
       },
       update: function()
@@ -775,6 +753,7 @@ tabindex="0">
               }
             }catch(error){};
           }
+          requestAnimationFrame(this.update.bind(this));
       },
       //helpers: TODO: move some of these to seperate js file
 	    _convertColor: function(hex)
@@ -782,18 +761,6 @@ tabindex="0">
         hex = new THREE.Color().setStyle(hex);
         this.bg = hex;
 	    },
-      _injectScene: function(scene, active){
-        this.scenes[scene.name] = scene;
-        /*if(active && scene !== this.scene)
-        {
-          if(this.scene) scene.children = this.scene.children;
-          this.scene = scene;
-        }
-        if(this.scene && this.camera)
-        {
-          this.fire("sceneready", {scene:this.scene,camera:this.camera});
-        }*/
-      },
       _injectCamera: function(camera){
         this.camera = camera;
         this.camera.aspect = this.width / this.height;
@@ -813,9 +780,8 @@ tabindex="0">
         //setup backround color
 	      this.bg = cs.getPropertyValue("background-color");
 	      this._convertColor(this.bg);
-		    //this.renderer.setClearColor( this.bg, 1 );	  
+		    //this.renderer.setClearColor( this.bg, 1 );
       },
     });
   </script>
 </polymer-element>
-
