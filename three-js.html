@@ -3,7 +3,7 @@
 <script src="lib/helpers/screen-capture.js"></script>
 <script src="lib/helpers/selection-helper.js"></script>
 <script src="lib/helpers/normalizeEvent.js"></script>
-<script src="lib/Octree.js"></script>
+<!--<script src="lib/Octree.js"></script>-->
 
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="three-js-baseElements.html">
@@ -103,7 +103,6 @@ tabindex="0">
         if (this.webkitRequestFullScreen) document.addEventListener("webkitfullscreenchange", this.onFullScreenChange.bind(this), false);
 
         this._setStyle();
-        this._setupHelpers();
         this.animate();
         //setInterval( this.update.bind(this), 1000 / 60 );
         this.update();
