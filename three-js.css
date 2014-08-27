@@ -1,32 +1,13 @@
 :host {
-    /*-webkit-touch-callout: none;
-		-webkit-user-select: none;
-		-khtml-user-select: none;
-		-moz-user-select: none;
-		-ms-user-select: none;
-		user-select: none;
-    position: absolute;*/
-    
-  display:block;
-	* {
-		opacity: 1;
-    transition: opacity 300ms;
-    
+    display:block;
+    opacity: 0;
+    transition: opacity 700ms;
+	
+	/** {
 		overflow:hidden;
 		background-color:#fff;
-		
-		/*make things unselectable, cross browser*/
-		/*-webkit-touch-callout: none;
-		-webkit-user-select: none;
-		-khtml-user-select: none;
-		-moz-user-select: none;
-		-ms-user-select: none;
-		user-select: none;*/
 	}
-
-	*:unresolved {
-	    opacity: 0;
-	 }
+	
   :-webkit-full-screen 
   {
     width:100% !important;
@@ -42,7 +23,12 @@
       left:0px;
       top:0px;
       background-color:red;
-   }
+   }*/
+}
+
+:host[resolved]
+{
+  opacity:1;
 }
 
 canvas {

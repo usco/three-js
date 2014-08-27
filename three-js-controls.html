@@ -1,5 +1,4 @@
 <polymer-element name="three-js-controls" constructor="threeJsControls" noscript>
-
 </polymer-element>
 
 
@@ -16,12 +15,13 @@
       object: null,
       ready: function() {
         this.object = new THREE.OrbitControls();
+        this._cameraUp = new THREE.Vector3(this.cameraUp[0],this.cameraUp[1],this.cameraUp[2]);  
       },
       init:function(camera, domElement)
       {
         this.object.object = camera;
         this.object.setDomElement( domElement);
-        this.object.upVector = this.cameraUp;
+        this.object.upVector = this._cameraUp;
 
 		    this.object.userPanSpeed = this.panSpeed;
 		    this.object.userZoomSpeed = this.zoomSpeed;
@@ -40,13 +40,16 @@
       },
       attached: function()
       {
-        this.cameraUp = new THREE.Vector3(this.cameraUp[0],this.cameraUp[1],this.cameraUp[2]);  
         this.addToParent3();   
       },
       //attribute change handlers
       autoRotateChanged:function()
       {
         this.object.autoRotate = this.autoRotate;
+      },
+      cameraUpChanged:function(){
+        this._cameraUp = new THREE.Vector3(this.cameraUp[0],this.cameraUp[1],this.cameraUp[2]);   
+        this.object.upVector = this._cameraUp;
       }
     });
   </script>  

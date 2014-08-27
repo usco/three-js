@@ -91,9 +91,6 @@ tabindex="0">
         this.updatables = [];//storage for all items that need to be synch with the update method
         this.selectedObjects = [];
       },
-      ready: function() {
-        //this._setupRenderer();
-      },
       attached:function()
       {
         //setup various handlers
@@ -104,9 +101,41 @@ tabindex="0">
 
         this._setStyle();
         this.animate();
-        //setInterval( this.update.bind(this), 1000 / 60 );
-        this.update();
+        this.update();//setInterval( this.update.bind(this), 1000 / 60 );
         this.onResize();
+      },
+      domReady:function(){
+        console.log("DOM READY");
+        //make sure we have AT LEAST one renderer and one viewport
+        //if not, create them 
+        if(this.renderers.length==0)
+        {
+          console.log("no renderers");
+          var renderer = document.createElement('three-js-webglRenderer');
+          //console.log("created renderer", renderer);
+          this.appendChild(renderer);
+        }
+        if(Object.keys(this.viewports).length === 0)
+        {
+          console.log("no viewports");
+          var camera   = document.createElement('three-js-combinedCamera');
+          var controls = document.createElement('three-js-orbitControls');
+          var viewport = document.createElement('three-js-viewport');
+          
+          camera.up          = [0,0,1];
+          camera.pos         = [100,50,200];
+          camera.orientation = "diagonal";
+          controls.cameraUp  = [0,0,1];
+          
+          viewport.name ="perspective";
+          viewport.id = "perspectiveView";
+          viewport.appendChild( camera );
+          viewport.appendChild( controls );
+          
+          //console.log("created viewport", viewport);
+          this.appendChild(viewport);
+        }
+        this.setAttribute('resolved','');
       },
       //initialization methods
       _setupRenderer: function()

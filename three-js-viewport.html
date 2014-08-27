@@ -25,7 +25,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 			
 			_pointerMoveTicks:0,
 			//base callbacks
-      enteredView:function(){
+      attached:function(){
         //console.log("in threejsviewport");
         var camera   = this.parentNode.querySelector(this.cameraId);
         if(camera) this.camera = camera = camera.object;
@@ -43,8 +43,11 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
         
         //alternative picking EXPERIMENTAL
         this.mouse= {x:300,y:200};
-        this.pickingTexture = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight );
-				this.pickingTexture.generateMipmaps = false;
+        //this.pickingTexture = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight );
+				//this.pickingTexture.generateMipmaps = false;
+				//octree EXPERIMENTAL
+				this.octree = null; 
+				
         //setup various handlers
         window.addEventListener("resize",this.onResize.bind(this));
       },
@@ -71,6 +74,47 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 			  }
 			  renderer.clear();
 			},
+			
+			pickOctree:function(event){
+			          var event = event.impl || event;
+        event = normalizeEvent(event);
+        var x = event.offsetX;
+        var y = event.offsetY;
+        
+        var v = new THREE.Vector3((x / this.realWidth) * 2 - 1, -(y / this.realHeight) * 2 + 1, 1);
+        x = (x / this.realWidth) * 2 - 1;
+        y = -(y / this.realHeight) * 2 + 1, 1;
+        var activeScenes = this.activeScenes;
+        
+        for(var key in activeScenes)
+        {
+          var activeScene = activeScenes[key];
+          var camera = this.camera;
+          var octree = this.octree;
+          
+          var s = Date.now();
+          var projector = new THREE.Projector();
+          var vector = new THREE.Vector3( x, y, 1 );
+			    projector.unprojectVector( v, camera );
+
+			    var raycaster = new THREE.Raycaster( camera.position, v.sub( camera.position ).normalize() );
+			    var octreeObjects;
+			    var numObjects;
+			    var numFaces = 0;
+			    var intersections;
+			    
+          var radiusSearch = 10;
+				  //octreeObjects = octree.search( raycaster.ray.origin, raycaster.ray.far, true, raycaster.ray.direction );
+				  //meshesSearch = octree.search( rayCaster.ray.origin, radiusSearch, true, rayCaster.ray.direction );
+				  //intersections = raycaster.intersectOctreeObjects( octreeObjects );
+				  numObjects = octreeObjects.length;
+				  //console.log("blah",octreeObjects);
+				  var e = Date.now();
+		  //console.log( "Time to pick (octree)" + (e-s) + " ms" );
+          break;
+        }
+        return;
+			},
       
       //attribute change handlers
       cameraChanged:function(oldCam,newCam){
@@ -87,10 +131,12 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
       {
         //if(!this.selectionHelper) return;
         //console.log("foo",this.name);
-        this._pointerMoveTicks++;
+        if(!(this.camera)) return;//TODO:this whole method should be disabled for as long as there is no camera
         
+        this._pointerMoveTicks++;
         if(this._pointerMoveTicks <5)return;
         this._pointerMoveTicks=0;
+        
         var event = event.impl || event;
         event = normalizeEvent(event);
         var x = event.offsetX;
@@ -115,6 +161,8 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
       },
       onPointerDown:function(event)
       {
+        if(!(this.camera)) return;//TODO:this whole method should be disabled for as long as there is no camera
+      
         var event = event.impl || event;
         normalizeEvent(event);
         var x = event.offsetX;
@@ -131,6 +179,8 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
       },
       onPointerUp:function(event)
       {
+        if(!(this.camera)) return;//TODO:this whole method should be disabled for as long as there is no camera
+      
         var activeScenes = this.activeScenes;
 
         var event = event.impl || event;
@@ -204,6 +254,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
       update:function()
       {
         if(this.controls) this.controls.update();
+        if(this.octree) this.octree.update();
       },
       render:function(renderer, activeScenes, width, height)
       {
@@ -235,17 +286,43 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
             renderer.setClearColor( this.background );
 
             var camera = this.camera;
-			      camera.aspect = width / height;
-			      camera.setSize(width,height);
-			      camera.updateProjectionMatrix();
-			      
-			      for(var key in activeScenes)
-            {
-              var activeScene = activeScenes[key];
-              activeScene.updateMatrixWorld();
-              //this.pick(renderer, activeScene, camera);
-              renderer.render(activeScene, camera);
-              
+            if(camera){
+			        camera.aspect = width / height;
+			        camera.setSize(width,height);
+			        camera.updateProjectionMatrix();
+			     
+			        for(var key in activeScenes)
+              {
+                var activeScene = activeScenes[key];
+                activeScene.updateMatrixWorld();
+                //this.pick(renderer, activeScene, camera);
+                renderer.render(activeScene, camera);
+                /*
+                FIXME:experimental , remove
+               if(!(this.octree)){
+                this.octree = new THREE.Octree( {
+					        // when undeferred = true, objects are inserted immediately
+					        // instead of being deferred until next octree.update() call
+					        // this may decrease performance as it forces a matrix update
+					        undeferred: true,
+					        // set the max depth of tree
+					        depthMax: Infinity,
+					        // max number of objects before nodes split or merge
+					        objectsThreshold: 8,
+					        // percent between 0 and 1 that nodes will overlap each other
+					        // helps insert objects that lie over more than one node
+					        overlapPct: 0.15,
+					        // pass the scene to visualize the octree
+					        scene: activeScene
+				        } );
+				        var octree = this.octree;
+                activeScene.addEventListener("objectAdded",function(event){
+                  console.log("added to scene",event);
+                  var mesh = event.object;
+                  //octree.add( mesh, { useFaces: true } );
+                });
+              }*/
+              }
             }
             try{
             renderer.enableScissorTest ( false );
@@ -304,7 +381,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 	      this.width = this.width/this.parentNode.width;
 	      this.height= this.height/this.parentNode.height;
 	      this.left= this.left/this.parentNode.width;
-	      console.log("width etc", this.width, this.height, this.left);
+	      //console.log("width etc", this.width, this.height, this.left);
 	       
 	      //THREE.Color.//.setRGB( 0.8, 0.5, 0.7 ),
         //setup backround color

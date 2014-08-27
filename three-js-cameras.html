@@ -11,6 +11,7 @@
       object: null,
       ready: function() {
         this.cameraUp = new THREE.Vector3(this.up[0],this.up[1],this.up[2]);  
+        this.super();
       },
       /*updatePosition: function() {
         this.super();
@@ -28,6 +29,10 @@
       },
       farChanged:function() {
         this.object.far = this.far;
+      },
+      upChanged:function(){
+        this.cameraUp = new THREE.Vector3(this.up[0],this.up[1],this.up[2]);  
+        this.camera.up = this.cameraUp;
       },
       lookAtChanged: function() {
         if(this.lookAt)
@@ -75,7 +80,7 @@
       ortho:false,
       object: null,
       ready: function() {
-        this.super();      
+        console.log("foobar");
         //todo: read camera params from camera config/settings ?
 		    this.defaultCameraPosition = new THREE.Vector3(100,100,200);
         this.camera = new THREE.CombinedCamera(
@@ -91,6 +96,7 @@
         this.camera.defaultPosition.copy(this.defaultCameraPosition);
         
         this.object = this.camera;
+        this.super();
       },
       /*updatePosition: function() {
         this.super();
@@ -102,12 +108,10 @@
 		    if(this.projection == "orthographic")
 		    {
 				    this.camera.toOrthographic();
-				    //this.selectionHelper.isOrtho = true;
 		    }
 		    else
 		    {
             this.camera.toPerspective();
-				    //this.selectionHelper.isOrtho = false;
 		    }
 	    },
 	    orthoChanged:function()
