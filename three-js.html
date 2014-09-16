@@ -44,7 +44,7 @@ controls needs:
 - renderer
 -->
 
-<polymer-element name="three-js" attributes="renderNow fullScreen postProcess selectedObjects highlightedObject"
+<polymer-element name="three-js" attributes="fullScreen postProcess selectedObjects highlightedObject"
 on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" on-three-js-get-camera="{{getCamera}}"
 
 touch-action="none" on-track="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}"
@@ -62,14 +62,64 @@ tabindex="0">
   </template>
   <script>
     Polymer('three-js', {
-      renderNow: false,
+      /**
+       * 'fullScreen` toggles the full screen mode for the threejs element
+       (with correct styling)
+       * 
+       * @attribute fullScreen
+       * @type bool
+      */
       fullScreen: false,
+      
+      /**
+       * 'postProcess` toggles the post processing (pixel shader based, so 
+       webgl only): this overrides any post process setting at the viewport
+       level
+       * 
+       * @attribute postProcess
+       * @type bool
+      */
       postProcess: false,
 
+      /**
+       * hash of all scenes , by name
+       * 
+       * @attribute scenes
+       * @type object
+      */
       scenes:null,
+      
+      /**
+       * hash of all active scenes(by name)
+       * 
+       * @attribute activeScenes
+       * @type object
+      */
       activeScenes:null,
 
+      /**
+       * list of all viewports
+       * 
+       * @attribute viewports
+       * @type object
+      */
       viewports:null,
+      
+      /**
+       * storage for all items that need to be synch with the render method
+       * 
+       * @attribute renderables
+       * @type array
+       */
+      renderables: null,
+      
+      /**
+       * storage for all items that need to be synch with the update method
+       * 
+       * @attribute updatables
+       * @type array
+       */
+      updatables : null,     
 
       selectedObjects: null,
       highlightedObject: null,
@@ -77,6 +127,8 @@ tabindex="0">
       keys:[],
 
       _animationId:null,
+      _renderingId:null,      
+      
       //generic custom element callbacks
       created: function() {
         this.width = 0;
@@ -88,7 +140,9 @@ tabindex="0">
         this.activeScenes = {};
         this.viewports = {};
 
-        this.updatables = [];//storage for all items that need to be synch with the update method
+        this.updatables = [];
+        this.renderables= [];
+        
         this.selectedObjects = [];
       },
       attached:function()
@@ -402,49 +456,75 @@ tabindex="0">
           }
       },
       //public api
+      
+      /**
+       * Get a scene by name
+       
+       * @method getScene
+       * @param {String} name: name of the scene to return 
+      */
       getScene:function( name )
       {
         if(!(name)) {console.log("no scene name given"); return;}
         return this.scenes[name];
       },
+      
+      /**
+       * Activate/deactivate scene: FIXME: not implemented yet
+       
+       * @method toggleScene
+       * @param {String} name: name of the scene to toggle 
+      */
       toggleScene:function( name )
       {
+        throw new Error("method not implemented");
         if(!(name)) {console.log("no scene name given to toggle"); return;}
         var scene = this.scenes[name];
-        //if(scene) this.scene = scene; this._setupHelpers(); this.scene.add( this.camera);
       },
-      clearScene:function(sceneName)
-      {
-        var scene = this.scenes[sceneName];
-        if(!(scene)) return;
-
-        /*while (this.hierarchyRoot.children.length > 0) {
-          this.hierarchyRoot.remove(this.hierarchyRoot.children[this.hierarchyRoot.children.length - 1]);
-        }*/
-        // cleanup without calling render (data needs to be cleaned up before a new scene can be generated)
-        //see here https://github.com/mrdoob/three.js/issues/2760
-        if(this.renderer instanceof THREE.WebGLRenderer)
-        {
-          this.renderer.initWebGLObjects(scene);
-        }
-      },
-	    addToScene: function ( object, sceneName )
+      
+      /**
+       * Add a 3d object to the given scene: if no scene
+       * Also provides two hooks : beforeAddToScene and afterAddToScene
+       
+       * @method addToScene
+       * @param {String} object : 3d object to add 
+       * @param {String} sceneName: name of the scene to add 
+       * @param {String} options: options hash
+      */
+	    addToScene: function ( object, sceneName, options )
 	    {
+	      var options = options || {};
+	      var autoCenter = options.autoCenter !== undefined ? options.autoCenter : true;
+	      var autoResize = options.autoResize !== undefined ? options.autoResize : true;
+	      
+	      if(autoCenter) this._centerMesh( object );
+        if(autoResize) this._resizeMesh( object );
+        
 	      //if no scene name is given take the first one
 	      if(!(sceneName)) for (var sceneName in this.scenes) if (this.scenes.hasOwnProperty(sceneName)) break;
 
 	      var scene = this.scenes[sceneName];
         if(!(scene)) {console.log("no valid scene found"); return;};
 
+        if(this.beforeAddToScene) this.beforeAddToScene( this, object, scene );
 		    try
 		    {
 			    scene.add( object );
+			    if(this.afterAddToScene) this.afterAddToScene( this, object, scene );
 		    }
 		    catch(error)
 		    {
 			    console.log("Failed to add object",object, "to scene: error", error.message)
 		    }
 	    },
+	    
+	    /**
+       * Remove given object from the given scene
+       
+       * @method removeFromScene
+       * @param {Object} object: name of the object to remove 
+       * @param {String} sceneName: name of the scene to remove the object from 
+      */
       removeFromScene : function( object, sceneName )
       {
         if(!(sceneName)) for (var sceneName in this.scenes) if (this.scenes.hasOwnProperty(sceneName)) break;
@@ -460,6 +540,35 @@ tabindex="0">
 			    console.log("Failed to remove object from scene: error", error)
 		    }
       },
+      
+      
+      /**
+       * Remove all objects from the given scene
+       
+       * @method clearScene
+       * @param {String} sceneName: name of the scene to clear 
+      */
+      clearScene:function(sceneName)
+      {
+        var scene = this.scenes[sceneName];
+        if(!(scene)) return;
+
+        // cleanup without calling render (data needs to be cleaned up before a new scene can be generated)
+        //see here https://github.com/mrdoob/three.js/issues/2760
+        if(this.renderer instanceof THREE.WebGLRenderer)
+        {
+          this.renderer.initWebGLObjects(scene);
+        }
+      },
+      
+      /**
+       * Take a screenshot of the current view 
+       
+       * @method captureScreen
+       * @param {String} callback: callback that gets called with the screenshot data
+       * @param {String} width: width of the screenshot (resized from original size)
+       * @param {String} height: height of the screenshot (resized from original size)
+      */
 	    captureScreen:function(callback, width, height)
 	    {
 		    var width = width || 640;
@@ -470,6 +579,9 @@ tabindex="0">
 		    }
 		    captureScreen(callback, this.renderer.domElement, width, height);
 	    },
+	    
+	    //internal api
+	    
       add3: function(child) {
         if(child.updatable)
         {
@@ -530,9 +642,6 @@ tabindex="0">
       },
 
       //attribute change handlers / various handlers
-      renderNowChanged: function() {
-        this.render();
-      },
       fullScreenChanged:function()
       {
         if(this.fullScreen)
@@ -569,25 +678,9 @@ tabindex="0">
 
         if(added.length>0) this.asyncFire("selectionsAdded",added);
         if(removed.length>0) this.asyncFire("selectionsRemoved",removed);
-
-        //console.log("SELECTED objects changed",this.selectedObjects);
       },
-      invalidate: function() {
-        this.validateJob = this.job(this.validateJob, this.validate, 250);
-      },
-      validate: function() {
-        (this.validateJob || this.nullJob).stop();
-
-        if(this.controls) this.controls.update();
-        this.render();
-      },
-      nullJob: {
-        stop: function(){}
-      },
-      //other
+      //internal methods
       render: function() {
-        //if (! this.camera) {return;}
-
         for(var i=0; i<this.renderers.length;i++)
           {
             var renderer = this.renderers[i];
@@ -797,7 +890,6 @@ tabindex="0">
       },
       _injectControls: function(controls){
         this.controls = controls;
-        console.log("controls are active",controls)
       },
       _setStyle:function()
       {
@@ -808,8 +900,34 @@ tabindex="0">
         //setup backround color
 	      this.bg = cs.getPropertyValue("background-color");
 	      this._convertColor(this.bg);
-		    //this.renderer.setClearColor( this.bg, 1 );
       },
+      _centerMesh:function( object )
+      {
+        console.log("centering mesh");
+        //TODO: should this be added to our object/mesh classes
+        //centering hack
+        if(!object.boundingSphere) computeObject3DBoundingSphere( object );
+        var offset = object.boundingSphere.center;
+        object.applyMatrix( new THREE.Matrix4().makeTranslation( -offset.x, -offset.y, -offset.z ) );
+      },
+      _resizeMesh:function( object )
+      {  
+        console.log("resizing mesh");
+        if(!object.boundingSphere) computeObject3DBoundingSphere( object );
+        var size = object.boundingSphere.radius;
+        if( size < this.minObjectSize)
+        {
+          var ratio = object.boundingSphere.radius/this.minObjectSize;
+          var scaling = 1/ratio;
+          object.applyMatrix( new THREE.Matrix4().makeScale( scaling, scaling, scaling ) );
+        }
+        else if(size > this.maxObjectSize)
+        {
+          var ratio = object.boundingSphere.radius/this.maxObjectSize;
+          var scaling = 1/ratio;
+          object.applyMatrix( new THREE.Matrix4().makeScale( scaling, scaling, scaling ) );
+        }
+      },  
     });
   </script>
 </polymer-element>
