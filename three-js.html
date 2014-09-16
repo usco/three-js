@@ -46,6 +46,8 @@ controls needs:
 
 <polymer-element name="three-js" attributes="fullScreen postProcess selectedObjects highlightedObject"
 on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" on-three-js-get-camera="{{getCamera}}"
+on-renderableadded="{{renderableAdded}}"
+
 
 touch-action="none" on-track="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}"
 on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}"
@@ -147,6 +149,9 @@ tabindex="0">
       },
       attached:function()
       {
+        //force unresolved attribute
+        this.setAttribute('unresolved', '');
+
         //setup various handlers
         window.addEventListener("resize",this.onResize.bind(this));
         if (this.requestFullscreen) document.addEventListener("fullscreenchange", this.onFullScreenChange.bind(this), false);
@@ -189,7 +194,21 @@ tabindex="0">
           //console.log("created viewport", viewport);
           this.appendChild(viewport);
         }
-        this.setAttribute('resolved','');
+
+       this.async(function(){
+          this._setStyle();
+          for(var key in this.viewports)
+          {
+            var view = this.viewports[key];
+            view._setStyle();
+          }
+          this.onResize();
+          this.async(function(){
+            this.setAttribute('resolved','');
+            this.removeAttribute('unresolved');
+          },null,100);
+        });
+        
       },
       //initialization methods
       _setupRenderer: function()
@@ -480,6 +499,7 @@ tabindex="0">
         throw new Error("method not implemented");
         if(!(name)) {console.log("no scene name given to toggle"); return;}
         var scene = this.scenes[name];
+        //if(scene) this.scene = scene; this._setupHelpers(); this.scene.add( this.camera);
       },
       
       /**
@@ -518,7 +538,7 @@ tabindex="0">
 		    }
 	    },
 	    
-	    /**
+	  /**
        * Remove given object from the given scene
        
        * @method removeFromScene
@@ -580,8 +600,7 @@ tabindex="0">
 		    captureScreen(callback, this.renderer.domElement, width, height);
 	    },
 	    
-	    //internal api
-	    
+	  //internal api  
       add3: function(child) {
         if(child.updatable)
         {

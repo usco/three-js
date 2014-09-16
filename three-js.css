@@ -1,14 +1,11 @@
 :host {
     display:block;
-    opacity: 0;
-    transition: opacity 700ms;
-	
-	/** {
-		overflow:hidden;
-		background-color:#fff;
-	}
-	
-  :-webkit-full-screen 
+    overflow:hidden;
+    background-color:#fff;
+    transition: opacity 700ms ;
+	  opacity:0;
+
+  :-webkit-full-screen 	-moz-full-screen 
   {
     width:100% !important;
     height:100% !important;
@@ -23,13 +20,20 @@
       left:0px;
       top:0px;
       background-color:red;
-   }*/
+   }
 }
 
-:host[resolved]
-{
+
+:host([resolved]){
   opacity:1;
+visibility: visible;
 }
+
+:host([unresolved]){
+  opacity:0;
+  visibility:hidden;
+}
+
 
 canvas {
         position: absolute;
@@ -39,33 +43,17 @@ canvas {
         left: 0;
         z-index:0;
 
-
         cursor:default;
         /*make things unselectable, cross browser*/
-      /*-webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -khtml-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;*/
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
 }
 
-/*
-:host {
-        display: block;
-        position: relative;
 
-		      -webkit-touch-callout: none;
-		      -webkit-user-select: none;
-		      -khtml-user-select: none;
-		      -moz-user-select: none;
-		      -ms-user-select: none;
-		      user-select: none;
-
-
-
-      }
-*/
 .unselectable
 {
   -webkit-touch-callout: none;

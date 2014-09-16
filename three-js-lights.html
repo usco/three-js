@@ -10,6 +10,9 @@
       },
       colorChanged:function(){
         this.object.color.set( this.color );
+      },
+      intensityChanged:function(){
+        this.object.intensity= this.intensity;
       }
     });
   </script>
@@ -83,12 +86,26 @@
 <polymer-element name="three-directionalLight" extends="three-js-light" attributes="target castShadow onlyShadow
 shadowMapWidth shadowMapHeight shadowCameraLeft shadowCameraRight shadowCameraTop shadowCameraBottom 
 shadowCameraNear shadowCameraFar shadowCameraFov
-shadowBias shadowDarkness">
+shadowBias shadowDarkness shadowCameraVisible">
   <script>
     Polymer('three-directionalLight', {
       target: null,
       castShadow:false,
       onlyShadow:false,
+
+      shadowMapWidth:512,
+      shadowMapHeight:512,
+      shadowCameraLeft:-500,
+      shadowCameraRight:500,
+      shadowCameraTop:500,
+      shadowCameraBottom:-500,
+      shadowCameraNear:50,
+      shadowCameraFar:5000,
+      shadowCameraFov:30,
+      shadowBias:0,
+      shadowDarkness:0.5,
+      shadowCameraVisible:false,
+
       created:function(){
         this.super();
         this.target = new THREE.Object3D();
@@ -97,34 +114,40 @@ shadowBias shadowDarkness">
         this.super();
         this.object = new THREE.DirectionalLight(this.color, this.intensity);
         this.object.target = this.target;
-        this.castShadowChanged();
       },
       targetChanged:function(){
         this.object.target = this.target;
       },
       castShadowChanged:function(){
         this.object.castShadow = this.castShadow;
-        if (this.castShadow) {
-          this.object.shadowMapWidth = 1024;
-          this.object.shadowMapHeight = 1024;
-          this.object.shadowCameraNear = 500;
-          this.object.shadowCameraFar = 4000;//3500
-          this.object.shadowCameraFov = 30;
-          this.object.shadowBias = 0.0001;//-0.0001;
-          this.object.shadowDarkness = 0.5;		//dirLight.shadowDarkness = 0.35;
-        }
       },
-      //TODO: no point in handling these indivisually, as the component's 
-      //attribute shadows that of the three.js light
       onlyShadowChanged:function(){
         this.object.onlyShadow = this.onlyShadow;
       },
-      shadowDarknessChanged:function(){
-        this.object.shadowDarkness = this.shadowDarkness;
+      shadowMapWidthChanged:function(){
+        this.object.shadowMapWidth = this.shadowMapWidth;
+      },
+      shadowMapHeightChanged:function(){
+        this.object.shadowMapHeight = this.shadowMapHeight;
+      },
+      shadowCameraNearChanged:function(){
+        this.object.shadowCameraNear = this.shadowCameraNear;
+      },
+      shadowCameraFarChanged:function(){
+        this.object.shadowCameraFar = this.shadowCameraFar;
+      },
+      shadowCameraFovChanged:function(){
+        this.object.shadowCameraFov = this.shadowCameraFov;
+      },
+      shadowBiasChanged:function(){
+        this.object.shadowBias = this.shadowBias;
       },
       shadowDarknessChanged:function(){
         this.object.shadowDarkness = this.shadowDarkness;
-      }
+      },
+      shadowCameraVisibleChanged:function(){
+        this.object.shadowCameraVisible = this.shadowCameraVisible;
+      },
     });
   </script>
 </polymer-element>
