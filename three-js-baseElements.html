@@ -9,15 +9,7 @@
       show: true,
       name : null,
       object: null,
-      /*observe:{
-        pos:'updatePosition',
-        rot:'updatePosition'
-      },*/
-      /*observe: {
-       'pos.x': 'updatePosition',
-       'pos.y': 'updatePosition',
-       'pos.z': 'updatePosition'
-      }*/
+
       //element lifecycle callbacks
       created:function()
       {
@@ -32,15 +24,78 @@
          this.object.rotation.set( this.rot[0],this.rot[1],this.rot[2]);
       },
       attached: function() {
-        this.__addOrderedChildren();
         this.addToParent3();
       },
       detached: function() {
         this.removeFromParent3();
       },
       //attribute change handlers / various handlers
+      posChanged:function(){
+
+        if(this.pos[0] != this.object.position.x)
+        {
+          this.object.position.setX( this.pos[0] );
+        }
+
+        if(this.pos[1] != this.object.position.y)
+        {
+          this.object.position.setY( this.pos[1] );
+        }
+
+        if(this.pos[2] != this.object.position.y)
+        {
+          this.object.position.setZ( this.pos[2] );
+        }
+      },
+      rotChanged:function(){
+
+        if(this.rot[0] != this.object.rotation.x)
+        {
+          this.object.rotation.setX( this.rot[0] );
+        }
+
+        if(this.rot[1] != this.object.rotation.y)
+        {
+          this.object.rotation.setY( this.rot[1] );
+        }
+
+        if(this.rot[2] != this.object.rotation.y)
+        {
+          this.object.rotation.setZ( this.rot[2] );
+        }
+      },
       objectChanged: function() {
-        this.updatePosition();
+        if(this.pos[0] != this.object.position.x)
+        {
+          this.pos[0] = this.object.position.x;
+        }
+
+        if(this.pos[1] != this.object.position.y)
+        {
+          this.pos[1] = this.object.position.y;
+        }
+
+        if(this.pos[2] != this.object.position.y)
+        {
+          this.pos[2] = this.object.position.y;
+        }
+
+        ///rotation
+        if(this.rot[0] != this.object.rotation.x)
+        {
+          this.rot[0] = this.object.rotation.x;
+        }
+
+        if(this.rot[1] != this.object.rotation.y)
+        {
+          this.rot[1] = this.object.rotation.y;
+        }
+
+        if(this.rot[2] != this.object.rotation.y)
+        {
+          this.rot[2] = this.object.rotation.y;
+        }
+
       },
       showChanged: function() {
         if(this.object.toggle){ this.object.toggle(this.show);}
@@ -59,27 +114,16 @@
         this.pos.z = z;
       },
       add3: function(child) {
-          //TODO: do this MUCH better
-          if(!this.object )
+          if(child.object && !(child instanceof( threeJsScene )) )
           {
-            if(!this._tmpBuff) this._tmpBuff = [];
-            this._tmpBuff.push(child);
-            console.log("child", child.localName+"_"+child.object.name, "will (LATER )be added to ", this.localName,"object"+"_"+this.name);
+            this.object.add(child.object);
           }
           else
           {
-            if(child.object && !(child instanceof( threeJsScene )) )
-            {
-              this.object.add(child.object);
-              //console.log("std path child", child.localName+"_"+child.object.name, "added to ", this.localName+"_"+this.object.name);
-            }
-            else
-            {
-              this.object.add(child);
-              console.log("child", child.localName, "added to ", this.localName);
-            }
+            this.object.add(child);
+            console.log("child", child.localName, "added to ", this.localName);
           }
-        },
+      },
       addToParent3: function() {
         if (this.parentNode.add3 && !this.objectParent) {
           this.objectParent = this.parentNode;
@@ -94,48 +138,7 @@
           this.objectParent = null;
           console.log('[%s]: REMOVED from threejs-objectParent', this.localName + (this.id ? '#' + this.id : ''));
         }
-      },
-      //helpers
-      __addOrderedChildren:function()
-      {
-        //FIXME: workaround for bad child element insertion order
-        if(this._tmpBuff)
-        {
-          console.log("this._tmpBuff.length",this._tmpBuff.length, "of",this.name, this._tmpBuff)
-          for(var i=this._tmpBuff.length-1;i >= 0 ; i--)
-          {
-            var child = this._tmpBuff[i];
-            var childObj = child.object;
-            this._tmpBuff.splice(i, 1);
-
-            if(childObj) console.log("child", child.localName+"_"+child.object.name, "added to ", this.localName+"_"+this.object.name);
-            if(child.object && child.localName !== 'three-js-scene' )
-            {
-              //console.log("child", child.localName+"_"+child.object.name, "added to ", this.localName+"_"+this.object.name);
-              this.object.add(child.object);
-            }
-            else
-            {
-              //console.log("2 child", child.localName, "added to ", this.localName);
-              this.object.add(child);
-            }
-          }
-        }
-        //this._tmpBuff = null;
-      },
-      updatePosition: function() {
-        if (this.object) {
-          console.log("updating position");
-          //this.object.position.set(Number(this.pos[0]), Number(this.pos[1]), Number(this.pos[2]));
-          //if(this.pos[0]) != this.object.position
-          this.pos = [this.object.position.x,this.object.position.y,this.object.position.z];
-          //this.object.position.set(Number(this.pos.x), Number(this.pos.y), Number(this.pos.z));
-          //this.object.rotation.set(this.rot.x, this.rot.y, this.rot.z);
-          //this.object.rotation.set(this.rot.x * Math.PI/180, this.rot.y * Math.PI/180, this.rot.z * Math.PI/180);
-          this.object.castShadow = this.castShadow;
-          this.object.receiveShadow = this.receiveShadow;
-        }
-      },
+      }
     });
   </script>
 </polymer-element>
