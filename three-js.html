@@ -46,6 +46,8 @@ controls needs:
 
 <polymer-element name="three-js" attributes="renderNow fullScreen postProcess selectedObjects highlightedObject"
 on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" on-three-js-get-camera="{{getCamera}}"
+on-renderableadded="{{renderableAdded}}"
+
 
 touch-action="none" on-track="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}"
 on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}"
@@ -93,6 +95,9 @@ tabindex="0">
       },
       attached:function()
       {
+        //force unresolved:
+        this.setAttribute('unresolved', '');
+
         //setup various handlers
         window.addEventListener("resize",this.onResize.bind(this));
         if (this.requestFullscreen) document.addEventListener("fullscreenchange", this.onFullScreenChange.bind(this), false);
@@ -114,6 +119,7 @@ tabindex="0">
           var renderer = document.createElement('three-js-webglRenderer');
           //console.log("created renderer", renderer);
           this.appendChild(renderer);
+
         }
         if(Object.keys(this.viewports).length === 0)
         {
@@ -135,7 +141,21 @@ tabindex="0">
           //console.log("created viewport", viewport);
           this.appendChild(viewport);
         }
-        this.setAttribute('resolved','');
+
+       this.async(function(){
+          this._setStyle();
+          for(var key in this.viewports)
+          {
+            var view = this.viewports[key];
+            view._setStyle();
+          }
+          this.onResize();
+          this.async(function(){
+            this.setAttribute('resolved','');
+            this.removeAttribute('unresolved');
+          },null,100);
+        });
+        
       },
       //initialization methods
       _setupRenderer: function()
@@ -267,7 +287,6 @@ tabindex="0">
 		      this.camera.updateProjectionMatrix();
         }
 
-		    /*this.renderer.setSize( this.width,this.height );*/
 		    for(var i = 0; i<this.renderers.length;i++)
 		    {
 		      var renderer = this.renderers[i];
@@ -400,6 +419,14 @@ tabindex="0">
               this.fire("longmovetap",{position:{x:x,y:y}});
             }
           }
+      },
+      renderableAdded:function( event ){
+
+        console.log("renderable added", event.detail);
+        this.renderables = [];
+        var renderable = event.detail.renderable;
+        renderable.scene = event.detail.scene;
+        this.renderables.push( renderable );
       },
       //public api
       getScene:function( name )
@@ -581,26 +608,26 @@ tabindex="0">
         if(this.controls) this.controls.update();
         this.render();
       },
-      nullJob: {
-        stop: function(){}
-      },
       //other
       render: function() {
-        //if (! this.camera) {return;}
-
         for(var i=0; i<this.renderers.length;i++)
-          {
+        {
             var renderer = this.renderers[i];
             try{renderer.clear();}catch(error){};
 
             for(var key in this.viewports)
             {
               var view = this.viewports[key];
-              view.render(renderer, this.activeScenes, this.width, this.height);
+              view.render(renderer, this.activeScenes, this.renderables, this.width, this.height);
               try{ renderer.clear( false, true, false ); } catch(error){};
             }
         }
         return;
+
+
+
+
+
 
         if (this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true && this.finalComposer)
         {

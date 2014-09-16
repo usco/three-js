@@ -256,7 +256,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
         if(this.controls) this.controls.update();
         if(this.octree) this.octree.update();
       },
-      render:function(renderer, activeScenes, width, height)
+      render:function(renderer, activeScenes, renderables, width, height)
       {
         var left   = Math.floor( width  * this.left );
 				var bottom = Math.floor( height * this.bottom );
@@ -279,6 +279,13 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
         else
         {   
           try{
+
+renderables[0].toIgnore.visible = false;
+                renderables[0].updateCubeMap( renderer, renderables[0].scene );
+                renderables[0].toIgnore.material.envMap = renderables[0].renderTarget;
+                renderables[0].toIgnore.visible = true;
+
+
 			      renderer.setViewport( left, bottom, width, height );
 			      renderer.setScissor( left, bottom, width, height );
 			      renderer.enableScissorTest ( true );
@@ -291,6 +298,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 			        camera.setSize(width,height);
 			        camera.updateProjectionMatrix();
 			     
+
 			        for(var key in activeScenes)
               {
                 var activeScene = activeScenes[key];
