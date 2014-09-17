@@ -5,8 +5,8 @@
       intensity: 1,
       ready: function() {
         this.object = new THREE.Light(this.color);
-        this.object.name = this.name;
         this.super();
+        this.object.name = this.name;
       },
       colorChanged:function(){
         this.object.color.set( this.color );
@@ -25,6 +25,14 @@
       ready: function() {
         this.super();
         this.object = new THREE.AmbientLight(this.color);
+      },
+      intensityChanged:function(){
+        // ambient light does not have intensity, only color
+        var newColor = new THREE.Color( this.color );
+        newColor.r *= this.intensity;
+        newColor.g *= this.intensity;
+        newColor.b *= this.intensity;
+        this.object.color.copy( newColor );
       }
     });
   </script>
