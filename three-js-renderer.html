@@ -28,38 +28,50 @@
   </script>
 </polymer-element>
 
-<polymer-element name="three-js-webglRenderer"  extends="three-js-renderer"  attributes="antialias">
+<polymer-element name="three-js-webglRenderer"  extends="three-js-renderer"  attributes="antialias preserveDrawingBuffer autoclear autoUpdateScene shadowMapEnabled shadowMapAutoUpdate shadowMapSoft shadowMapType">
   <script>Polymer('three-js-webglRenderer',{
       antialias:true,
+      preserveDrawingBuffer:true,
+      autoclear:false,
+      autoUpdateScene:false,
+      shadowMapEnabled:true,
+      shadowMapAutoUpdate:true,
+      shadowMapSoft:true,
+      shadowMapType:"PCF",// options are THREE.BasicShadowMap | THREE.PCFShadowMap | THREE.PCFSoftShadowMap
+
        _setupRenderer: function()
       {
         if ( Detector.webgl )
-        {var renderer = new THREE.WebGLRenderer( {antialias:this.antialias, preserveDrawingBuffer:true} );}
+        {var renderer = new THREE.WebGLRenderer( {antialias:this.antialias, preserveDrawingBuffer:this.preserveDrawingBuffer} );}
 		    else
         { var renderer = new THREE.CanvasRenderer(); }
 		    renderer.setSize(this.offsetWidth, this.offsetHeight);
 
-		    renderer.shadowMapEnabled = true;//this.showShadows;
-		    renderer.shadowMapAutoUpdate = true; //this.showShadows;
-		    renderer.shadowMapSoft = true;
-		    renderer.shadowMapType = THREE.PCFShadowMap; // options are THREE.BasicShadowMap | THREE.PCFShadowMap | THREE.PCFSoftShadowMap
-		    renderer.autoClear = false;
-	      renderer.autoUpdateScene = false;
+		    renderer.shadowMapEnabled = this.shadowMapEnabled;
+		    renderer.shadowMapAutoUpdate = this.shadowMapAutoUpdate;
+		    renderer.shadowMapSoft = this.shadowMapSoft;
+		    renderer.shadowMapType = THREE.PCFShadowMap; 
+        renderer.autoClear = this.autoclear;
+	      renderer.autoUpdateScene = this.autoUpdateScene;
+
 	      //this._convertColor(this.bg);
 		    //renderer.setClearColor( this.bg, 1 );	
+        //renderer.setClearColor(0xeeeeee, 1);
 
         //if lightdom 
         this.appendChild(renderer.domElement);
         //this.shadowRoot.appendChild(renderer.domElement);
         this.renderer = renderer;
-        
         var self = this;
+
+
+
         if ( Detector.webgl ){
-        renderer.context.canvas.addEventListener("webglcontextlost", function(event) {
+          renderer.context.canvas.addEventListener("webglcontextlost", function(event) {
             event.preventDefault();
             console.log("webgl context lost");
             self.removeEventListener("webglcontextlost");
-            cancelAnimationFrame(this._animationId); 
+            //cancelAnimationFrame(this._animationId); 
             
             function resetToInitialState(ctx) {
                 var numAttribs = ctx.getParameter(ctx.MAX_VERTEX_ATTRIBS);
