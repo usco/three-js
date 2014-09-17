@@ -262,7 +262,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 				var bottom = Math.floor( height * this.bottom );
 			  var width  = Math.floor( width  * this.width );
 				var height = Math.floor( height * this.height );
-				
+
 				this.activeScenes = activeScenes;
 
         if(this.postProcess && this.composer && renderer instanceof THREE.WebGLRenderer)
@@ -279,13 +279,6 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
         else
         {   
           try{
-
-renderables[0].toIgnore.visible = false;
-                renderables[0].updateCubeMap( renderer, renderables[0].scene );
-                renderables[0].toIgnore.material.envMap = renderables[0].renderTarget;
-                renderables[0].toIgnore.visible = true;
-
-
 			      renderer.setViewport( left, bottom, width, height );
 			      renderer.setScissor( left, bottom, width, height );
 			      renderer.enableScissorTest ( true );
@@ -304,7 +297,15 @@ renderables[0].toIgnore.visible = false;
                 var activeScene = activeScenes[key];
                 activeScene.updateMatrixWorld();
                 //this.pick(renderer, activeScene, camera);
+                
+                for(var i=0;i<renderables.length;i++)
+                {
+                  renderables[i].renderer = renderer;
+                  renderables[i].camera   = camera;
+                  renderables[i].render(  );
+                }
                 renderer.render(activeScene, camera);
+
                 /*
                 FIXME:experimental , remove
                if(!(this.octree)){
@@ -382,7 +383,7 @@ renderables[0].toIgnore.visible = false;
 	      this.width = parseInt(cs.getPropertyValue("width").replace("px",""));
 	      this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
 	      this.left = parseInt(cs.getPropertyValue("left").replace("px",""));
-	      //this.bottom = parseInt(cs.getPropertyValue("bottom").replace("px",""));
+	      this.bottom = parseInt(cs.getPropertyValue("bottom").replace("px",""));
 	      this.realWidth = this.width;
 	      this.realHeight = this.height;
 	      
