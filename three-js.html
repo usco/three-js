@@ -281,7 +281,7 @@ tabindex="0">
         this._pushStart = new Date().getTime();
 
 			  //set focus so keyboard binding works
-			  if( document.activeElement != this.impl)
+			  if(this.impl && document.activeElement != this.impl)
 			  {
 				  this.impl.focus();
         }
