@@ -31,7 +31,9 @@
       },
       //attribute change handlers / various handlers
       posChanged:function(){
-
+        if(!(this.object.position)) return;
+        if(!(this.object.position.setX)) return;
+         
         if(this.pos[0] != this.object.position.x)
         {
           this.object.position.setX( this.pos[0] );
@@ -48,7 +50,9 @@
         }
       },
       rotChanged:function(){
-
+        if(!(this.object.rotation)) return;
+        if(!(this.object.rotation.setX)) return;
+        
         if(this.rot[0] != this.object.rotation.x)
         {
           this.object.rotation.setX( this.rot[0] );
