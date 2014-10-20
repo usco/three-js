@@ -14,14 +14,14 @@
           this.objectParent = this.parentNode;
           this.parentNode.add3(this);
           var parentName = this.parentNode.localName;
-          console.log('[%s]: request adding to [%s]', this.localName + (this.id ? '#' + this.id : ''), parentName);
+          //console.log('[%s]: request adding to [%s]', this.localName + (this.id ? '#' + this.id : ''), parentName);
         }
       },
       removeFromParent3: function() {
         if (this.objectParent) {
           this.objectParent.remove3(this);
           this.objectParent = null;
-          console.log('[%s]: REMOVED from threejs-objectParent', this.localName + (this.id ? '#' + this.id : ''));
+          //console.log('[%s]: REMOVED from threejs-objectParent', this.localName + (this.id ? '#' + this.id : ''));
         }
       },
     });
