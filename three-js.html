@@ -3,6 +3,8 @@
 <script src="lib/helpers/screen-capture.js"></script>
 <script src="lib/helpers/selection-helper.js"></script>
 <script src="lib/helpers/normalizeEvent.js"></script>
+<script src="lib/helpers/computeBounding.js"></script>
+
 <!--<script src="lib/Octree.js"></script>-->
 
 <link rel="import" href="../polymer/polymer.html">
@@ -44,7 +46,7 @@ controls needs:
 - renderer
 -->
 
-<polymer-element name="three-js" attributes="fullScreen postProcess selectedObjects highlightedObject"
+<polymer-element name="three-js" attributes="logLevel fullScreen postProcess selectedObjects highlightedObject"
 on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" on-three-js-get-camera="{{getCamera}}"
 on-renderableadded="{{renderableAdded}}"
 
@@ -64,6 +66,13 @@ tabindex="0">
   </template>
   <script>
     Polymer('three-js', {
+       /**
+       * 'logLevel` sets the current logging level for the component
+       * 
+       * @attribute logLevel
+       * @type string
+      */
+      logLevel:"warn",
       /**
        * 'fullScreen` toggles the full screen mode for the threejs element
        (with correct styling)
@@ -164,7 +173,6 @@ tabindex="0">
         this.onResize();
       },
       domReady:function(){
-        console.log("DOM READY");
         //make sure we have AT LEAST one renderer and one viewport
         //if not, create them 
         if(this.renderers.length==0)
@@ -400,8 +408,9 @@ tabindex="0">
 	      var autoCenter = options.autoCenter !== undefined ? options.autoCenter : false;
 	      var autoResize = options.autoResize !== undefined ? options.autoResize : false;
 	      
+	      //TODO: should the various "transformations" be "plugins"
 	      if(autoCenter) this._centerMesh( object );
-        if(autoResize) this._resizeMesh( object );
+        if(autoResize) this._resizeMesh( object, options.minSize, options.maxSize );
         
 	      //if no scene name is given take the first one
 	      if(!(sceneName)) for (var sceneName in this.scenes) if (this.scenes.hasOwnProperty(sceneName)) break;
@@ -805,27 +814,27 @@ tabindex="0">
       },
       _centerMesh:function( object )
       {
-        console.log("centering mesh");
         //TODO: should this be added to our object/mesh classes
         //centering hack
         if(!object.boundingSphere) computeObject3DBoundingSphere( object );
         var offset = object.boundingSphere.center;
         object.applyMatrix( new THREE.Matrix4().makeTranslation( -offset.x, -offset.y, -offset.z ) );
       },
-      _resizeMesh:function( object )
+      _resizeMesh:function( object, minSize, maxSize )
       {  
-        console.log("resizing mesh");
+        var minSize = minSize || 20;
+        var maxSize = maxSize || 200;
         if(!object.boundingSphere) computeObject3DBoundingSphere( object );
         var size = object.boundingSphere.radius;
-        if( size < this.minObjectSize)
+        if( size < minSize)
         {
-          var ratio = object.boundingSphere.radius/this.minObjectSize;
+          var ratio = object.boundingSphere.radius/minSize;
           var scaling = 1/ratio;
           object.applyMatrix( new THREE.Matrix4().makeScale( scaling, scaling, scaling ) );
         }
-        else if(size > this.maxObjectSize)
+        else if(size > maxSize)
         {
-          var ratio = object.boundingSphere.radius/this.maxObjectSize;
+          var ratio = object.boundingSphere.radius/maxSize;
           var scaling = 1/ratio;
           object.applyMatrix( new THREE.Matrix4().makeScale( scaling, scaling, scaling ) );
         }
