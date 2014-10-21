@@ -128,6 +128,9 @@
             //console.log("child", child.localName, "added to ", this.localName);
           }
       },
+      remove3: function(child) {
+        this.object.remove(child.object);
+      },
       addToParent3: function() {
         if (this.parentNode.add3 && !this.objectParent) {
           this.objectParent = this.parentNode;
