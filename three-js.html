@@ -460,17 +460,36 @@ tabindex="0">
        * @method clearScene
        * @param {String} sceneName: name of the scene to clear 
       */
-      clearScene:function(sceneName)
+      clearScene:function(sceneName, options)
       {
         var scene = this.scenes[sceneName];
         if(!(scene)) return;
 
+        var options = options || {};
+        var clearLights = options.lights === undefined ? false: options.lights;
+        var clearMeshes = options.meshes === undefined ? true: options.meshes;
+        
+        var sceneItems = scene.children;
+        for(var i=0;i<sceneItems.length;i++)
+        {
+          var item = sceneItems[i];
+          if( item instanceof THREE.Mesh && clearMeshes)
+          {
+            scene.remove( item );
+          }
+          
+          if( item instanceof THREE.Light && clearLights)
+          {
+            scene.remove( item );
+          }
+        }
+        /*
         // cleanup without calling render (data needs to be cleaned up before a new scene can be generated)
         //see here https://github.com/mrdoob/three.js/issues/2760
         if(this.renderer instanceof THREE.WebGLRenderer)
         {
           this.renderer.initWebGLObjects(scene);
-        }
+        }*/
       },
       
       /**
