@@ -462,6 +462,8 @@ tabindex="0">
       */
       clearScene:function(sceneName, options)
       {
+        //TODO: this needs to be rethought : we need to find a way to differentiate "external"
+        //"regular" three.js meshes / object 3ds from custom element based ones
         var scene = this.scenes[sceneName];
         if(!(scene)) return;
 
@@ -470,10 +472,11 @@ tabindex="0">
         var clearMeshes = options.meshes === undefined ? true: options.meshes;
         
         var sceneItems = scene.children;
-        for(var i=0;i<sceneItems.length;i++)
+        for(var i=sceneItems.length;i>=0; i--)
         {
+          sceneItems = scene.children;
           var item = sceneItems[i];
-          if( item instanceof THREE.Mesh && clearMeshes)
+          if( (item instanceof THREE.Mesh) && clearMeshes )
           {
             scene.remove( item );
           }
