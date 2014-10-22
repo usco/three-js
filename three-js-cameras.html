@@ -97,9 +97,6 @@
         this.object = this.camera;
         this.super();
       },
-      /*updatePosition: function() {
-        this.super();
-      },*/
       //attribute change handlers / various handlers
       projectionChanged:function()
 	    {
@@ -132,6 +129,9 @@
             this.camera[methodName]();
           }catch(error){console.log(error);}
 	    },
+	    centerView:function(){
+	      this.camera.centerView();
+	    }
   
     });
   </script>

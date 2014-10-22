@@ -50,7 +50,26 @@
       cameraUpChanged:function(){
         this._cameraUp = new THREE.Vector3(this.cameraUp[0],this.cameraUp[1],this.cameraUp[2]);   
         this.object.upVector = this._cameraUp;
-      }
+      },
+      rotateUp:function(){
+        this.object.rotateUp();
+      },
+      rotateDown:function(){
+        this.object.rotateDown();
+      },
+      rotateLeft:function(){
+        this.object.rotateLeft();
+      },
+      rotateRight:function(){
+        this.object.rotateRight();
+      },
+      zoomOut:function(){
+        this.object.zoomOut();
+      },
+      zoomIn:function(){
+        this.object.zoomIn();
+      },
+      
     });
   </script>  
 
