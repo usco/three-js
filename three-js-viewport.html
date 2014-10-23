@@ -1,5 +1,5 @@
 
-<polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId composerId left bottom width height postProcess"
+<polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId composerId left bottom width height postProcess pickOnPointerMove"
 touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}" 
 >
 <!--on-track="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}"-->
@@ -10,12 +10,15 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
       updatable:true,
       cameraId:null,
       camera:null,
+      
       controls:null,
       controlsId:null,
+      
       composerId:null,
       composer:null,
       
-      postProcess:false,
+      postProcess:false,//toggle post processing effects
+      pickOnPointerMove: false,//toggle picking to be done when pointer moves
       
       left: 0,
 			bottom: 0,
@@ -131,7 +134,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
       {
         //if(!this.selectionHelper) return;
         //console.log("foo",this.name);
-        if(!(this.camera)) return;//TODO:this whole method should be disabled for as long as there is no camera
+        if(!(this.camera) || !(this.pickOnPointerMove) ) return;//TODO:this whole method should be disabled for as long as there is no camera
         
         this._pointerMoveTicks++;
         if(this._pointerMoveTicks <5)return;
