@@ -3,7 +3,7 @@
 
 
 <script src="lib/OrbitControls.js"></script>
-<polymer-element name="three-js-orbitControls" extends="three-js-controls" attributes="cameraUp panSpeed zoomSpeed rotateSpeed autoRotate">
+<polymer-element name="three-js-orbitControls" extends="three-js-controls" attributes="cameraUp panSpeed zoomSpeed autoRotateSpeed autoRotate">
   <script>
     Polymer('three-js-orbitControls', {
       autoRotate: false,
@@ -46,6 +46,10 @@
       autoRotateChanged:function()
       {
         this.object.autoRotate = this.autoRotate;
+      },
+      autoRotateSpeedChanged:function()
+      {
+        this.object.autoRotateSpeed = this.autoRotateSpeed;
       },
       cameraUpChanged:function(){
         this._cameraUp = new THREE.Vector3(this.cameraUp[0],this.cameraUp[1],this.cameraUp[2]);   
