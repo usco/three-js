@@ -79,7 +79,7 @@
       orientation: "diagonal",
       ortho:false,
       object: null,
-      defaultPos: null,
+      defaultPos: [0,0,0],
       ready: function() {
         //todo: read camera params from camera config/settings ?
 		    this.defaultCameraPosition = new THREE.Vector3(100,100,200);
@@ -97,10 +97,8 @@
         
         this.object = this.camera;
         this.super();
-        
-        this._posFlagged = false;
       },
-      defaultPosChanged:function(oldPos,newPos){
+      defaultPosChanged:function(oldPos, newPos){
         if(!newPos) newPos = this.pos;
         this.object.defaultPosition.copy( new THREE.Vector3( newPos[0], newPos[1], newPos[2] ) );
       },
