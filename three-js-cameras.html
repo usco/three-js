@@ -72,13 +72,14 @@
 
 <script src="lib/CombinedCamera.js"></script>
 
-<polymer-element name="three-js-combinedCamera" extends="three-js-camera" attributes="projection orientation ortho">
+<polymer-element name="three-js-combinedCamera" extends="three-js-camera" attributes="projection orientation ortho defaultPos">
   <script>
     Polymer('three-js-combinedCamera', {
       projection: "perspective",
       orientation: "diagonal",
       ortho:false,
       object: null,
+      defaultPos: null,
       ready: function() {
         //todo: read camera params from camera config/settings ?
 		    this.defaultCameraPosition = new THREE.Vector3(100,100,200);
@@ -96,6 +97,12 @@
         
         this.object = this.camera;
         this.super();
+        
+        this._posFlagged = false;
+      },
+      defaultPosChanged:function(oldPos,newPos){
+        if(!newPos) newPos = this.pos;
+        this.object.defaultPosition.copy( new THREE.Vector3( newPos[0], newPos[1], newPos[2] ) );
       },
       //attribute change handlers / various handlers
       projectionChanged:function()
@@ -131,6 +138,9 @@
 	    },
 	    centerView:function(){
 	      this.camera.centerView();
+	    },
+	    resetView:function(){
+	      this.camera.resetView();
 	    }
   
     });

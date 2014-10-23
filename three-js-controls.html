@@ -73,6 +73,13 @@
       zoomIn:function(){
         this.object.zoomIn();
       },
+      centerOn:function(position){
+        var position = position === undefined ? new THREE.Vector3(): position;
+        this.object.center = position ;
+      },
+      reset:function(){
+        this.object.reset();
+      },
       
     });
   </script>  
