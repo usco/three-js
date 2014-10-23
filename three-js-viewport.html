@@ -363,6 +363,9 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
           this.composer = child;
         }
       },
+      remove3: function(child) {
+        //TODO: do we actually need to do anything to clean up ??
+      },
 			addToParent3: function() {
         if (this.parentNode.add3 && !this.objectParent) {
           this.objectParent = this.parentNode;
