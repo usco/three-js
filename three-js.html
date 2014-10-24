@@ -1,5 +1,6 @@
 <script src="lib/Detector.js"></script>
 <script src="lib/three.js"></script>
+<script src="lib/three.projector.js"></script>
 <script src="lib/helpers/screen-capture.js"></script>
 <script src="lib/helpers/selection-helper.js"></script>
 <script src="lib/helpers/normalizeEvent.js"></script>
@@ -409,12 +410,13 @@ tabindex="0">
 	      var autoResize = options.autoResize !== undefined ? options.autoResize : false;
 	      
 	      //TODO: should the various "transformations" be "plugins"
-        if(autoCenter) this._centerMesh( object, options.onX, options.onY, options.onZ );
-        if(autoResize) this._resizeMesh( object, options.minSize, options.maxSize );
+	      try{
+          if(autoCenter) this._centerMesh( object, options.onX, options.onY, options.onZ );
+          if(autoResize) this._resizeMesh( object, options.minSize, options.maxSize );
         
-        //regenerate bounding boxes/spheres to avoid issues with picking etc
-        computeObject3DBoundingSphere( object, true );
-        
+          //regenerate bounding boxes/spheres to avoid issues with picking etc
+          computeObject3DBoundingSphere( object, true );
+        }catch(error){console.log("failed to center/resize", error);}
         //helper, for debug
         /*var length = 1;
         var geometry = new THREE.Geometry();
@@ -909,7 +911,12 @@ tabindex="0">
       {  
         var minSize = minSize || 20;
         var maxSize = maxSize || 200;
-        if(!object.boundingSphere) computeObject3DBoundingSphere( object );
+        
+        console.log("resizing");
+        //if(!object.boundingSphere) computeObject3DBoundingSphere( object );
+        //FIXME: bsphere can be present but with a radius == infinity etc
+        computeObject3DBoundingSphere( object );
+        
         var size = object.boundingSphere.radius;
         if( size < minSize)
         {
