@@ -121,6 +121,7 @@
           if(child.object && !(child instanceof( threeJsScene )) )
           {
             this.object.add(child.object);
+            child.object.userData.persistent = true;
           }
           else
           {

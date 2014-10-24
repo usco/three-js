@@ -408,15 +408,23 @@ tabindex="0">
 	      var options = options || {};
 	      var autoCenter = options.autoCenter !== undefined ? options.autoCenter : false;
 	      var autoResize = options.autoResize !== undefined ? options.autoResize : false;
+	      var updateable = options.updateable !== undefined ? options.updateable : false;
+        var persistent  = options.cleareable !== undefined ? options.cleareable : false;
 	      
 	      //TODO: should the various "transformations" be "plugins"
-	      try{
-          if(autoCenter) this._centerMesh( object, options.onX, options.onY, options.onZ );
-          if(autoResize) this._resizeMesh( object, options.minSize, options.maxSize );
+        if(autoCenter) this._centerMesh( object, options.onX, options.onY, options.onZ );
+        if(autoResize) this._resizeMesh( object, options.minSize, options.maxSize );
+        if(updateable) this.updatables.push( object );
+        if(persistent ) object.userData.persistent = true;
         
-          //regenerate bounding boxes/spheres to avoid issues with picking etc
-          computeObject3DBoundingSphere( object, true );
-        }catch(error){console.log("failed to center/resize", error);}
+        //regenerate bounding boxes/spheres to avoid issues with picking etc
+        computeObject3DBoundingSphere( object, true );
+        
+        //if an object is "persistent" (usually a custom element embeded item)
+        //it cannot later on be removed from its scene using "clearScene" (unless forced)
+        //this is used for clearing scenes of all external items but keep helpers etc
+
+        
         //helper, for debug
         /*var length = 1;
         var geometry = new THREE.Geometry();
@@ -502,20 +510,13 @@ tabindex="0">
         if(!(scene)) return;
 
         var options = options || {};
-        var clearLights = options.lights === undefined ? false: options.lights;
-        var clearMeshes = options.meshes === undefined ? true: options.meshes;
         
         var sceneItems = scene.children;
-        for(var i=sceneItems.length;i>=0; i--)
+        for(var i=sceneItems.length-1;i>=0; i--)
         {
           sceneItems = scene.children;
           var item = sceneItems[i];
-          if( (item instanceof THREE.Mesh) && clearMeshes )
-          {
-            scene.remove( item );
-          }
-          
-          if( item instanceof THREE.Light && clearLights)
+          if( !item.userData.persistent )
           {
             scene.remove( item );
           }
@@ -550,6 +551,8 @@ tabindex="0">
 	    
 	    //internal api  
       add3: function(child) {
+        //TODO: throw errors etc if there is an attempt to add a 
+        //non valid object type
         if(child.updatable)
         {
           this.updatables.push( child );
@@ -911,8 +914,6 @@ tabindex="0">
       {  
         var minSize = minSize || 20;
         var maxSize = maxSize || 200;
-        
-        console.log("resizing");
         //if(!object.boundingSphere) computeObject3DBoundingSphere( object );
         //FIXME: bsphere can be present but with a radius == infinity etc
         computeObject3DBoundingSphere( object );
