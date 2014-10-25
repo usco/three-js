@@ -7,18 +7,62 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
     Polymer('three-js-viewport', {
       object: null,
       name: "",
+      
+      /**
+       * 'updatable` toggles the update loop of the viewport & its 
+       * contents
+       * 
+       * @attribute updatable
+       * @type bool
+      */
       updatable:true,
+      
+      /**
+       * 'cameraId` id of the camera to use if linking
+       * to a camera outside the viewport
+       * 
+       * @attribute cameraId
+       * @type bool
+      */
       cameraId:null,
       camera:null,
       
-      controls:null,
+      /**
+       * 'controlsId` id of the controls to use if linking
+       * to controls outside the viewport
+       * 
+       * @attribute controlsId
+       * @type bool
+      */
       controlsId:null,
+      controls:null,
       
+      /**
+       * 'composerId` id of the fxComposer to use if linking
+       * to an fxComposer outside the viewport
+       * 
+       * @attribute composerId
+       * @type bool
+      */
       composerId:null,
       composer:null,
       
+      /**
+       * 'postProcess` toggles the post processing (pixel shader based, so 
+       * webgl only)
+       * 
+       * @attribute postProcess
+       * @type bool
+      */
       postProcess:false,//toggle post processing effects
-      pickOnPointerMove: false,//toggle picking to be done when pointer moves
+      
+      /**
+       * 'pickOnPointerMove` toggle picking to be done when pointer moves
+       * 
+       * @attribute pickOnPointerMove
+       * @type bool
+      */
+      pickOnPointerMove: false,
       
       left: 0,
 			bottom: 0,
@@ -27,6 +71,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 			background: new THREE.Color(),
 			
 			_pointerMoveTicks:0,
+			
 			//base callbacks
       attached:function(){
         //console.log("in threejsviewport");
