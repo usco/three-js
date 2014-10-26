@@ -28,7 +28,7 @@
   </script>
 </polymer-element>
 
-<polymer-element name="three-js-webglRenderer"  extends="three-js-renderer"  attributes="antialias preserveDrawingBuffer autoclear autoUpdateScene shadowMapEnabled shadowMapAutoUpdate shadowMapSoft shadowMapType">
+<polymer-element name="three-js-webglRenderer"  extends="three-js-renderer"  attributes="antialias preserveDrawingBuffer autoclear autoUpdateScene shadowMapEnabled shadowMapAutoUpdate shadowMapSoft shadowMapType pBS">
   <script>Polymer('three-js-webglRenderer',{
       antialias:true,
       preserveDrawingBuffer:true,
@@ -38,7 +38,7 @@
       shadowMapAutoUpdate:true,
       shadowMapSoft:true,
       shadowMapType:"PCF",// options are THREE.BasicShadowMap | THREE.PCFShadowMap | THREE.PCFSoftShadowMap
-
+      pBS:false,//physicallyBasedShading
        _setupRenderer: function()
       {
         if ( Detector.webgl )
@@ -53,7 +53,7 @@
 		    renderer.shadowMapType = THREE.PCFShadowMap; 
         renderer.autoClear = this.autoclear;
 	      renderer.autoUpdateScene = this.autoUpdateScene;
-
+        renderer.physicallyBasedShading = this.pBS;
 	      //this._convertColor(this.bg);
 		    //renderer.setClearColor( this.bg, 1 );	
         //renderer.setClearColor(0xeeeeee, 1);
