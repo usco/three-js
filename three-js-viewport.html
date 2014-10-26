@@ -91,8 +91,8 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
         
         //alternative picking EXPERIMENTAL
         this.mouse= {x:300,y:200};
-        //this.pickingTexture = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight );
-				//this.pickingTexture.generateMipmaps = false;
+        this.pickingTexture = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight );
+				this.pickingTexture.generateMipmaps = false;
 				//octree EXPERIMENTAL
 				this.octree = null; 
 				
@@ -118,7 +118,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 				if ( data)
 				{
 					//move our highlightBox so that it surrounds the picked object
-          //console.log("data", data);
+          console.log("data", data);
 			  }
 			  renderer.clear();
 			},
@@ -248,9 +248,11 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
           var activeScene = activeScenes[key];
           if(!(activeScene._pickable)) continue;
           this.selectionHelper.hiearchyRoot = activeScene.children;
+          
           selected = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode);
           if( selected) break;
         }
+        
         //console.log("selected", selected,x,y);
 
         if(this._longStaticTap)
@@ -312,6 +314,14 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 				var height = Math.floor( height * this.height );
 
 				this.activeScenes = activeScenes;
+				
+				//FIXME god awfull hack, only used for three-stats
+				for(var i=0;i<renderables.length;i++)
+        {
+				  if(!('scene' in renderables[i])){
+				    renderables[i].render();
+				  }
+				}
 
         if(this.postProcess && this.composer && renderer instanceof THREE.WebGLRenderer)
         {
@@ -339,7 +349,6 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 			        camera.setSize(width,height);
 			        camera.updateProjectionMatrix();
 			     
-
 			        for(var key in activeScenes)
               {
                 var activeScene = activeScenes[key];
@@ -348,9 +357,15 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
                 
                 for(var i=0;i<renderables.length;i++)
                 {
-                  renderables[i].renderer = renderer;
-                  renderables[i].camera   = camera;
-                  renderables[i].render(  );
+                  if('scene' in renderables[i]){
+                    if(renderables[i].scene == activeScene)
+                    {
+                    renderables[i].renderer = renderer;
+                    renderables[i].camera   = camera;
+                    renderables[i].render(  );
+                    }
+                  }
+                  
                 }
                 renderer.render(activeScene, camera);
 

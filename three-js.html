@@ -57,11 +57,9 @@ on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}"
 tabindex="0">
 <template>
   <link rel="stylesheet" type="text/css" href="three-js.css">
-    <content select="three-js-scene" id="scene-inner"> </content>
     <content select="three-js-viewport" id="viewports"></content>
     <content select="three-effect-composer" id="composers"></content>
     <content select="three-js-renderer" id="renderers"></content>
-
     <content select="drag-drop" id="dragDropLayer"> </content>
     <content select="three-stats" ></content>
   </template>
@@ -411,7 +409,8 @@ tabindex="0">
 	      var updateable = options.updateable !== undefined ? options.updateable : false;
         var persistent  = options.cleareable !== undefined ? options.cleareable : false;
 	      
-	      //TODO: should the various "transformations" be "plugins"
+	      //TODO: should the various "transformations" be "plugins", technically,
+	      //these are all pre/post insertion "effects"
         if(autoCenter) this._centerMesh( object, options.onX, options.onY, options.onZ );
         if(autoResize) this._resizeMesh( object, options.minSize, options.maxSize );
         if(updateable) this.updatables.push( object );
@@ -557,6 +556,12 @@ tabindex="0">
         {
           this.updatables.push( child );
         }
+        if(child.renderable)
+        {
+          this.renderables.push( child );
+        }
+        
+        
         if( child instanceof( threeJsRenderer ) ){
           this.renderer = child.renderer;
           this.renderers.push( child.renderer );
@@ -652,7 +657,7 @@ tabindex="0">
       //internal methods
       render: function() {
         for(var i=0; i<this.renderers.length;i++)
-          {
+        {
             var renderer = this.renderers[i];
             try{renderer.clear();}catch(error){};
 
@@ -844,6 +849,7 @@ tabindex="0">
               }
             }catch(error){};
           }
+          //setTimeout(this.update.bind(this), 15);
           requestAnimationFrame(this.update.bind(this));
       },
       //helpers: TODO: move some of these to seperate js file
