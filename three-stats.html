@@ -1,5 +1,5 @@
 <script src="lib/Stats.js"></script>
-<polymer-element name="three-stats" attributes="show" >
+<polymer-element name="three-stats" attributes="show channel" >
 	<template>
     <style>
       :host{
@@ -12,6 +12,8 @@
 	  Polymer('three-stats', {
 	    show:      false,
 	    updatable: true,
+	    renderable:true,
+	    channel: 'render',
 		  ready: function() {
 			  this.init();
 		  },
@@ -28,7 +30,11 @@
 		  },
 		  update:function()
 		  {
-			  this.stats.update();
+			  if(this.channel == 'update') { this.stats.update();}
+		  },
+		  render:function()
+		  {
+		    if(this.channel == 'render')  { this.stats.update();}
 		  },
 		  addToParent3: function() {
         if (this.parentNode.add3 && !this.objectParent) {
