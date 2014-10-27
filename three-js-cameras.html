@@ -127,12 +127,16 @@
 	    },
       orientationChanged:function()
 	    {
-			    console.log("orientation changed to", this.orientation);
+	      //needs to be async to make sure it is only fired initially
+	      //AFTER the camera is setup
+	      this.async(function(){
+			    //console.log("orientation changed to", this.orientation);
           var orientation = this.orientation;
           var methodName = "to"+orientation.charAt(0).toUpperCase() + orientation.slice(1)+"View";
           try{
             this.camera[methodName]();
           }catch(error){console.log(error);}
+         });
 	    },
 	    centerView:function(){
 	      this.camera.centerView();
