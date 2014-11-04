@@ -250,7 +250,13 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
           this.selectionHelper.hiearchyRoot = activeScene.children;
           
           selected = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode);
-          if( selected) break;
+          
+          if( selected){
+            var selectionDetails = selected.userData.tmpIntersectData;
+            delete selected.userData.tmpIntersectData
+            this.fire("objectpicked",{pickingInfos:selectionDetails});
+            break;
+          }
         }
         
         //console.log("selected", selected,x,y);
