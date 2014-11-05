@@ -20,8 +20,8 @@
          this.object.castShadow = this.castShadow;
          this.object.receiveShadow = this.receiveShadow;
          this.object.name = this.name;
-         this.object.position.set( this.pos[0],this.pos[1],this.pos[2]);
-         this.object.rotation.set( this.rot[0],this.rot[1],this.rot[2]);
+         this.object.position.copy( this.posToVector() );
+         this.object.rotation.copy( this.rotToEuler()  );
       },
       attached: function() {
         this.addToParent3();
@@ -32,74 +32,38 @@
       //attribute change handlers / various handlers
       posChanged:function(){
         if(!(this.object.position)) return;
-        if(!(this.object.position.setX)) return;
-         
-        if(this.pos[0] != this.object.position.x)
-        {
-          this.object.position.setX( this.pos[0] );
-        }
-
-        if(this.pos[1] != this.object.position.y)
-        {
-          this.object.position.setY( this.pos[1] );
-        }
-
-        if(this.pos[2] != this.object.position.y)
-        {
-          this.object.position.setZ( this.pos[2] );
+        
+        var tmpPos = this.posToVector();
+        if( !tmpPos.equals( this.object.position ) ){
+          this.object.position.copy( tmpPos );
         }
       },
       rotChanged:function(){
         if(!(this.object.rotation)) return;
-        if(!(this.object.rotation.setX)) return;
         
-        if(this.rot[0] != this.object.rotation.x)
-        {
-          this.object.rotation.setX( this.rot[0] );
-        }
-
-        if(this.rot[1] != this.object.rotation.y)
-        {
-          this.object.rotation.setY( this.rot[1] );
-        }
-
-        if(this.rot[2] != this.object.rotation.y)
-        {
-          this.object.rotation.setZ( this.rot[2] );
+        var tmpRot = this.rotToEuler();
+        if( !tmpRot.equals( this.object.rotation ) ){
+          this.object.rotation.copy( tmpRot );
         }
       },
       objectChanged: function() {
-        if(this.pos[0] != this.object.position.x)
-        {
-          this.pos[0] = this.object.position.x;
-        }
-
-        if(this.pos[1] != this.object.position.y)
-        {
-          this.pos[1] = this.object.position.y;
-        }
-
-        if(this.pos[2] != this.object.position.y)
-        {
-          this.pos[2] = this.object.position.y;
+        //position
+        var tmpPos = this.posToVector();
+        if( !tmpPos.equals( this.object.position ) ){
+          var objPos = this.object.position.toArray();
+          this.pos[0] = objPos[0];
+          this.pos[1] = objPos[1];
+          this.pos[2] = objPos[2];
         }
 
         ///rotation
-        if(this.rot[0] != this.object.rotation.x)
-        {
-          this.rot[0] = this.object.rotation.x;
+        var tmpRot = this.rotToEuler();
+        if( !tmpRot.equals( this.object.rotation ) ){
+          var objRot = this.object.rotation.toArray();
+          this.rot[0] = objRot[0];
+          this.rot[1] = objRot[1];
+          this.rot[2] = objRot[2];
         }
-
-        if(this.rot[1] != this.object.rotation.y)
-        {
-          this.rot[1] = this.object.rotation.y;
-        }
-
-        if(this.rot[2] != this.object.rotation.y)
-        {
-          this.rot[2] = this.object.rotation.y;
-        }
-
       },
       showChanged: function() {
         if(this.object.toggle){ this.object.toggle(this.show);}
@@ -146,6 +110,17 @@
           this.objectParent = null;
           //console.log('[%s]: REMOVED from threejs-objectParent', this.localName + (this.id ? '#' + this.id : ''));
         }
+      },
+      //helpers
+      posToVector:function(){
+        return new THREE.Vector3().fromArray( this.pos );
+      },
+      rotToEuler:function(){
+        return new THREE.Euler().fromArray([ 
+          this.rot[0]* Math.PI / 180,
+          this.rot[1]* Math.PI / 180,
+          this.rot[2]* Math.PI / 180
+        ]);
       }
     });
   </script>
