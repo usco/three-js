@@ -28,6 +28,9 @@
   </script>
 </polymer-element>
 
+<!--FIXME: is is strange to import the canvas renderer js here ??-->
+<script src="lib/CanvasRenderer.js"></script>
+
 <polymer-element name="three-js-webglRenderer"  extends="three-js-renderer"  attributes="antialias preserveDrawingBuffer autoclear autoUpdateScene shadowMapEnabled shadowMapAutoUpdate shadowMapSoft shadowMapType pBS">
   <script>Polymer('three-js-webglRenderer',{
       antialias:true,
@@ -41,30 +44,33 @@
       pBS:false,//physicallyBasedShading
        _setupRenderer: function()
       {
+        var renderer = undefined;
         if ( Detector.webgl )
-        {var renderer = new THREE.WebGLRenderer( {antialias:this.antialias, preserveDrawingBuffer:this.preserveDrawingBuffer} );}
+        {
+          renderer = new THREE.WebGLRenderer( {antialias:this.antialias, preserveDrawingBuffer:this.preserveDrawingBuffer} );
+          renderer.shadowMapEnabled = this.shadowMapEnabled;
+		      renderer.shadowMapAutoUpdate = this.shadowMapAutoUpdate;
+		      //renderer.shadowMapSoft = this.shadowMapSoft;
+		      renderer.shadowMapType = THREE.PCFSoftShadowMap;//THREE.PCFShadowMap; 
+	        renderer.autoUpdateScene = this.autoUpdateScene;
+          renderer.physicallyBasedShading = this.pBS;
+        }
 		    else
-        { var renderer = new THREE.CanvasRenderer(); }
+        { 
+          renderer = new THREE.CanvasRenderer(); 
+        }
 		    renderer.setSize(this.offsetWidth, this.offsetHeight);
+		    renderer.autoClear = this.autoclear;
 
-		    renderer.shadowMapEnabled = this.shadowMapEnabled;
-		    renderer.shadowMapAutoUpdate = this.shadowMapAutoUpdate;
-		    renderer.shadowMapSoft = this.shadowMapSoft;
-		    renderer.shadowMapType = THREE.PCFShadowMap; 
-        renderer.autoClear = this.autoclear;
-	      renderer.autoUpdateScene = this.autoUpdateScene;
-        renderer.physicallyBasedShading = this.pBS;
 	      //this._convertColor(this.bg);
 		    //renderer.setClearColor( this.bg, 1 );	
         //renderer.setClearColor(0xeeeeee, 1);
-
+  
         //if lightdom 
         this.appendChild(renderer.domElement);
         //this.shadowRoot.appendChild(renderer.domElement);
         this.renderer = renderer;
         var self = this;
-
-
 
         if ( Detector.webgl ){
           renderer.context.canvas.addEventListener("webglcontextlost", function(event) {
