@@ -102,15 +102,15 @@ shadowBias shadowDarkness shadowCameraVisible">
       onlyShadow:false,
 
       shadowMapWidth:512,
-      shadowMapHeight:512,
+      shadowMapHeight:256,
       shadowCameraLeft:-500,
       shadowCameraRight:500,
       shadowCameraTop:500,
       shadowCameraBottom:-500,
-      shadowCameraNear:50,
+      shadowCameraNear: 1200,
       shadowCameraFar:5000,
-      shadowCameraFov:30,
-      shadowBias:0,
+      shadowCameraFov:50,
+      shadowBias:0.0001,
       shadowDarkness:0.5,
       shadowCameraVisible:false,
 
@@ -122,6 +122,13 @@ shadowBias shadowDarkness shadowCameraVisible">
         this.super();
         this.object = new THREE.DirectionalLight(this.color, this.intensity);
         this.object.target = this.target;
+        
+        /*this.object.castShadow = this.castShadow;
+        this.object.shadowMapWidth = this.shadowMapWidth;
+        this.object.shadowMapHeight = this.shadowMapHeight;
+        this.object.shadowCameraVisible = this.shadowCameraVisible;
+        this.object.shadowDarkness = this.shadowDarkness;
+        this.object.shadowBias = this.shadowBias;*/
       },
       targetChanged:function(){
         this.object.target = this.target;
