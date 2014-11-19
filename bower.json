@@ -3,9 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "platform": "Polymer/platform#master",
+    "webcomponentsjs": "Polymer/webcomponentsjs#~0.5.1",
     "polymer": "Polymer/polymer#master",
-    "PointerEvents": "Polymer/polymer-gestures#master"
+    "polymer-gestures": "Polymer/polymer-gestures#master"
   },
   "ignore": [
     "index.html"
