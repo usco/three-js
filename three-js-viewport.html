@@ -2,7 +2,6 @@
 <polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId composerId left bottom width height postProcess pickOnPointerMove"
 touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}" 
 >
-<!--on-track="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}"-->
   <script>
     Polymer('three-js-viewport', {
       object: null,
@@ -236,12 +235,6 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
         var x = event.offsetX;
         var y = event.offsetY;
 
-        this._actionInProgress = false;
-        var _pushEnd = new Date().getTime()
-        var _elapsed = _pushEnd - this._pushStart;
-        this._longAction = !(_elapsed <= 125);
-        this._longStaticTap = (_elapsed >= 300 && this._noMove == true);
-
         var selected = null;
         for(var key in activeScenes)
         {
@@ -258,6 +251,11 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
             break;
           }
         }
+        this._actionInProgress = false;
+        var _pushEnd = new Date().getTime()
+        var _elapsed = _pushEnd - this._pushStart;
+        this._longAction = !(_elapsed <= 125);
+        this._longStaticTap = (_elapsed >= 300 && this._noMove == true);
         
         //console.log("selected", selected,x,y);
 
