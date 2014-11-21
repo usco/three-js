@@ -218,11 +218,6 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
         this._noMove = true;
         this._actionInProgress = true;
         this._pushStart = new Date().getTime();
-			  //set focus so keyboard binding works
-			  /*if( document.activeElement != this.impl)
-			  {
-				  this.impl.focus();
-        }*/
       },
       onPointerUp:function(event)
       {
