@@ -48,13 +48,12 @@ controls needs:
 -->
 
 <polymer-element name="three-js" attributes="logLevel fullScreen postProcess selectedObjects highlightedObject"
-on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" on-three-js-get-camera="{{getCamera}}"
-on-renderableadded="{{renderableAdded}}"
+on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" on-three-js-get-camera="{{getCamera}}" 
+on-renderableadded="{{renderableAdded}}" tabindex="-1">
 
-
-touch-action="none" on-track="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}"
+<!--touch-action="none" on-track="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}"
 on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}"
-tabindex="0">
+tabindex="0">-->
 <template>
   <link rel="stylesheet" type="text/css" href="three-js.css">
     <content select="three-js-viewport" id="viewports"></content>
@@ -239,7 +238,6 @@ tabindex="0">
         {
           this.finalComposer.setSize(this.hRes, this.vRes);
         }
-
         */
       },
       onFullScreenChange:function()
@@ -256,14 +254,15 @@ tabindex="0">
 	    {//overidable method stand in
         this.keys[event.keyCode] = true;
         this.shiftPress = event.shiftKey;
-        //console.log("key down")
+        console.log("key down")
 	    },
       onKeyUp:function(event)
 	    {//overidable method stand in
         this.keys[event.keyCode] = false;
         this.shiftPress = event.shiftKey;
+        console.log("key up")
 	    },
-      onPointerMove:function(event)
+      /*onPointerMove:function(event)
       {
         if(!this.selectionHelper) return;
 
@@ -290,6 +289,7 @@ tabindex="0">
 			  //set focus so keyboard binding works
 			  if(this.impl && document.activeElement != this.impl)
 			  {
+			    console.log("gna");
 				  this.impl.focus();
         }
       },
@@ -357,7 +357,7 @@ tabindex="0">
               this.fire("longmovetap",{position:{x:x,y:y}});
             }
           }
-      },
+      },*/
       renderableAdded:function( event ){
         //console.log("renderable added", event.detail);
         var renderable = event.detail.renderable;
@@ -418,14 +418,13 @@ tabindex="0">
         
         //regenerate bounding boxes/spheres to avoid issues with picking etc
         computeObject3DBoundingSphere( object, true );
-        
         //if an object is "persistent" (usually a custom element embeded item)
         //it cannot later on be removed from its scene using "clearScene" (unless forced)
         //this is used for clearing scenes of all external items but keep helpers etc
 
         
         //helper, for debug
-        /*var length = 1;
+        /*var length = 5;
         var geometry = new THREE.Geometry();
         geometry.vertices.push(new THREE.Vector3(-length/2, 0, 0));
         geometry.vertices.push(new THREE.Vector3(length/2, 0, 0));
@@ -458,6 +457,12 @@ tabindex="0">
         console.log(w,d,h);
         var bar  = new THREE.Mesh(new THREE.BoxGeometry(w,d,h), new THREE.MeshBasicMaterial({color:0xFF3300, wireframe:true}));
         object.add( bar );*/
+        
+        //handle updatable objects
+        if(object.update)
+        {
+          this.updatables.push( object );
+        }
 
         if(this.beforeAddToScene) this.beforeAddToScene( this, object, scene );
 		    try
