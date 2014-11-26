@@ -8,7 +8,7 @@
     Polymer('three-js-orbitControls', {
       autoRotate: false,
       cameraUp : [0,1,0],
-      panSpeed : 8.0,
+      panSpeed : 2.0,
       zoomSpeed: 2.0,
       rotateSpeed: 2.0, 
       autoRotateSpeed:4.0,
@@ -44,6 +44,16 @@
         this.addToParent3();   
       },
       //attribute change handlers
+      panSpeedChanged:function(){
+        this.object.userPanSpeed = this.panSpeed;
+        console.log("panSpeedChanged", this.panSpeed);
+      },
+      zoomSpeedChanged:function(){
+        this.object.userZoomSpeed = this.zoomSpeed;
+      },
+      rotateSpeedChanged:function(){
+        this.object.userRotateSpeed = this.rotateSpeed;
+      },
       autoRotateChanged:function()
       {
         this.object.autoRotate = this.autoRotate;
