@@ -98,7 +98,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
         //setup various handlers
         window.addEventListener("resize",this.onResize.bind(this));
       },
-      
+      //internal api
       pick:function(renderer,scene,camera) {
         var mouse = this.mouse;
         var pickingData = [];
@@ -200,9 +200,8 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
           var activeScene = activeScenes[key];
           if(!(activeScene._pickable)) continue;
           this.selectionHelper.hiearchyRoot = activeScene.children;
-          this.parentNode.highlightedObject = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode);
+          this.parentNode.highlightedObject = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode, false);
           if( this.parentNode.highlightedObject) break;
-          return;
         }
         this._noMove = false;
       },
