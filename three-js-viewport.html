@@ -1,5 +1,5 @@
 
-<polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId composerId left bottom width height postProcess pickOnPointerMove"
+<polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId controlsId composerId left bottom width height postProcess pickOnPointerMove scenes exScenes"
 touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}" 
 >
   <script>
@@ -63,6 +63,21 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
       */
       pickOnPointerMove: false,
       
+      /**
+       * 'scenes' : list of scenes to display in this viewport : defaults to all
+       * 
+       * @attribute scenes
+       * @type list
+      */
+      scenes:[],
+      /**
+       * 'exScenes' : list of scenes to ignore / not display
+       * 
+       * @attribute exScenes
+       * @type list
+      */
+      exScenes:[],
+      
       left: 0,
 			bottom: 0,
 			width: 1.0,
@@ -73,20 +88,27 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 			
 			//base callbacks
       attached:function(){
-        //console.log("in threejsviewport");
-        var camera   = this.parentNode.querySelector(this.cameraId);
+        var camera   = this.parentNode.querySelector('#'+this.cameraId);
         if(camera) this.camera = camera = camera.object;
         
-        var controls   = this.parentNode.querySelector(this.controlsId);
+        var controls = this.parentNode.querySelector('#'+this.controlsId);
         if(controls) this.controls = controls = controls.object;
         
         var composer = this.parentNode.querySelector(this.composerId);
         if(composer) this.composer = composer = composer.composer;
+
+        this.scenes   = [].concat( this.scenes );
+        this.exScenes = [].concat( this.exScenes );
+        
+        /*Array1 = Array1.filter(function(val) {
+          return Array2.indexOf(val) == -1;
+        });*/
+        
         
         this.selectionHelper = new SelectionHelper({camera:this.camera})
-
         this.addToParent3();
         this.onResize();
+        
         
         //alternative picking EXPERIMENTAL
         this.mouse= {x:300,y:200};
@@ -168,6 +190,9 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
         if(this.controls) this.controls.container.init(this.camera, this);
         this.selectionHelper.camera = this.camera;
       },
+      scenesChanged:function(){
+        console.log("scenesChanged",this.scenes);
+      },
       //event handlers
       onResize:function(){
         this._setStyle();
@@ -207,6 +232,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
       },
       onPointerDown:function(event)
       {
+        console.log("pointer down in three-js-viewport");
         if(!(this.camera)) return;//TODO:this whole method should be disabled for as long as there is no camera
       
         var event = event.impl || event;
@@ -217,9 +243,11 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
         this._noMove = true;
         this._actionInProgress = true;
         this._pushStart = new Date().getTime();
+        this._startPos = {x:x,y:y};
       },
       onPointerUp:function(event)
       {
+        console.log("pointer up in three-js-viewport");
         if(!(this.camera)) return;//TODO:this whole method should be disabled for as long as there is no camera
       
         var activeScenes = this.activeScenes;
@@ -245,55 +273,77 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
             break;
           }
         }
+        
         this._actionInProgress = false;
         var _pushEnd = new Date().getTime()
         var _elapsed = _pushEnd - this._pushStart;
-        this._longAction = !(_elapsed <= 125);
-        this._longStaticTap = (_elapsed >= 300 && this._noMove == true);
+        var moveX = Math.abs( this._startPos.x - x );
+        var moveY = Math.abs( this._startPos.y - y );
+        
+        var longActionLength = 500;
+        var jitterMax = 1; //how much pixel movement is still ok to consider "not moved"
+        
+        this._noMove = ( moveX + moveY ) <= jitterMax;
+        this._longAction = !(_elapsed <= longActionLength);
+        this._longStaticTap = (_elapsed >= longActionLength && this._noMove == true);
+        
         
         //console.log("selected", selected,x,y);
+        //console.log("moved", Math.abs( moveX ), Math.abs( moveY ) ); 
 
-        if(this._longStaticTap)
+        if(this._longAction)
         {
-          this.fire("longstatictap",{position:{x:x,y:y}});
-        }
-        else if( selected != null && selected != undefined)
-        {
-          //this.selectionHelper.selectObjectAt(x,y)
-          //multi select handling
-          if(!(this.parentNode.shiftPress))
+          //console.log("long action");
+          if(this._noMove == true)
           {
-            //no shift pressed: single selection
-            //this.selectedObjects.push(selected);
-            this.parentNode.selectedObjects=[selected];
+            //console.log("long static tap");
+            this.fire("longstatictap",{position:{x:x,y:y}});
           }
-          else
-          {
-            var tmpArray = [];
-            tmpArray = this.parentNode.selectedObjects.slice(0);
-            //necessary hack to work with polymer change handlers
-             var index = tmpArray.indexOf(selected);
-             if(index>-1) //already present, remove selection
-             {
-              tmpArray.splice(index,1);
-             }
-             else//not yet present, add selection
-             {
-              tmpArray.push( selected );
-             }
-             this.parentNode.selectedObjects = tmpArray;
+          else{
+            //console.log("moved");
           }
         }
-        else
-        {
-          if (this._longAction == false)
+        //short action
+        else{
+          //console.log("short action");
+          if(this._noMove == true )
           {
-				    this.selectionHelper._unSelect();
-            //multiselect
-            this.parentNode.selectedObjects=[];
+            //console.log("no movement");
+            if( !selected )
+            {
+              this.selectionHelper._unSelect();//FIXME: get rid of these
+              this.parentNode.selectedObjects=[];
+            }
+            else
+            {
+              //this.selectionHelper.selectObjectAt(x,y)
+              //multi select handling
+              if(!(this.parentNode.shiftPress))
+              {
+                //no shift pressed: single selection
+                //this.selectedObjects.push(selected);
+                this.parentNode.selectedObjects=[selected];
+              }
+              else
+              {
+                var tmpArray = [];
+                tmpArray = this.parentNode.selectedObjects.slice(0);
+                //necessary hack to work with polymer change handlers
+                 var index = tmpArray.indexOf(selected);
+                 if(index>-1) //already present, remove selection
+                 {
+                  tmpArray.splice(index,1);
+                 }
+                 else//not yet present, add selection
+                 {
+                  tmpArray.push( selected );
+                 }
+                 this.parentNode.selectedObjects = tmpArray;
+              }
+            }
           }
-          else
-          {
+          else{
+            //console.log("moved");
             this.fire("longmovetap",{position:{x:x,y:y}});
           }
         }
@@ -307,7 +357,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
       render:function(renderer, activeScenes, renderables, width, height)
       {
         var left   = Math.floor( width  * this.left );
-				var bottom = Math.floor( height * this.bottom );
+				var bottom = this.bottom;//= Math.floor( height * this.bottom );
 			  var width  = Math.floor( width  * this.width );
 				var height = Math.floor( height * this.height );
 
@@ -350,6 +400,9 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 			        for(var key in activeScenes)
               {
                 var activeScene = activeScenes[key];
+                if( this.exScenes.indexOf( key ) !=-1 ) continue;
+                if( this.scenes.length > 0 && this.scenes.indexOf( key ) == -1) continue;
+                
                 activeScene.updateMatrixWorld();
                 //this.pick(renderer, activeScene, camera);
                 
