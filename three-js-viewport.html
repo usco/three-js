@@ -1,5 +1,5 @@
 
-<polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId controlsId composerId left bottom width height postProcess pickOnPointerMove scenes exScenes"
+<polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId controlsId composerId postProcess pickOnPointerMove pickable scenes exScenes left bottom width height "
 touch-action="none"  on-mousemove="{{onPointerMove}}" 
 >
 <!--on-mousedown="{{onPointerDown}}" on-mouseup="{{onPointerUp}}" -->
@@ -55,6 +55,15 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
        * @type bool
       */
       postProcess:false,//toggle post processing effects
+      
+      /**
+       * 'pickable` is picking possible at all in this viewport?
+       * if not , it overrides any scene specific settings
+       * 
+       * @attribute pickable
+       * @type bool
+      */
+      pickable: true,
       
       /**
        * 'pickOnPointerMove` toggle picking to be done when pointer moves
@@ -123,20 +132,19 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
 				
         //setup various handlers
         window.addEventListener("resize", this.onResize.bind(this));
-        
+
         var useCapture = false;
-        
+
         var pointerDownHandler = this.onPointerDown.bind(this);
-    		this.addEventListener( "mousedown", pointerDownHandler, useCapture );
-	      this.addEventListener( "touchstart", pointerDownHandler, useCapture );
-        
+        this.addEventListener( "mousedown", pointerDownHandler, useCapture );
+        this.addEventListener( "touchstart", pointerDownHandler, useCapture );
+
         var pointerUpHandler = this.onPointerUp.bind(this);
         this.addEventListener( "mouseup", pointerUpHandler , useCapture );
         this.addEventListener( "mouseout", pointerUpHandler, useCapture );
-	      this.addEventListener( "touchend", pointerUpHandler, useCapture );
-	      this.addEventListener( "touchcancel", pointerUpHandler, useCapture );
-	      this.addEventListener( "touchleave", pointerUpHandler, useCapture );
-        
+        this.addEventListener( "touchend", pointerUpHandler, useCapture );
+        this.addEventListener( "touchcancel", pointerUpHandler, useCapture );
+        this.addEventListener( "touchleave", pointerUpHandler, useCapture );
       },
       //internal api
       pick:function(renderer,scene,camera) {
@@ -218,10 +226,15 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
       scenesChanged:function(){
         console.log("scenesChanged",this.scenes);
       },
+      pickableChanged:function(){
+        if(this.pickable){
+        
+        }
+      },
       //event handlers
       onResize:function(){
         this._setStyle();
-        this.selectionHelper.viewWidth = this.realWidth;
+        this.selectionHelper.viewWidth  = this.realWidth;
         this.selectionHelper.viewHeight = this.realHeight;
       },
       onPointerMove:function(event)
@@ -242,9 +255,11 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
         //FIXME:temporary hack
         this.mouse.x = x;
         this.mouse.y = y;
+        this._noMove = false;
         
         var activeScenes = this.activeScenes;
         
+        if(!this.pickable) return;
         for(var key in activeScenes)
         {
           var activeScene = activeScenes[key];
@@ -253,7 +268,6 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
           this.parentNode.highlightedObject = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode, false);
           if( this.parentNode.highlightedObject) break;
         }
-        this._noMove = false;
       },
       onPointerDown:function(event)
       {
@@ -276,30 +290,12 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
         if(!(this.camera)) return;//TODO:this whole method should be disabled for as long as there is no camera
       
         var activeScenes = this.activeScenes;
-        return;
 
         var event = event.impl || event;
         event = normalizeEvent(event);
         var x = event.offsetX;
         var y = event.offsetY;
 
-        var selected = null;
-        for(var key in activeScenes)
-        {
-          var activeScene = activeScenes[key];
-          if(!(activeScene._pickable)) continue;
-          this.selectionHelper.hiearchyRoot = activeScene.children;
-          
-          selected = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode);
-          
-          if( selected){
-            var selectionDetails = selected.userData.tmpIntersectData;
-            delete selected.userData.tmpIntersectData
-            this.fire("objectpicked",{pickingInfos:selectionDetails});
-            break;
-          }
-        }
-        
         this._actionInProgress = false;
         var _pushEnd = new Date().getTime()
         var _elapsed = _pushEnd - this._pushStart;
@@ -312,6 +308,31 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
         this._noMove = ( moveX + moveY ) <= jitterMax;
         this._longAction = !(_elapsed <= longActionLength);
         this._longStaticTap = (_elapsed >= longActionLength && this._noMove == true);
+        
+        
+        //selection handling : FIXME : seperate this
+        var selected = null;
+        if(this.pickable){
+
+          for(var key in activeScenes)
+          {
+            var activeScene = activeScenes[key];
+            if(!(activeScene._pickable)) continue;
+            if(!this._validateScene( key )) continue;//TODO: should this be set once and for all
+            //and then only changed when needed ?
+            
+            this.selectionHelper.hiearchyRoot = activeScene.children;
+            
+            selected = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode);
+            
+            if( selected){
+              var selectionDetails = selected.userData.tmpIntersectData;
+              delete selected.userData.tmpIntersectData
+              this.fire("objectpicked",{pickingInfos:selectionDetails});
+              break;
+            }
+          }
+        }
         
         
         //console.log("selected", selected,x,y);
@@ -335,6 +356,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
           if(this._noMove == true )
           {
             //console.log("no movement");
+            if( !this.pickable ) return;
             if( !selected )
             {
               this.selectionHelper._unSelect();//FIXME: get rid of these
@@ -373,6 +395,8 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
             this.fire("longmovetap",{position:{x:x,y:y}});
           }
         }
+        
+        
       },
       //api
       update:function()
@@ -426,8 +450,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
 			        for(var key in activeScenes)
               {
                 var activeScene = activeScenes[key];
-                if( this.exScenes.indexOf( key ) !=-1 ) continue;
-                if( this.scenes.length > 0 && this.scenes.indexOf( key ) == -1) continue;
+                if(!this._validateScene( key )) continue;
                 
                 activeScene.updateMatrixWorld();
                 //this.pick(renderer, activeScene, camera);
@@ -519,6 +542,12 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
         }
       },
       //helpers
+      _validateScene:function( sceneName )
+      {
+        if( this.exScenes.indexOf( sceneName ) !=-1 ) return false;
+        if( this.scenes.length > 0 && this.scenes.indexOf( sceneName ) == -1) return false;
+        return true;
+      },
       _setStyle:function()
       {
 	      //setup width & height
