@@ -1,7 +1,8 @@
 
 <polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId controlsId composerId left bottom width height postProcess pickOnPointerMove scenes exScenes"
-touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}" 
+touch-action="none"  on-mousemove="{{onPointerMove}}" 
 >
+<!--on-mousedown="{{onPointerDown}}" on-mouseup="{{onPointerUp}}" -->
   <script>
     Polymer('three-js-viewport', {
       object: null,
@@ -87,6 +88,9 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 			_pointerMoveTicks:0,
 			
 			//base callbacks
+			created:function(){
+			  this._startPos = {x:0,y:0};
+			},
       attached:function(){
         var camera   = this.parentNode.querySelector('#'+this.cameraId);
         if(camera) this.camera = camera = camera.object;
@@ -118,7 +122,21 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
 				this.octree = null; 
 				
         //setup various handlers
-        window.addEventListener("resize",this.onResize.bind(this));
+        window.addEventListener("resize", this.onResize.bind(this));
+        
+        var useCapture = false;
+        
+        var pointerDownHandler = this.onPointerDown.bind(this);
+    		this.addEventListener( "mousedown", pointerDownHandler, useCapture );
+	      this.addEventListener( "touchstart", pointerDownHandler, useCapture );
+        
+        var pointerUpHandler = this.onPointerUp.bind(this);
+        this.addEventListener( "mouseup", pointerUpHandler , useCapture );
+        this.addEventListener( "mouseout", pointerUpHandler, useCapture );
+	      this.addEventListener( "touchend", pointerUpHandler, useCapture );
+	      this.addEventListener( "touchcancel", pointerUpHandler, useCapture );
+	      this.addEventListener( "touchleave", pointerUpHandler, useCapture );
+        
       },
       //internal api
       pick:function(renderer,scene,camera) {
@@ -187,7 +205,14 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
       
       //attribute change handlers
       cameraChanged:function(oldCam,newCam){
-        if(this.controls) this.controls.container.init(this.camera, this);
+        if(this.controls){
+          if(!this.controls.container.initialized)
+          {
+            this.controls.container.init(this.camera, this);
+          }else{
+            this.controls.addObject( this.camera );
+          }
+        }
         this.selectionHelper.camera = this.camera;
       },
       scenesChanged:function(){
@@ -232,7 +257,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
       },
       onPointerDown:function(event)
       {
-        console.log("pointer down in three-js-viewport");
+        console.log("pointer down in three-js-viewport " + this.name);
         if(!(this.camera)) return;//TODO:this whole method should be disabled for as long as there is no camera
       
         var event = event.impl || event;
@@ -243,14 +268,15 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
         this._noMove = true;
         this._actionInProgress = true;
         this._pushStart = new Date().getTime();
-        this._startPos = {x:x,y:y};
+        this._startPos = {x:x, y:y};
       },
       onPointerUp:function(event)
       {
-        console.log("pointer up in three-js-viewport");
+        //console.log("pointer up in three-js-viewport"+this.name);
         if(!(this.camera)) return;//TODO:this whole method should be disabled for as long as there is no camera
       
         var activeScenes = this.activeScenes;
+        return;
 
         var event = event.impl || event;
         event = normalizeEvent(event);
@@ -290,7 +316,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-down="{{onPointerDown}}
         
         //console.log("selected", selected,x,y);
         //console.log("moved", Math.abs( moveX ), Math.abs( moveY ) ); 
-
+        
         if(this._longAction)
         {
           //console.log("long action");

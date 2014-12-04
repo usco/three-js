@@ -19,6 +19,8 @@
 <link rel="import" href="three-postfx.html">
 <link rel="import" href="three-js-css3dObject.html">
 
+<!--specific implementations, perhaps move these elsewhere-->
+<link rel="import" href="three-orbit-controls.html">
 
 <link rel="import" href="three-helpers.html">
 <link rel="import" href="three-stats.html">
@@ -461,6 +463,7 @@ tabindex="0">-->
         //handle updatable objects
         if(object.update)
         {
+          console.log("updatable object", object);
           this.updatables.push( object );
         }
 
