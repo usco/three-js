@@ -1,0 +1,90 @@
+<script src="lib/CombinedCamera.js"></script>
+
+<polymer-element name="three-js-combinedCamera" extends="three-js-camera" attributes="projection orientation ortho defaultPos">
+  <script>
+    Polymer('three-js-combinedCamera', {
+      projection: "perspective",
+      orientation: "diagonal",
+      ortho:false,
+      object: null,
+      defaultPos: [0,0,0],
+      ready: function() {
+        //todo: read camera params from camera config/settings ?
+		    this.defaultCameraPosition = new THREE.Vector3(100,100,200);
+        this.camera = new THREE.CombinedCamera(
+          this.width,
+          this.height,
+          this.fov,
+          this.near,
+          this.far,
+          this.near,
+          this.far);
+        this.camera.up = this.cameraUp;
+        this.camera.position.copy(this.defaultCameraPosition);
+        this.camera.defaultPosition.copy(this.defaultCameraPosition);
+        
+        this.object = this.camera;
+        this.super();
+      },
+      defaultPosChanged:function(oldPos, newPos){
+        if(!newPos) newPos = this.pos;
+        this.object.defaultPosition.copy( new THREE.Vector3( newPos[0], newPos[1], newPos[2] ) );
+      },
+      //attribute change handlers / various handlers
+      posChanged:function(){
+        this.super();
+        console.log("camera position changed");
+      },
+      rotChanged:function(){
+        this.super();
+        console.log("camera rotation changed");
+      },
+      projectionChanged:function()
+	    {
+		    //console.log("projectionChanged", this.projection);
+		    if(this.projection == "orthographic")
+		    {
+				    this.camera.toOrthographic();
+		    }
+		    else
+		    {
+            this.camera.toPerspective();
+		    }
+	    },
+	    orthoChanged:function()
+	    {
+	      if(this.ortho)
+	      {
+	        this.camera.toOrthographic();
+	      }
+	      else{
+	        this.camera.toPerspective();
+	      }
+	    },
+      orientationChanged:function()
+	    {
+	      //needs to be async to make sure it is only fired initially
+	      //AFTER the camera is setup
+	      this.async(function(){
+			    console.log("orientation changed to", this.orientation);
+			    
+          var orientation = this.orientation;
+          var methodName = "to"+orientation.charAt(0).toUpperCase() + orientation.slice(1)+"View";
+          
+          //TODO: find another way to invalidate orientation
+          //if(this.orientation != "") this.orientation = "";
+          try{
+            this.camera[methodName]();
+          }catch(error){console.log(error);}
+         });
+	    },
+	    centerView:function(){
+	      this.camera.centerView();
+	    },
+	    resetView:function(){
+	      this.camera.resetView();
+	    }
+  
+    });
+  </script>
+</polymer-element>
