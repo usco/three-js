@@ -1,6 +1,6 @@
 
 <polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId controlsId composerId postProcess pickOnPointerMove pickable scenes exScenes left bottom width height "
-touch-action="none"  on-mousemove="{{onPointerMove}}" 
+touch-action="none"  on-mousemove="{{onPointerMove}}" on-dblclick="{{doubleTapHandler}}"
 >
 <!--on-mousedown="{{onPointerDown}}" on-mouseup="{{onPointerUp}}" -->
   <script>
@@ -117,11 +117,9 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
           return Array2.indexOf(val) == -1;
         });*/
         
-        
         this.selectionHelper = new SelectionHelper({camera:this.camera})
         this.addToParent3();
         this.onResize();
-        
         
         //alternative picking EXPERIMENTAL
         this.mouse= {x:300,y:200};
@@ -141,10 +139,10 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
 
         var pointerUpHandler = this.onPointerUp.bind(this);
         this.addEventListener( "mouseup", pointerUpHandler , useCapture );
-        this.addEventListener( "mouseout", pointerUpHandler, useCapture );
+        //this.addEventListener( "mouseout", pointerUpHandler, useCapture );
         this.addEventListener( "touchend", pointerUpHandler, useCapture );
-        this.addEventListener( "touchcancel", pointerUpHandler, useCapture );
-        this.addEventListener( "touchleave", pointerUpHandler, useCapture );
+        //this.addEventListener( "touchcancel", pointerUpHandler, useCapture );
+        //this.addEventListener( "touchleave", pointerUpHandler, useCapture );
       },
       //internal api
       pick:function(renderer,scene,camera) {
@@ -222,14 +220,6 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
           }
         }
         this.selectionHelper.camera = this.camera;
-      },
-      scenesChanged:function(){
-        console.log("scenesChanged",this.scenes);
-      },
-      pickableChanged:function(){
-        if(this.pickable){
-        
-        }
       },
       //event handlers
       onResize:function(){
@@ -395,8 +385,42 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
             this.fire("longmovetap",{position:{x:x,y:y}});
           }
         }
+      },
+      doubleTapHandler:function( event ){
+        console.log("double tapping in viewport");
+        if(!(this.camera)) return;//TODO:this whole method should be disabled for as long as there is no camera
+      
+        var activeScenes = this.activeScenes;
+
+        var event = event.impl || event;
+        event = normalizeEvent(event);
+        var x = event.offsetX;
+        var y = event.offsetY;
         
+        var selected = null;
+        var pickingInfos = {};
+        if(this.pickable){
+
+          for(var key in activeScenes)
+          {
+            var activeScene = activeScenes[key];
+            if(!(activeScene._pickable)) continue;
+            if(!this._validateScene( key )) continue;//TODO: should this be set once and for all
+            //and then only changed when needed ?
+            
+            this.selectionHelper.hiearchyRoot = activeScene.children;
+            
+            selected = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode);
+            
+            if( selected){
+              var selectionDetails = selected.userData.tmpIntersectData;
+              delete selected.userData.tmpIntersectData
+              break;
+            }
+          }
+        }
         
+        this.fire("doubletap",{pickingInfos:selectionDetails});
       },
       //api
       update:function()
@@ -414,12 +438,12 @@ touch-action="none"  on-mousemove="{{onPointerMove}}"
 				this.activeScenes = activeScenes;
 				
 				//FIXME god awfull hack, only used for three-stats
-				for(var i=0;i<renderables.length;i++)
+				/*for(var i=0;i<renderables.length;i++)
         {
 				  if(!('scene' in renderables[i])){
 				    renderables[i].render();
 				  }
-				}
+				}*/
 
         if(this.postProcess && this.composer && renderer instanceof THREE.WebGLRenderer)
         {

@@ -677,6 +677,14 @@ tabindex="0">-->
               try{ renderer.clear( false, true, false ); } catch(error){};
             }
         }
+        //these should be strickly top level renderables like three-stats
+        for(var i=0;i<this.renderables.length;i++)
+        {
+				  if(!('scene' in this.renderables[i])){
+				    this.renderables[i].render();
+				  }
+				}
+        
         return;
 
         if (this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true && this.finalComposer)
