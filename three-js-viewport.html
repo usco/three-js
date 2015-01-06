@@ -143,6 +143,10 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-dblclick="{{doubleTapHa
         this.addEventListener( "touchend", pointerUpHandler, useCapture );
         //this.addEventListener( "touchcancel", pointerUpHandler, useCapture );
         //this.addEventListener( "touchleave", pointerUpHandler, useCapture );
+        
+        //indirect event handlers
+        //this.addEventListener("longstatictap", this.handleDragOver, false);
+        //this.addEventListener("longmovetap", this.handleDrop, false);
       },
       //internal api
       pick:function(renderer,scene,camera) {
@@ -229,12 +233,11 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-dblclick="{{doubleTapHa
       },
       onPointerMove:function(event)
       {
-        //if(!this.selectionHelper) return;
-        //console.log("foo",this.name);
-        if(!(this.camera) || !(this.pickOnPointerMove) ) return;//TODO:this whole method should be disabled for as long as there is no camera
+        //TODO:this whole method should be disabled for as long as there is no camera
+        if(!(this.camera) || !(this.pickOnPointerMove) ) return;
         
         this._pointerMoveTicks++;
-        if(this._pointerMoveTicks <5)return;
+        if(this._pointerMoveTicks <3)return;
         this._pointerMoveTicks=0;
         
         var event = event.impl || event;
@@ -249,19 +252,24 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-dblclick="{{doubleTapHa
         
         var activeScenes = this.activeScenes;
         
+        
         if(!this.pickable) return;
         for(var key in activeScenes)
         {
           var activeScene = activeScenes[key];
           if(!(activeScene._pickable)) continue;
           this.selectionHelper.hiearchyRoot = activeScene.children;
-          this.parentNode.highlightedObject = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode, false);
+          
+          var highlightCandidate = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode, false);
+          //highlightCandidate = filterTest( highlightCandidate );
+          this.parentNode.highlightedObject = highlightCandidate;
+          
           if( this.parentNode.highlightedObject) break;
         }
       },
       onPointerDown:function(event)
       {
-        console.log("pointer down in three-js-viewport " + this.name);
+        //console.log("pointer down in three-js-viewport " + this.name);
         if(!(this.camera)) return;//TODO:this whole method should be disabled for as long as there is no camera
       
         var event = event.impl || event;
@@ -314,6 +322,7 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-dblclick="{{doubleTapHa
             this.selectionHelper.hiearchyRoot = activeScene.children;
             
             selected = this.selectionHelper.getObjectAt(x,y,this.camera.inOrthographicMode);
+            selected = this._filterBubbleUpSelection( selected );
             
             if( selected){
               var selectionDetails = selected.userData.tmpIntersectData;
@@ -323,8 +332,6 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-dblclick="{{doubleTapHa
             }
           }
         }
-        
-        
         //console.log("selected", selected,x,y);
         //console.log("moved", Math.abs( moveX ), Math.abs( moveY ) ); 
         
@@ -566,6 +573,33 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-dblclick="{{doubleTapHa
         }
       },
       //helpers
+      _filterBubbleUpSelection:function( node ){
+         function goUpHierarchy(node, stopCondition)
+          {
+            if(stopCondition( node ) ){
+              return node;
+            }
+            else{
+              if(node.parent && node.selectTrickleUp){
+              return goUpHierarchy( node.parent, stopCondition );}
+              else{
+                return null;
+              }
+            }
+          }
+      	  function isOk(node)
+          {
+            if(node.selectable ) return true;
+            return false
+          }
+          if(!node) return null;
+          //console.log("filtered", node);
+          //hacks hacks hacks
+          var originalNode = node;
+	        var validNode = goUpHierarchy(node, isOk);
+	        if(validNode) validNode._originalNode = originalNode;
+	        return validNode;
+      },
       _validateScene:function( sceneName )
       {
         if( this.exScenes.indexOf( sceneName ) !=-1 ) return false;
