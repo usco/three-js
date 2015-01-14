@@ -61,6 +61,25 @@
       receiveShadowChanged: function() {
         this.object.receiveShadow = this.receiveShadow;
       },
+      rotChanged:function(){
+        console.log("rotation changed");
+        if(!(this.object.rotation)) return;
+        
+        if(this.rot[0] != this.object.rotation.x)
+        {
+          this.object.rotation.x = this.rot[0] ;
+        }
+
+        if(this.rot[1] != this.object.rotation.y)
+        {
+          this.object.rotation.y= this.rot[1] ;
+        }
+
+        if(this.rot[2] != this.object.rotation.z)
+        {
+          this.object.rotation.z= this.rot[2] ;
+        }
+      },
       //public api
       setPosition: function(x, y, z) {
         this.pos.x = x;

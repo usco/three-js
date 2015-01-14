@@ -17,7 +17,7 @@
       },
       init:function(camera, domElement)
       {
-        console.log("here", camera, domElement);
+        //console.log("here", camera, domElement);
         this.object.addObject( camera );
         this.object.setDomElement( domElement);
         this.object.upVector = this._cameraUp;
@@ -50,7 +50,6 @@
         this.object.userZoomSpeed = this.zoomSpeed;
       },
       rotateSpeedChanged:function(){
-        console.log("rotateSpeed",this.rotateSpeed);
         this.object.userRotateSpeed = this.rotateSpeed;
       },
       autoRotateChanged:function()
