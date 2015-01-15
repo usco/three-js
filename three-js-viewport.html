@@ -1,5 +1,5 @@
 
-<polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId controlsId composerId postProcess pickOnPointerMove pickable scenes exScenes left bottom width height "
+<polymer-element name="three-js-viewport" constructor="threeJsViewport" attributes="name cameraId controlsId composerId postProcess pickOnPointerMove pickable scenes exScenes left bottom width height"
 touch-action="none"  on-mousemove="{{onPointerMove}}" on-dblclick="{{doubleTapHandler}}"
 >
 <!--on-mousedown="{{onPointerDown}}" on-mouseup="{{onPointerUp}}" -->
@@ -92,13 +92,14 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-dblclick="{{doubleTapHa
 			bottom: 0,
 			width: 1.0,
 			height: 1.0,
-			background: new THREE.Color(),
+			background:  "#FFF",
 			
 			_pointerMoveTicks:0,
 			
 			//base callbacks
 			created:function(){
 			  this._startPos = {x:0,y:0};
+			  //this.background =  "#FFF"; 
 			},
       attached:function(){
         var camera   = this.parentNode.querySelector('#'+this.cameraId);
@@ -464,12 +465,15 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-dblclick="{{doubleTapHa
             this.composer.render();
         }
         else
-        {   
+        { 
+        
           try{
 			      renderer.setViewport( left, bottom, width, height );
 			      renderer.setScissor( left, bottom, width, height );
 			      renderer.enableScissorTest ( true );
 			      }catch(error){}
+			      
+			      //console.log("this.background",this.id, this.background);
             renderer.setClearColor( this.background );
 
             var camera = this.camera;
@@ -609,24 +613,25 @@ touch-action="none"  on-mousemove="{{onPointerMove}}" on-dblclick="{{doubleTapHa
       _setStyle:function()
       {
 	      //setup width & height
-	      var cs = window.getComputedStyle(this);
-	      this.width = parseInt(cs.getPropertyValue("width").replace("px",""));
+	      var cs      = window.getComputedStyle(this);
+	      this.width  = parseInt(cs.getPropertyValue("width").replace("px",""));
 	      this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
-	      this.left = parseInt(cs.getPropertyValue("left").replace("px",""));
+	      this.left   = parseInt(cs.getPropertyValue("left").replace("px",""));
 	      this.bottom = parseInt(cs.getPropertyValue("bottom").replace("px","")) || 0;
-	      this.realWidth = this.width;
+	      this.realWidth  = this.width;
 	      this.realHeight = this.height;
 	      
-	      this.width = this.width/this.parentNode.width;
-	      this.height= this.height/this.parentNode.height;
-	      this.left= this.left/this.parentNode.width;
-	      //console.log("width etc", this.width, this.height, this.left);
+	      this.width  = this.width/this.parentNode.width;
+	      this.height = this.height/this.parentNode.height;
+	      this.left   = this.left/this.parentNode.width;
 	       
-	      //THREE.Color.//.setRGB( 0.8, 0.5, 0.7 ),
         //setup backround color
-	      this.bg = cs.getPropertyValue("background-color");
-	      //this._convertColor(this.bg);
-		    //this.renderer.setClearColor( this.bg, 1 );	  
+        var bg = cs.getPropertyValue("background-color") ;
+        bg = new THREE.Color(bg).getHex();
+        
+        this.background = bg;
+	      //console.log("this.background", this.background, this.style.backgroundColor );
+	      
       },
     });
   </script>

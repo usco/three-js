@@ -665,27 +665,36 @@ tabindex="0">-->
       },
       //internal methods
       render: function() {
-        for(var i=0; i<this.renderers.length;i++)
+        var viewports   = this.viewports;
+        var renderers   = this.renderers;
+        var scenes      = this.activeScenes;
+        var renderables = this.renderables;
+        
+        for(var i=0; i< renderers.length;i++)
         {
-            var renderer = this.renderers[i];
+            var renderer = renderers[i];
             try{renderer.clear();}catch(error){};
 
-            for(var key in this.viewports)
+            for(var key in viewports)
             {
-              var view = this.viewports[key];
-              view.render(renderer, this.activeScenes, this.renderables, this.width, this.height);
+              var view = viewports[key];
+              view.render(renderer, scenes, renderables, this.width, this.height);
               try{ renderer.clear( false, true, false ); } catch(error){};
             }
         }
         //these should be strickly top level renderables like three-stats
-        for(var i=0;i<this.renderables.length;i++)
+        for(var i=0;i<renderables.length;i++)
         {
-				  if(!('scene' in this.renderables[i])){
-				    this.renderables[i].render();
+				  if(!('scene' in renderables[i])){
+				    renderables[i].render();
 				  }
 				}
         
         return;
+
+
+        //TODO: cleanup, it is obsolete
+
 
         if (this.renderer instanceof THREE.WebGLRenderer && this.postProcess == true && this.finalComposer)
         {
@@ -870,11 +879,6 @@ tabindex="0">-->
           requestAnimationFrame(this.update.bind(this));
       },
       //helpers: TODO: move some of these to seperate js file
-	    _convertColor: function(hex)
-	    {
-        hex = new THREE.Color().setStyle(hex);
-        this.bg = hex;
-	    },
       _injectCamera: function(camera){
         this.camera = camera;
         this.camera.aspect = this.width / this.height;
@@ -890,9 +894,6 @@ tabindex="0">-->
 	      var cs = window.getComputedStyle(this);
 	      this.width = parseInt(cs.getPropertyValue("width").replace("px",""));
 	      this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
-        //setup backround color
-	      this.bg = cs.getPropertyValue("background-color");
-	      this._convertColor(this.bg);
       },
       _centerMesh:function( object, onX, onY, onZ )
       {
