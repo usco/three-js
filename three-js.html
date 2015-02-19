@@ -50,12 +50,16 @@ controls needs:
 - renderer
 -->
 
-<polymer-element name="three-js" attributes="logLevel fullScreen postProcess selectedObjects highlightedObject"
+<polymer-element name="three-js" 
+attributes="logLevel fullScreen postProcess selectedObjects highlightedObject"
 on-three-js-get-renderer="{{getRenderer}}" on-three-js-get-scene="{{getScene}}" on-three-js-get-camera="{{getCamera}}" 
-on-renderableadded="{{renderableAdded}}" tabindex="-1">
+on-renderableadded="{{renderableAdded}}" tabindex="-1"
+
+on-keyup="{{keyUpHandler}}" on-keydown="{{keyDownHandler}}"
+>
 
 <!--touch-action="none" on-track="{{onPointerMove}}" on-down="{{onPointerDown}}" on-up="{{onPointerUp}}"
-on-keyup="{{onKeyUp}}" on-keydown="{{onKeyDown}}" on-keypress="{{onKeyPress}}"
+ on-keypress="{{onKeyPress}}"
 tabindex="0">-->
 <template>
   <link rel="stylesheet" type="text/css" href="three-js.css">
@@ -133,8 +137,22 @@ tabindex="0">-->
        */
       updatables : null,     
 
+      /**
+       * list of selected objects
+       * 
+       * @attribute selectedObjects
+       * @type array
+      */
       selectedObjects: null,
+      
+      /**
+       * currently highlighted object
+       * 
+       * @attribute highlightedObject
+       * @type object
+      */
       highlightedObject: null,
+
 
       keys:[],
 
@@ -178,13 +196,13 @@ tabindex="0">-->
         //if not, create them 
         if(this.renderers.length==0)
         {
-          console.log("no renderers");
+          //console.log("no renderers");
           var renderer = document.createElement('three-js-webglRenderer');
           this.appendChild(renderer);
         }
         if(Object.keys(this.viewports).length === 0)
         {
-          console.log("no viewports");
+          //console.log("no viewports");
           var camera   = document.createElement('three-js-combinedCamera');
           var controls = document.createElement('three-js-orbitControls');
           var viewport = document.createElement('three-js-viewport');
@@ -221,7 +239,7 @@ tabindex="0">-->
       onResize: function()
       {
 	      var cs = window.getComputedStyle(this);
-	      this.width = parseInt(cs.getPropertyValue("width").replace("px",""));
+	      this.width  = parseInt(cs.getPropertyValue("width").replace("px",""));
 	      this.height = parseInt(cs.getPropertyValue("height").replace("px",""));
 
         //resize all that is needed
@@ -253,114 +271,18 @@ tabindex="0">-->
       {
         //console.log("key pressed")
       },
-      onKeyDown:function(event)
+      keyDownHandler:function(event)
 	    {//overidable method stand in
         this.keys[event.keyCode] = true;
         this.shiftPress = event.shiftKey;
         console.log("key down")
 	    },
-      onKeyUp:function(event)
+      keyUpHandler:function(event)
 	    {//overidable method stand in
         this.keys[event.keyCode] = false;
         this.shiftPress = event.shiftKey;
         console.log("key up")
 	    },
-      /*onPointerMove:function(event)
-      {
-        if(!this.selectionHelper) return;
-
-        var event = event.impl || event;
-        event = normalizeEvent(event);
-        var x = event.offsetX;
-        var y = event.offsetY;
-
-        this.highlightedObject = this.selectionHelper.getObjectAt(x,y);
-
-        this._noMove = false;
-      },
-      onPointerDown:function(event)
-      {
-        var event = event.impl || event;
-        normalizeEvent(event);
-        var x = event.offsetX;
-        var y = event.offsetY;
-
-        this._noMove = true;
-        this._actionInProgress = true;
-        this._pushStart = new Date().getTime();
-
-			  //set focus so keyboard binding works
-			  if(this.impl && document.activeElement != this.impl)
-			  {
-			    console.log("gna");
-				  this.impl.focus();
-        }
-      },
-      onPointerUp:function(event)
-      {
-        if(!this.selectionHelper) return;
-
-        var event = event.impl || event;
-        normalizeEvent(event);
-        var x = event.offsetX;
-        var y = event.offsetY;
-
-        this._actionInProgress = false;
-          var _pushEnd = new Date().getTime()
-          var _elapsed = _pushEnd - this._pushStart;
-          this._longAction = !(_elapsed <= 125);
-          this._longStaticTap = (_elapsed >= 300 && this._noMove == true);
-
-          var selected = this.selectionHelper.getObjectAt(x,y);
-
-          if(this._longStaticTap)
-          {
-            this.fire("longstatictap",{position:{x:x,y:y}});
-          }
-          else if( selected != null && selected != undefined)
-          {
-            this.selectionHelper.selectObjectAt(x,y)
-            //multi select handling
-            if(!(this.shiftPress))
-            {
-              //no shift pressed: single selection
-              //this.selectedObjects=.length = 0;
-              //this.selectedObjects.push(selected);
-              this.selectedObjects=[selected];
-            }
-            else
-            {
-              var tmpArray = [];
-              tmpArray = this.selectedObjects.slice(0);
-              //necessary hack to work with polymer change handlers
-
-               var index = tmpArray.indexOf(selected);
-               if(index>-1) //already present, remove selection
-               {
-                tmpArray.splice(index,1);
-               }
-               else//not yet present, add selection
-               {
-                tmpArray.push( selected );
-               }
-               this.selectedObjects = tmpArray;
-            }
-          }
-          else
-          {
-            if (this._longAction == false)
-            {
-					    this.selectionHelper._unSelect();
-
-              //multiselect
-              this.selectedObjects=[];//.length=0;//=[];
-            }
-            else
-            {
-              this.fire("longmovetap",{position:{x:x,y:y}});
-            }
-          }
-      },*/
       renderableAdded:function( event ){
         //console.log("renderable added", event.detail);
         var renderable = event.detail.renderable;
