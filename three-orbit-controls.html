@@ -1,5 +1,5 @@
 <script src="lib/OrbitControls.js"></script>
-<polymer-element name="three-js-orbitControls" extends="three-js-controls" attributes="cameraUp rotateSpeed panSpeed zoomSpeed autoRotateSpeed autoRotate enabled">
+<polymer-element name="three-js-orbitControls" extends="three-js-controls" attributes="cameraUp rotateSpeed panSpeed zoomSpeed autoRotateSpeed autoRotate enabled active">
   <script>
     Polymer('three-js-orbitControls', {
       autoRotate: false,
@@ -11,10 +11,22 @@
       enabled:true,
       object: null,
       initialized:false,
+      
+      active:false,//flag set when controls are active (rotating, zooming etc)
+      
+      /*observe:{
+        "object.active":"foo"
+      },*/
+      
       ready: function() {
         this.object = new THREE.OrbitControls();
         this._cameraUp = new THREE.Vector3(this.cameraUp[0],this.cameraUp[1],this.cameraUp[2]);  
       },
+      
+      /*foo:function(){
+        //console.log("foo", this.object.active);
+        this.active = this.object.active;
+      },*/
       init:function(camera, domElement)
       {
         //console.log("here", camera, domElement);
@@ -29,6 +41,27 @@
 		    this.object.autoRotate = this.autoRotate;
 		    this.object.autoRotateSpeed = this.autoRotateSpeed;
 		    this.initialized = true;
+		    
+		    var self = this;
+        this.object.addEventListener('active', function(event) {console.log("active");});
+        
+       /*
+        this.object.addEventListener('change', function(event) {
+          //console.log("change");
+          self.active = true;
+          self.job("controlsActiveChanged", function(){
+            self.active = false;
+          },500);
+        });*/
+        this.object.addEventListener('activated', function(event) {
+          self.active = true;
+          console.log("active");
+        });
+        
+        this.object.addEventListener('deactivated', function(event) {
+          self.active = false;
+          console.log("UNactive");
+        });
       },
       addToParent3: function() {
         if (this.parentNode.add3 && !this.objectParent) {
